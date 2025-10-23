@@ -6,6 +6,15 @@ SEED = 42
 
 
 def smooth(x, k=5):
+    """Сглаживает временной ряд с помощью простого скользящего среднего.
+
+    Args:
+        x (np.ndarray): Входной массив (временной ряд).
+        k (int): Размер окна сглаживания.
+
+    Returns:
+        np.ndarray: Сглаженный массив.
+    """
     x = np.asarray(x, dtype=float)
     if len(x) < k:
         return x
@@ -13,6 +22,15 @@ def smooth(x, k=5):
 
 
 def moving_avg(x, k=100):
+    """Вычисляет скользящее среднее для временного ряда.
+
+    Args:
+        x (np.ndarray): Входной массив (временной ряд).
+        k (int): Размер окна для среднего.
+
+    Returns:
+        np.ndarray: Массив со значениями скользящего среднего.
+    """
     x = np.asarray(x, dtype=float)
     if len(x) < k:
         return x
@@ -21,6 +39,21 @@ def moving_avg(x, k=100):
 
 def run_random(env, episodes=20, gamma=0.99, seed=SEED,
                log_first=0, log_steps=0, return_details=False):
+    """Запускает симуляцию со случайной политикой в заданной среде.
+
+    Args:
+        env: Среда Gymnasium.
+        episodes (int): Количество эпизодов для запуска.
+        gamma (float): Коэффициент дисконтирования.
+        seed (int): Зерно для генератора случайных чисел.
+        log_first (int): Кол-во первых эпизодов для логирования переходов.
+        log_steps (int): Кол-во первых шагов для логирования переходов.
+        return_details (bool): Если True, возвращает детали о переходах.
+
+    Returns:
+        np.ndarray or tuple: Массив суммарных наград. Если `return_details`
+        is True, также возвращает список траекторий.
+    """
     env.action_space.seed(seed)
     rs = np.random.RandomState(seed)
     returns = []
@@ -49,6 +82,19 @@ def run_random(env, episodes=20, gamma=0.99, seed=SEED,
 
 
 def eval_value_mc(env, policy, episodes=200, seed=SEED, gamma=0.99):
+    """Оценивает ценность (value) заданной политики методом Монте-Карло.
+
+    Args:
+        env: Среда Gymnasium.
+        policy (callable): Функция политики (состояние -> действие).
+        episodes (int): Количество эпизодов для оценки.
+        seed (int): Зерно для генератора случайных чисел.
+        gamma (float): Коэффициент дисконтирования.
+
+    Returns:
+        tuple[float, float, float, np.ndarray]: Средняя награда, std,
+        95% CI и массив всех наград.
+    """
     rs = np.random.RandomState(seed)
     totals = []
     for ep in range(episodes):
@@ -69,6 +115,20 @@ def eval_value_mc(env, policy, episodes=200, seed=SEED, gamma=0.99):
 
 
 def q_learning(env, episodes=2000, alpha=0.7, gamma=0.99, epsilon=0.2, seed=SEED):
+    """Реализует алгоритм Q-обучения для дискретных сред.
+
+    Args:
+        env: Среда Gymnasium (дискретные S и A).
+        episodes (int): Количество эпизодов для обучения.
+        alpha (float): Скорость обучения (learning rate).
+        gamma (float): Коэффициент дисконтирования.
+        epsilon (float): Параметр для ε-жадной стратегии.
+        seed (int): Зерно для генератора случайных чисел.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray]: Обученная Q-таблица,
+        массив наград и история TD-ошибок.
+    """
     rs = np.random.RandomState(seed)
     S, A = env.observation_space.n, env.action_space.n
     Q = np.zeros((S, A), dtype=np.float32)
@@ -98,6 +158,17 @@ def q_learning(env, episodes=2000, alpha=0.7, gamma=0.99, epsilon=0.2, seed=SEED
 
 
 def eval_greedy(env, Q, episodes=200, seed=SEED):
+    """Оценивает жадную политику на основе Q-таблицы.
+
+    Args:
+        env: Среда Gymnasium.
+        Q (np.ndarray): Q-таблица.
+        episodes (int): Количество эпизодов для оценки.
+        seed (int): Зерно для генератора случайных чисел.
+
+    Returns:
+        float: Доля выигранных эпизодов (награда > 0 в конце).
+    """
     rs = np.random.RandomState(seed)
     wins = 0
     for ep in range(episodes):
@@ -113,6 +184,23 @@ def eval_greedy(env, Q, episodes=200, seed=SEED):
 
 def td0_value_learning(env, episodes=300, alpha=0.1, gamma=0.99, seed=SEED,
                        bin_counts=(6, 6, 6, 6), bounds=CP_BOUNDS):
+    """Оценивает V-функцию методом TD(0) для непрерывной среды.
+
+    Используется дискретизация пространства состояний.
+
+    Args:
+        env: Среда Gymnasium (непрерывное S).
+        episodes (int): Количество эпизодов для обучения.
+        alpha (float): Скорость обучения.
+        gamma (float): Коэффициент дисконтирования.
+        seed (int): Зерно для генератора случайных чисел.
+        bin_counts (tuple): Кол-во бинов для каждого измерения состояния.
+        bounds (tuple): Границы для дискретизации.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Обученная V-таблица и история
+        среднеквадратичных TD-ошибок.
+    """
     rs = np.random.RandomState(seed)
     edges = make_edges(bounds, bin_counts)
     state_space = int(np.prod(bin_counts))

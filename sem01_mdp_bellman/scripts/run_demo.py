@@ -1,11 +1,13 @@
-"""
-Seminar 1 demo runner (refactored to use rlcourse.sem01 modules).
+"""Демонстрационный скрипт для Семинара 1.
 
-Usage examples:
-  python run_demo.py --env cartpole --mode random
-  python run_demo.py --env cartpole --mode mc
-  python run_demo.py --env cartpole --mode td0
-  python run_demo.py --env frozenlake --mode ql
+Запускает различные алгоритмы RL из модуля `rlcourse.sem01` в средах
+CartPole-v1 и FrozenLake-v1.
+
+Примеры использования:
+  python sem01_mdp_bellman/scripts/run_demo.py --env cartpole --mode random
+  python sem01_mdp_bellman/scripts/run_demo.py --env cartpole --mode mc
+  python sem01_mdp_bellman/scripts/run_demo.py --env cartpole --mode td0
+  python sem01_mdp_bellman/scripts/run_demo.py --env frozenlake --mode ql
 """
 
 import argparse
@@ -26,6 +28,7 @@ from rlcourse.sem01.discretization import discretize
 
 
 def main():
+    """Разбирает аргументы командной строки и запускает соответствующую демонстрацию."""
     parser = argparse.ArgumentParser(description="Seminar 1 demos")
     parser.add_argument("--env", choices=["cartpole", "frozenlake"], default="cartpole")
     parser.add_argument("--mode", choices=["random", "mc", "td0", "ql"], default="random")

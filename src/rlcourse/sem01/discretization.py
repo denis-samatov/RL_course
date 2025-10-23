@@ -11,6 +11,17 @@ bounds = np.array([
 
 
 def make_edges(bounds_arr=bounds, bin_counts=BIN_COUNTS):
+    """Создает границы бинов для дискретизации непрерывного пространства.
+
+    Args:
+        bounds_arr (np.ndarray): Массив с границами для каждой размерности
+            состояния. Формат: [[min1, max1], [min2, max2], ...].
+        bin_counts (tuple): Количество бинов для каждой размерности.
+
+    Returns:
+        list: Список массивов, где каждый массив содержит границы бинов
+        для соответствующей размерности.
+    """
     return [np.linspace(lo, hi, n + 1) for (lo, hi), n in zip(bounds_arr, bin_counts)]
 
 
@@ -18,6 +29,16 @@ EDGES = make_edges(bounds, BIN_COUNTS)
 
 
 def discretize(obs, edges=EDGES, bin_counts=BIN_COUNTS) -> int:
+    """Преобразует непрерывное наблюдение в дискретное состояние.
+
+    Args:
+        obs (np.ndarray): Непрерывное наблюдение (состояние).
+        edges (list): Границы бинов для каждой размерности.
+        bin_counts (tuple): Количество бинов для каждой размерности.
+
+    Returns:
+        int: Дискретный индекс состояния.
+    """
     idxs = []
     for i, e in enumerate(edges):
         n = len(e) - 1
@@ -30,5 +51,13 @@ def discretize(obs, edges=EDGES, bin_counts=BIN_COUNTS) -> int:
 
 
 def state_space_size(bin_counts=BIN_COUNTS) -> int:
+    """Вычисляет общий размер дискретного пространства состояний.
+
+    Args:
+        bin_counts (tuple): Количество бинов для каждой размерности.
+
+    Returns:
+        int: Общее количество дискретных состояний.
+    """
     return int(np.prod(bin_counts))
 

@@ -7,6 +7,12 @@ SEED = 42
 
 
 def default_video_dir() -> Path:
+    """Возвращает путь к директории для сохранения видео по умолчанию.
+
+    Returns:
+        Path: Объект Path, указывающий на директорию
+        'sem01_mdp_bellman/assets/videos'.
+    """
     root = Path(__file__).resolve().parents[3]
     return root / 'sem01_mdp_bellman' / 'assets' / 'videos'
 
@@ -18,6 +24,19 @@ def record_episodes(
     name_prefix: str = "cartpole-random",
     seed: int = SEED,
 ):
+    """Записывает видео нескольких эпизодов в среде Gymnasium.
+
+    Args:
+        env_name (str): Название среды.
+        num_episodes (int): Количество эпизодов для записи.
+        video_folder (str | None): Путь к папке для сохранения видео.
+            Если None, используется путь по умолчанию.
+        name_prefix (str): Префикс для имен файлов видео.
+        seed (int): Зерно для генератора случайных чисел.
+
+    Returns:
+        list: Список имен созданных видеофайлов.
+    """
     if video_folder is None:
         video_folder = str(default_video_dir())
     os.makedirs(video_folder, exist_ok=True)
