@@ -78,6 +78,7 @@ def q_learning(env, episodes=2000, alpha=0.7, gamma=0.99, epsilon=0.2, seed=SEED
         s, _ = env.reset(seed=int(rs.randint(0, 1_000_000)))
         done = trunc = False
         G = 0.0
+        t = 0
         while not (done or trunc):
             if rs.rand() < epsilon:
                 a = int(rs.randint(A))
@@ -88,8 +89,9 @@ def q_learning(env, episodes=2000, alpha=0.7, gamma=0.99, epsilon=0.2, seed=SEED
             td_error = td_target - Q[s, a]
             Q[s, a] += alpha * td_error
             max_abs_td = max(max_abs_td, float(abs(td_error)))
-            G += r
+            G += (gamma ** t) * r
             s = s_next
+            t += 1
         returns.append(G)
         if (ep + 1) % 50 == 0:
             delta_norm.append(max_abs_td)
