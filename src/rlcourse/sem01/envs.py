@@ -15,6 +15,7 @@ def make_cartpole(seed: int = SEED, **kwargs):
 
 def make_frozenlake(seed: int = SEED, **kwargs):
     env = gym.make('FrozenLake-v1', **kwargs)
+    env.action_space.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
     return env
