@@ -18,6 +18,7 @@ EDGES = make_edges(bounds, BIN_COUNTS)
 
 
 def discretize(obs, edges=EDGES, bin_counts=BIN_COUNTS) -> int:
+    """Discretizes a continuous observation into a single integer."""
     idxs = []
     for i, e in enumerate(edges):
         n = len(e) - 1
@@ -25,8 +26,16 @@ def discretize(obs, edges=EDGES, bin_counts=BIN_COUNTS) -> int:
         b = int(np.digitize(val, e) - 1)
         b = max(0, min(n - 1, b))
         idxs.append(b)
-    b0, b1, b2, b3 = idxs
-    return ((b0 * bin_counts[1] + b1) * bin_counts[2] + b2) * bin_counts[3] + b3
+
+    if not idxs:
+        return 0
+
+    # N-dimensional to 1-dimensional mapping
+    # This is equivalent to np.ravel_multi_index(tuple(idxs), bin_counts)
+    state = idxs[0]
+    for i in range(1, len(idxs)):
+        state = state * bin_counts[i] + idxs[i]
+    return state
 
 
 def state_space_size(bin_counts=BIN_COUNTS) -> int:
