@@ -39,6 +39,8 @@ results/
 # IDE
 .vscode/
 .idea/
+notes/html/
+notes/convert_to_html.py
 
 # Model checkpoints and weights
 *.pt
