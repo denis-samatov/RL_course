@@ -27,6 +27,8 @@ $$
 s_t \xrightarrow{a_t} (r_{t+1}, s_{t+1})
 $$
 
+![Цикл Agent–Environment](images/Screenshot%202025-10-24%20at%2009.59.06.png)
+
 ---
 
 ### Марковский процесс принятия решений (MDP)
