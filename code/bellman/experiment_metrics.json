@@ -1,0 +1,30 @@
+{
+  "experiment_a": {
+    "coarse": {
+      "episodes": 800,
+      "reward_mean_last_50": 71.95999908447266,
+      "eval_reward": 191.6,
+      "eval_length": 191.6
+    },
+    "fine": {
+      "episodes": 800,
+      "reward_mean_last_50": 55.599998474121094,
+      "eval_reward": 153.9,
+      "eval_length": 153.9
+    }
+  },
+  "experiment_b": {
+    "fast_decay": {
+      "episodes": 800,
+      "reward_mean_last_50": 37.18000030517578,
+      "eval_reward": 44.1,
+      "eval_length": 44.1
+    },
+    "slow_decay": {
+      "episodes": 800,
+      "reward_mean_last_50": 116.5199966430664,
+      "eval_reward": 114.0,
+      "eval_length": 114.0
+    }
+  }
+}

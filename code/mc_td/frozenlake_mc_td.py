@@ -32,6 +32,9 @@ def set_seeds(env: gym.Env, seed: int) -> None:
         seed: Deterministic seed forwarded to numpy and the environment.
 
     Notes:
+        This function seeds the environment's internal RNG but does not return
+        the initial observation. The first call to generate_episode() or reset()
+        will properly initialize the episode state.
         Older Gym releases may not implement ``reset(seed=...)``; in that case
         the call is silently ignored.
     """
@@ -62,7 +65,7 @@ def reset(env: gym.Env) -> int:
     return int(obs)
 
 
-def step(env: gym.Env, action: int) -> Tuple[int, float, bool, Dict[str, np.ndarray]]:
+def step(env: gym.Env, action: int) -> Tuple[int, float, bool, bool, Dict[str, np.ndarray]]:
     """Execute one environment step using the Gym v0.26+ API.
 
     Args:
@@ -70,16 +73,15 @@ def step(env: gym.Env, action: int) -> Tuple[int, float, bool, Dict[str, np.ndar
         action: Discrete action sampled from the policy.
 
     Returns:
-        Tuple containing the next state index, scalar reward, boolean episode
-        termination flag, and the info dict provided by Gym.
+        Tuple containing the next state index, scalar reward, terminated flag,
+        truncated flag, and the info dict provided by Gym.
     """
 
     obs, reward, terminated, truncated, info = env.step(action)
-    done = bool(terminated or truncated)
-    return int(obs), float(reward), done, info
+    return int(obs), float(reward), bool(terminated), bool(truncated), info
 
 
-def moving_average(series: Iterable[float], window: int = 100) -> np.ndarray:
+def moving_average(series: Iterable[float], window: int = 100) -> Tuple[np.ndarray, np.ndarray]:
     """Compute a simple moving average over the supplied sequence.
 
     Args:
@@ -88,15 +90,20 @@ def moving_average(series: Iterable[float], window: int = 100) -> np.ndarray:
             shorter than the requested width.
 
     Returns:
-        Numpy array containing the smoothed values (``valid`` convolution).
+        Tuple of (smoothed_values, x_indices) where x_indices are adjusted
+        to reflect the center of each averaging window for correct alignment
+        when plotting.
     """
 
     data = np.asarray(list(series), dtype=float)
     if data.size == 0:
-        return np.array([])
+        return np.array([]), np.array([])
     width = max(1, min(window, data.size))
     kernel = np.ones(width, dtype=float) / width
-    return np.convolve(data, kernel, mode="valid")
+    smoothed = np.convolve(data, kernel, mode="valid")
+    # Adjust x-indices to center of averaging window
+    x_indices = np.arange(width // 2, width // 2 + len(smoothed))
+    return smoothed, x_indices
 
 
 def uniform_policy(num_actions: int) -> Policy:
@@ -145,11 +152,11 @@ def generate_episode(
     for _ in range(max_steps):
         action_probs = policy(state)
         action = int(rng.choice(len(action_probs), p=action_probs))
-        next_state, reward, done, _ = step(env, action)
+        next_state, reward, terminated, truncated, _ = step(env, action)
         rewards.append(reward)
         states.append(next_state)
         state = next_state
-        if done:
+        if terminated or truncated:
             break
 
     return states, rewards
@@ -227,6 +234,10 @@ def td0_prediction(
     Returns:
         Dictionary with learned state values and the trajectory of the
         start-state estimate across episodes.
+        
+    Notes:
+        Bootstrap is only zeroed when episode terminates naturally (terminated=True),
+        not when merely truncated by time limit.
     """
 
     rng = np.random.default_rng(seed)
@@ -239,11 +250,12 @@ def td0_prediction(
         for _ in range(max_steps):
             action_probs = policy(state)
             action = int(rng.choice(len(action_probs), p=action_probs))
-            next_state, reward, done, _ = step(env, action)
-            td_target = reward if done else reward + gamma * value[next_state]
+            next_state, reward, terminated, truncated, _ = step(env, action)
+            # Only zero bootstrap on true termination, not time-limit truncation
+            td_target = reward if terminated else reward + gamma * value[next_state]
             value[state] += alpha * (td_target - value[state])
             state = next_state
-            if done:
+            if terminated or truncated:
                 break
 
         history.append(value[0])
@@ -278,9 +290,11 @@ def value_to_grid(value: Dict[int, float], grid_size: Tuple[int, int]) -> np.nda
 
     Returns:
         2-D numpy array with values placed according to their grid position.
+        Unvisited states are marked as NaN to distinguish them from states
+        with genuinely zero value.
     """
 
-    arr = np.zeros(grid_size, dtype=float)
+    arr = np.full(grid_size, np.nan, dtype=float)
     for idx, val in value.items():
         row = idx // grid_size[1]
         col = idx % grid_size[1]
@@ -366,7 +380,9 @@ def _simulate_episode(
 
         frame = env.render()
         done = bool(terminated or truncated)
-        if done or step == max_steps - 1:
+        
+        if done:
+            # Episode ended naturally - append final frame with return overlay
             frames.append(
                 _annotate_frame(
                     frame,
@@ -374,10 +390,21 @@ def _simulate_episode(
                 )
             )
             break
+        
+        # Intermediate frame without return overlay
         frames.append(
             _annotate_frame(
                 frame,
                 _labels(include_return=False, total_reward=total_reward),
+            )
+        )
+    else:
+        # Loop exited without break (hit max_steps) - append final frame
+        frame = env.render()
+        frames.append(
+            _annotate_frame(
+                frame,
+                _labels(include_return=True, total_reward=total_reward),
             )
         )
 
@@ -452,7 +479,7 @@ def run_comparison(
     max_steps: int = 200,
     slippery: bool = True,
     seed: int = 42,
-    video_dir: Optional[str] = "videos/frozenlake",
+    video_dir: Optional[str] = None,
     video_episodes: int = 3,
 ) -> None:
     """Compare MC and TD(0) predictions on FrozenLake under a uniform policy.
@@ -465,6 +492,7 @@ def run_comparison(
         slippery: Whether to enable stochastic transitions in FrozenLake.
         seed: Seed controlling randomness in the comparison.
         video_dir: Optional directory where evaluation rollouts are recorded.
+                   Set to None (default) to disable video recording.
         video_episodes: Number of episodes to capture when recording videos.
 
     Side Effects:
@@ -495,11 +523,13 @@ def run_comparison(
     )
 
     plt.figure(figsize=(10, 5))
-    plt.plot(moving_average(mc_history, 100), label="MC (first-visit)")
-    plt.plot(moving_average(td_history, 100), label="TD(0)")
+    mc_smooth, mc_x = moving_average(mc_history, 100)
+    td_smooth, td_x = moving_average(td_history, 100)
+    plt.plot(mc_x, mc_smooth, label="MC (first-visit)")
+    plt.plot(td_x, td_smooth, label="TD(0)")
     plt.xlabel("Episodes")
     plt.ylabel("Estimate of V(start)")
-    plt.title("Convergence of MC vs TD on FrozenLake")
+    plt.title("Convergence of MC vs TD on FrozenLake (100-episode moving average)")
     plt.legend()
     plt.tight_layout()
     plt.show()

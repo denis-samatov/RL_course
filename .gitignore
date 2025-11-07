@@ -48,3 +48,8 @@ notes/convert_to_html.py
 *.pth
 *.h5
 *.pkl
+
+
+code/bellman/homework_solution.ipynb
+code/dqn/homework_solution.ipynb
+code/mc_td/homework_solution.ipynb

@@ -54,7 +54,17 @@ class Discretizer:
 
         Args:
             bins: Number of bins for (x, x_dot, theta, theta_dot).
+        
+        Raises:
+            ValueError: If any bin count is less than 1.
         """
+        # Validate bin counts
+        if any(b < 1 for b in bins):
+            raise ValueError(
+                f"All bin counts must be >= 1, got bins={bins}. "
+                "Each dimension needs at least one bin for discretization."
+            )
+        
         # Reasonable clipping ranges for CartPole-v1
         self.bins = bins
         # cart position
@@ -183,10 +193,30 @@ class QLearningAgent:
         if self.rng.random() < epsilon:
             return int(self.rng.integers(self.num_actions))
         return int(np.argmax(self.q_table[state_idx]))
+    
+    def act_greedy(self, state_idx: int) -> int:
+        """Choose the greedy action (no exploration) for evaluation.
+        
+        Args:
+            state_idx: Discrete index representing the current state.
+            
+        Returns:
+            Action with highest Q-value for the given state.
+        """
+        return int(np.argmax(self.q_table[state_idx]))
 
-    def bellman_update(self, s_idx: int, a: int, r: float, s_next_idx: int, done: bool) -> None:
-        """Apply a single Q-learning Bellman update for state-action pair (s, a)."""
-        best_next = 0.0 if done else float(np.max(self.q_table[s_next_idx]))
+    def bellman_update(self, s_idx: int, a: int, r: float, s_next_idx: int, terminated: bool) -> None:
+        """Apply a single Q-learning Bellman update for state-action pair (s, a).
+        
+        Args:
+            s_idx: Current state index.
+            a: Action taken.
+            r: Reward received.
+            s_next_idx: Next state index.
+            terminated: True if episode ended naturally (not by time limit).
+                       Bootstrap should be kept when episode was merely truncated.
+        """
+        best_next = 0.0 if terminated else float(np.max(self.q_table[s_next_idx]))
         td_target = r + self.config.discount_factor * best_next
         td_error = td_target - float(self.q_table[s_idx, a])
         self.q_table[s_idx, a] += self.config.learning_rate * td_error
@@ -206,13 +236,14 @@ class QLearningAgent:
             for t in range(self.config.max_steps_per_episode):
                 action = self.act(s_idx, epsilon)
                 next_obs, reward, terminated, truncated, _ = self.env.step(action)
-                done = terminated or truncated
                 s_next_idx = self._state_to_index(next_obs)
 
-                self.bellman_update(s_idx, action, float(reward), s_next_idx, done)
+                # Only zero bootstrap on actual termination, not time-limit truncation
+                self.bellman_update(s_idx, action, float(reward), s_next_idx, terminated)
 
                 total_reward += float(reward)
                 s_idx = s_next_idx
+                done = terminated or truncated
 
                 if done:
                     episode_returns[ep] = total_reward
@@ -224,59 +255,75 @@ class QLearningAgent:
                 episode_lengths[ep] = self.config.max_steps_per_episode
         return episode_returns, episode_lengths
 
-    def evaluate(self, num_episodes: int = 10) -> Tuple[float, float]:
-        """Evaluate a greedy policy and return mean episode return and length."""
+    def evaluate(self, num_episodes: int = 10, seed_offset: int = 10_000) -> Tuple[float, float]:
+        """Evaluate a greedy policy and return mean episode return and length.
+        
+        Args:
+            num_episodes: Number of episodes to evaluate.
+            seed_offset: Offset added to base seed for reproducible evaluation.
+            
+        Returns:
+            Tuple of (mean_return, mean_length) over evaluation episodes.
+        """
         returns = []
         lengths = []
         for ep in range(num_episodes):
-            obs, _ = self.env.reset(seed=self.config.seed + 10_000 + ep)
-            s_idx = self._state_to_index(obs)
-            total_reward = 0.0
-            done = False
-            for t in range(self.config.max_steps_per_episode):
-                action = int(np.argmax(self.q_table[s_idx]))
-                next_obs, reward, terminated, truncated, _ = self.env.step(action)
-                total_reward += float(reward)
-                s_idx = self._state_to_index(next_obs)
-                done = terminated or truncated
-                if done:
-                    returns.append(total_reward)
-                    lengths.append(t + 1)
-                    break
-            if not done:
-                returns.append(total_reward)
-                lengths.append(self.config.max_steps_per_episode)
+            eval_seed = self.config.seed + seed_offset + ep
+            total_reward, episode_length = self._run_greedy_episode(self.env, eval_seed)
+            returns.append(total_reward)
+            lengths.append(episode_length)
+            print(f"  Eval episode {ep+1}/{num_episodes} (seed={eval_seed}): return={total_reward:.1f}, length={episode_length}")
         return float(np.mean(returns)), float(np.mean(lengths))
+    
+    def _run_greedy_episode(self, env: gym.Env, seed: int) -> Tuple[float, int]:
+        """Roll out a single greedy episode (shared helper for evaluation and video recording).
+        
+        Args:
+            env: Gym environment to run the episode in.
+            seed: Random seed for this episode.
+            
+        Returns:
+            Tuple of (total_reward, episode_length).
+        """
+        obs, _ = env.reset(seed=seed)
+        s_idx = self._state_to_index(obs)
+        total_reward = 0.0
+        for t in range(self.config.max_steps_per_episode):
+            action = self.act_greedy(s_idx)
+            next_obs, reward, terminated, truncated, _ = env.step(action)
+            total_reward += float(reward)
+            s_idx = self._state_to_index(next_obs)
+            if terminated or truncated:
+                return total_reward, t + 1
+        return total_reward, self.config.max_steps_per_episode
 
-    def save(self, path: str) -> None:
-        """Persist the learned Q-table to disk, creating directories if required."""
-        directory = os.path.dirname(path)
-        if directory:
-            os.makedirs(directory, exist_ok=True)
-        np.save(path, self.q_table)
+    def save(self, path) -> None:
+        """Persist the learned Q-table to disk, creating directories if required.
+        
+        Args:
+            path: File path (str or PathLike) where Q-table will be saved.
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(str(path), self.q_table)
 
-    def load(self, path: str) -> None:
-        """Load a previously saved Q-table after validating its structure."""
-        arr = np.load(path, allow_pickle=False)
+    def load(self, path) -> None:
+        """Load a previously saved Q-table after validating its structure.
+        
+        Args:
+            path: File path (str or PathLike) to load Q-table from.
+            
+        Raises:
+            ValueError: If loaded Q-table shape doesn't match expected dimensions.
+        """
+        arr = np.load(str(path), allow_pickle=False)
         expected_shape = (self.discretizer.num_states, self.num_actions)
         if arr.shape != expected_shape:
             raise ValueError(f"Q-table shape mismatch: got {arr.shape}, expected {expected_shape}")
         self.q_table = arr.astype(np.float32, copy=False)
 
 
-def _run_greedy_episode(agent: QLearningAgent, env: gym.Env, seed: int) -> Tuple[float, int]:
-    """Roll out a single greedy episode for video or evaluation utilities."""
-    obs, _ = env.reset(seed=seed)
-    s_idx = agent._state_to_index(obs)
-    total_reward = 0.0
-    for t in range(agent.config.max_steps_per_episode):
-        action = int(np.argmax(agent.q_table[s_idx]))
-        next_obs, reward, terminated, truncated, _ = env.step(action)
-        total_reward += float(reward)
-        s_idx = agent._state_to_index(next_obs)
-        if terminated or truncated:
-            return total_reward, t + 1
-    return total_reward, agent.config.max_steps_per_episode
+
 
 
 def train_and_evaluate(args: argparse.Namespace) -> None:
@@ -332,9 +379,11 @@ def train_and_evaluate(args: argparse.Namespace) -> None:
                 rec_returns = []
                 rec_lengths = []
                 for ep in range(args.video_episodes):
-                    ret, ln = _run_greedy_episode(agent, video_env, seed=config.seed + 20_000 + ep)
+                    video_seed = config.seed + 20_000 + ep
+                    ret, ln = agent._run_greedy_episode(video_env, video_seed)
                     rec_returns.append(ret)
                     rec_lengths.append(ln)
+                    print(f"  Video episode {ep+1}/{args.video_episodes} (seed={video_seed}): return={ret:.1f}, length={ln}")
                 if rec_returns:
                     print(
                         f"Recorded episodes -> mean return: {float(np.mean(rec_returns)):.2f}, "
@@ -363,7 +412,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bins-thetadot", type=int, default=16, help="Number of bins for pole angular velocity theta_dot")
     parser.add_argument("--eval-episodes", type=int, default=10, help="Number of evaluation episodes after training")
     parser.add_argument("--output", type=str, default="cartpole_q_table.npy", help="Path to save the learned Q-table")
-    parser.add_argument("--video-dir", type=str, default="videos/cartpole", help="Directory to save evaluation videos (empty to disable)")
+    parser.add_argument("--video-dir", type=str, default="", help="Directory to save evaluation videos (empty string disables video recording)")
     parser.add_argument("--video-episodes", type=int, default=1, help="How many evaluation episodes to record to video")
     return parser.parse_args()
 
