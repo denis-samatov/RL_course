@@ -10,7 +10,7 @@
 
 ## Структура курса
 
-### 📘 [note_1.md](note_1.md) — Введение в Deep Reinforcement Learning
+### 📘 [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Введение в Deep Reinforcement Learning
 
 **Основные темы:**
 
@@ -25,7 +25,7 @@
 
 ---
 
-### 📗 [note_2.md](note_2.md) — Фреймворк обучения с подкреплением
+### 📗 [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) — Фреймворк обучения с подкреплением
 
 **Основные темы:**
 
@@ -42,7 +42,7 @@
 
 ---
 
-### 📙 [note_3.md](note_3.md) — Exploration vs Exploitation
+### 📙 [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md) — Exploration vs Exploitation
 
 **Основные темы:**
 
@@ -58,7 +58,7 @@
 
 ---
 
-### 📕 [note_4.md](note_4.md) — Policy-Based vs Value-Based методы
+### 📕 [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based методы
 
 **Основные темы:**
 
@@ -76,7 +76,7 @@
 
 ---
 
-### 📕 [note_5.md](note_5.md) — Что такое "Deep" в Deep RL
+### 📕 [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — Что такое "Deep" в Deep RL
 
 **Основные темы:**
 
@@ -92,7 +92,7 @@
 
 ---
 
-### 📙 [note_6.md](note_6.md) — Два типа value-based методов
+### 📙 [note_06_value_based_methods.md](note_06_value_based_methods.md) — Два типа value-based методов
 
 **Основные темы:**
 
@@ -108,7 +108,7 @@
 
 ---
 
-### 📘 [note_7.md](note_7.md) — Уравнение Беллмана
+### 📘 [note_07_bellman_equation.md](note_07_bellman_equation.md) — Уравнение Беллмана
 
 **Основные темы:**
 
@@ -124,7 +124,7 @@
 
 ---
 
-### 📗 [note_8.md](note_8.md) — Monte Carlo vs Temporal Difference
+### 📗 [note_08_monte_carlo_vs_td.md](note_08_monte_carlo_vs_td.md) — Monte Carlo vs Temporal Difference
 
 **Основные темы:**
 
@@ -140,7 +140,7 @@
 
 ---
 
-### 📘 [note_9.md](note_9.md) — Q-Learning — базовый алгоритм обучения действиям
+### 📘 [note_09_q_learning.md](note_09_q_learning.md) — Q-Learning — базовый алгоритм обучения действиям
 
 **Основные темы:**
 

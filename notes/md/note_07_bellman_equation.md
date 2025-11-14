@@ -2,7 +2,7 @@
 
 ## Тема: Уравнение Беллмана — основа обучения с подкреплением
 
-> **Связано с:** [note_6.md](note_6.md) — V и Q функции · [note_4.md](note_4.md) — Value-Based методы
+> **Связано с:** [note_06_value_based_methods.md](note_06_value_based_methods.md) — V и Q функции · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Value-Based методы
 
 ---
 

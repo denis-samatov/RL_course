@@ -2,7 +2,7 @@
 
 ## Тема: «Deep» в Deep Reinforcement Learning
 
-> **Связано с:** [note_1.md](note_1.md) · [note_2.md](note_2.md) · [note_3.md](note_3.md) · [note_4.md](note_4.md)
+> **Связано с:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) · [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) · [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md) · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md)
 
 ---
 

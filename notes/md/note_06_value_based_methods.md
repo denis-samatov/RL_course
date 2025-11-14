@@ -2,7 +2,7 @@
 
 ## Тема: Два типа value-based методов
 
-> **Связано с:** [note_4.md](note_4.md) — Policy-Based vs Value-Based методы · [note_5.md](note_5.md) — Deep RL
+> **Связано с:** [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based методы · [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — Deep RL
 
 ---
 

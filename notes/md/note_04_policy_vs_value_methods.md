@@ -2,7 +2,7 @@
 
 ## Тема: Два главных подхода к решению задач обучения с подкреплением
 
-> **Связано с:** [note_1.md](note_1.md) · [note_2.md](note_2.md) · [note_3.md](note_3.md)
+> **Связано с:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) · [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) · [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md)
 
 ---
 
@@ -128,7 +128,7 @@ $$
    — ожидаемое вознаграждение, если сделать действие $a$ в состоянии $s$,
    а потом следовать политике $\pi$.
 
-Пример алгоритма на базе Q-функции — Q-Learning (off-policy TD control). Подробности и формула обновления см. в [note_9.md](note_9.md).
+Пример алгоритма на базе Q-функции — Q-Learning (off-policy TD control). Подробности и формула обновления см. в [note_09_q_learning.md](note_09_q_learning.md).
 
 ---
 
@@ -157,7 +157,7 @@ $$
 * Не моделируют вероятностное поведение (чисто детерминированные политики).
 * **Проблема масштабирования:** в табличных методах (классический Q-Learning) требуется хранить значение для каждой пары $(s, a)$ — невозможно для больших пространств состояний.
 
-> **Решение проблемы масштабирования:** Deep Q-Learning (DQN) использует нейронные сети для аппроксимации Q-функции. Подробнее в [note_5.md](note_5.md).
+> **Решение проблемы масштабирования:** Deep Q-Learning (DQN) использует нейронные сети для аппроксимации Q-функции. Подробнее в [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md).
 
 ---
 

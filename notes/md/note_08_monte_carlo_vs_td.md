@@ -2,7 +2,7 @@
 
 ## Тема: Monte Carlo vs Temporal Difference Learning (MC vs TD)
 
-> **Связано с:** [note_7.md](note_7.md) — Уравнение Беллмана · [note_6.md](note_6.md) — V и Q функции
+> **Связано с:** [note_07_bellman_equation.md](note_07_bellman_equation.md) — Уравнение Беллмана · [note_06_value_based_methods.md](note_06_value_based_methods.md) — V и Q функции
 
 ---
 
@@ -131,18 +131,51 @@ TD *частично* опирается на собственные оценк�
 
 ## 7. Обновления в коде (интуитивно)
 
+**Примечание:** Код использует Gymnasium API (версия ≥ 0.26.0). Если вы используете старый Gym (<0.26), замените:
+- `state, info = env.reset()` → `state = env.reset()`
+- `next_state, reward, terminated, truncated, info = env.step(action)` → `next_state, reward, done, _ = env.step(action)`
+
 ```python
 # Monte Carlo (по окончании эпизода)
-for t in range(len(episode)):
-    G = sum(r * (gamma ** i) for i, r in enumerate(rewards[t:]))
-    V[state[t]] += alpha * (G - V[state[t]])
+# Сначала собираем траекторию
+trajectory = []  # List[(state, reward)]
+state, info = env.reset()
+done = False
+
+while not done:
+    action = choose_action(state)
+    next_state, reward, terminated, truncated, info = env.step(action)
+    trajectory.append((state, reward))
+    state = next_state
+    done = terminated or truncated
+
+# Затем обновляем V для каждого посещённого состояния
+G = 0
+visited_states = set()
+for state, reward in reversed(trajectory):
+    G = reward + gamma * G
+    # First-visit MC: обновляем только при первом посещении
+    state_key = tuple(state) if isinstance(state, np.ndarray) else state
+    if state_key not in visited_states:
+        V[state_key] = V.get(state_key, 0.0) + alpha * (G - V.get(state_key, 0.0))
+        visited_states.add(state_key)
 
 # Temporal Difference (во время эпизода)
-state = env.reset()
-for t in range(steps):
+state, info = env.reset()
+for t in range(max_steps):
     action = choose_action(state)
-    next_state, reward, done, _ = env.step(action)
-    V[state] += alpha * (reward + gamma * V[next_state] - V[state])
+    next_state, reward, terminated, truncated, info = env.step(action)
+    done = terminated or truncated
+    
+    # Конвертируем состояния в hashable keys
+    state_key = tuple(state) if isinstance(state, np.ndarray) else state
+    next_state_key = tuple(next_state) if isinstance(next_state, np.ndarray) else next_state
+    
+    # TD(0) update
+    V[state_key] = V.get(state_key, 0.0) + alpha * (
+        reward + gamma * V.get(next_state_key, 0.0) - V.get(state_key, 0.0)
+    )
+    
     state = next_state
     if done:
         break

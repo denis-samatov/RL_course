@@ -32,14 +32,20 @@ warnings.filterwarnings(
 
 @dataclass
 class QLearningConfig:
-    """Configuration bundle that controls training, evaluation, and discretisation behaviour."""
+    """Configuration bundle that controls training, evaluation, and discretisation behaviour.
+    
+    Notes:
+        Exploration (epsilon) decays per timestep, not per episode, ensuring smooth
+        decay even in long episodes. With ~1M total steps expected, epsilon_decay_steps
+        controls the exploration schedule.
+    """
     num_episodes: int = 4000
     max_steps_per_episode: int = 500
     learning_rate: float = 0.1
     discount_factor: float = 0.99
     epsilon_start: float = 1.0
     epsilon_end: float = 0.05
-    epsilon_decay_episodes: int = 2000
+    epsilon_decay_steps: int = 1_000_000  # Per-step decay (not per-episode)
     seed: int = 42
     # Discretization bins per state dimension: [x, x_dot, theta, theta_dot]
     bins: Tuple[int, int, int, int] = (8, 8, 16, 16)
@@ -154,18 +160,22 @@ class QLearningAgent:
         self.q_table = np.zeros((self.discretizer.num_states, self.num_actions), dtype=np.float32)
         self.rng = np.random.default_rng(config.seed)
 
-    def _epsilon(self, episode: int) -> float:
-        """Return exploration rate for the given episode using linear decay.
+    def _epsilon(self, global_step: int) -> float:
+        """Return exploration rate for the given timestep using linear decay.
 
         Args:
-            episode: Zero-based training episode index.
+            global_step: Total number of environment steps taken so far.
 
         Returns:
             Exploration probability epsilon for epsilon-greedy action selection.
+            
+        Notes:
+            Per-step decay ensures smooth exploration reduction even in long episodes,
+            avoiding excessive random actions late in training.
         """
-        if episode >= self.config.epsilon_decay_episodes:
+        if global_step >= self.config.epsilon_decay_steps:
             return self.config.epsilon_end
-        frac = episode / max(1, self.config.epsilon_decay_episodes)
+        frac = global_step / max(1, self.config.epsilon_decay_steps)
         return self.config.epsilon_start + frac * (self.config.epsilon_end - self.config.epsilon_start)
 
     def _state_to_index(self, obs: np.ndarray) -> int:
@@ -222,18 +232,26 @@ class QLearningAgent:
         self.q_table[s_idx, a] += self.config.learning_rate * td_error
 
     def train(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Run Q-learning for the configured number of episodes."""
+        """Run Q-learning for the configured number of episodes.
+        
+        Notes:
+            Epsilon is computed per timestep (not per episode) to ensure smooth
+            exploration decay even when episodes become long late in training.
+        """
         episode_returns = np.zeros(self.config.num_episodes, dtype=np.float32)
         episode_lengths = np.zeros(self.config.num_episodes, dtype=np.int32)
+        
+        global_step = 0  # Track total steps for per-step epsilon decay
 
         for ep in tqdm(range(self.config.num_episodes), desc="Training episodes", unit="ep"):
             obs, _ = self.env.reset(seed=self.config.seed + ep)
             s_idx = self._state_to_index(obs)
-            epsilon = self._epsilon(ep)
             total_reward = 0.0
             done = False
 
             for t in range(self.config.max_steps_per_episode):
+                # Compute epsilon per-step, not per-episode
+                epsilon = self._epsilon(global_step)
                 action = self.act(s_idx, epsilon)
                 next_obs, reward, terminated, truncated, _ = self.env.step(action)
                 s_next_idx = self._state_to_index(next_obs)
@@ -243,6 +261,7 @@ class QLearningAgent:
 
                 total_reward += float(reward)
                 s_idx = s_next_idx
+                global_step += 1  # Increment global step counter
                 done = terminated or truncated
 
                 if done:
@@ -253,6 +272,7 @@ class QLearningAgent:
             if not done:
                 episode_returns[ep] = total_reward
                 episode_lengths[ep] = self.config.max_steps_per_episode
+                
         return episode_returns, episode_lengths
 
     def evaluate(self, num_episodes: int = 10, seed_offset: int = 10_000) -> Tuple[float, float]:
@@ -331,6 +351,9 @@ def train_and_evaluate(args: argparse.Namespace) -> None:
     env = gym.make("CartPole-v1")
 
     try:
+        # Convert episodes to steps for epsilon decay (per-step decay is more stable)
+        epsilon_decay_steps = args.eps_decay_episodes * args.max_steps
+        
         config = QLearningConfig(
             num_episodes=args.episodes,
             max_steps_per_episode=args.max_steps,
@@ -338,7 +361,7 @@ def train_and_evaluate(args: argparse.Namespace) -> None:
             discount_factor=args.gamma,
             epsilon_start=args.eps_start,
             epsilon_end=args.eps_end,
-            epsilon_decay_episodes=args.eps_decay_episodes,
+            epsilon_decay_steps=epsilon_decay_steps,  # Fixed: convert episodes to steps
             seed=args.seed,
             bins=(args.bins_x, args.bins_xdot, args.bins_theta, args.bins_thetadot),
             model_output_path=args.output,

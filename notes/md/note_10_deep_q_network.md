@@ -54,7 +54,7 @@ $$
 Обновление в классическом Q‑Learning:
 
 $$
-Q(s,a) \leftarrow Q(s,a) + \alpha,\big[r + \gamma\max_{a'}Q(s',a') - Q(s,a)\big]
+Q(s,a) \leftarrow Q(s,a) + \alpha \big[r + \gamma\max_{a'}Q(s',a') - Q(s,a)\big]
 $$
 
 В DQN таблицы нет, поэтому учим параметры сети минимизировать TD‑ошибку.
@@ -67,15 +67,15 @@ $$
 
 $$
 y = \begin{cases}
-r, & \text{если } \text{done} = 1\
-r + \gamma,\max_{a'} Q_{\theta^-}(s', a'), & \text{иначе}
+r, & \text{если } \text{done} = 1\\
+r + \gamma \max_{a'} Q_{\theta^-}(s', a'), & \text{иначе}
 \end{cases}
 $$
 
 **Лосс (MSE по минибатчу):**
 
 $$
-\mathcal{L}(\theta) = \mathbb{E}*{(s,a,r,s',\text{done})\sim \mathcal{D}}\big[\big(y - Q*\theta(s,a)\big)^2\big]
+\mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s',\text{done})\sim \mathcal{D}}\big[\big(y - Q_\theta(s,a)\big)^2\big]
 $$
 
 Градиентный шаг по параметрам (\theta).
@@ -100,7 +100,7 @@ $$
 Затем полносвязный слой на 512 нейронов и выход из (N) значений (по числу действий):
 
 $$
-\big[,Q(s,a_1),\ Q(s,a_2),\ \dots,\ Q(s,a_N),\big]
+\big[Q(s,a_1),\ Q(s,a_2),\ \dots,\ Q(s,a_N)\big]
 $$
 
 ---
@@ -110,7 +110,7 @@ $$
 **Реплей‑буфер** хранит переходы и позволяет обучаться на перемешанных минибатчах:
 
 $$
-\mathcal{D} = {(s_t,a_t,r_t,s_{t+1},\text{done}*t)}*{t=1}^T
+\mathcal{D} = \{(s_t,a_t,r_t,s_{t+1},\text{done}_t)\}_{t=1}^T
 $$
 
 **Target network** копирует параметры онлайн‑сети периодически:
@@ -130,13 +130,13 @@ $$
 Линейная деконфигурация (\varepsilon) с шагами:
 
 $$
-\varepsilon_t = \max\big(\varepsilon_{\min},\ \varepsilon_{\max} - k,t\big)
+\varepsilon_t = \max\big(\varepsilon_{\min},\ \varepsilon_{\max} - k \cdot t\big)
 $$
 
 Экспоненциальная альтернатива:
 
 $$
-\varepsilon_t = \varepsilon_{\min} + (\varepsilon_{\max}-\varepsilon_{\min}),e^{-t/\tau}
+\varepsilon_t = \varepsilon_{\min} + (\varepsilon_{\max}-\varepsilon_{\min}) \cdot e^{-t/\tau}
 $$
 
 ---
@@ -148,7 +148,7 @@ $$
 Устраняет переоценку за счёт раздельного (\arg\max) и оценки:
 
 $$
-y = r + \gamma, Q_{\theta^-}\Big(s',\ \arg\max_{a'} Q_\theta(s',a')\Big)
+y = r + \gamma \cdot Q_{\theta^-}\Big(s',\ \arg\max_{a'} Q_\theta(s',a')\Big)
 $$
 
 ### Dueling Network
@@ -165,8 +165,10 @@ $$
 
 $$
 P(i) = \frac{p_i^{\alpha}}{\sum_k p_k^{\alpha}},\qquad
-w_i = \Big(\frac{1}{N,P(i)}\Big)^{\beta}
+w_i = \left(\frac{1}{N \cdot P(i)}\right)^{\beta}
 $$
+
+где веса $w_i$ нормализуются на максимум в батче: $w_i \leftarrow w_i / \max_j w_j$, чтобы не дестабилизировать обновления.
 
 ### N‑step Returns
 
@@ -213,7 +215,7 @@ $$
 * Средняя вознаграждённость эпизода (скользящее окно):
 
 $$
-\overline{R}*t = \frac{1}{K}\sum*{i=t-K+1}^{t} R_i
+\overline{R}_t = \frac{1}{K}\sum_{i=t-K+1}^{t} R_i
 $$
 
 * Доля действий с максимальным Q (эксплойт против экслор).
@@ -265,7 +267,7 @@ $$
 **Bellman‑оптимальность:**
 
 $$
-Q^*(s,a) = \mathbb{E}\big[r + \gamma\max_{a'} Q^*(s',a'),\big|,s,a\big]
+Q^*(s,a) = \mathbb{E}\big[r + \gamma\max_{a'} Q^*(s',a') \big| s,a\big]
 $$
 
 **TD‑цель DQN:**
@@ -277,13 +279,13 @@ $$
 **Лосс:**
 
 $$
-\mathcal{L}(\theta) = \mathbb{E}\big[,(y - Q_\theta(s,a))^2,\big]
+\mathcal{L}(\theta) = \mathbb{E}\big[(y - Q_\theta(s,a))^2\big]
 $$
 
 **Double DQN‑цель:**
 
 $$
-y = r + \gamma, Q_{\theta^-}\big(s',\ \arg\max_{a'} Q_\theta(s',a')\big)
+y = r + \gamma \cdot Q_{\theta^-}\big(s',\ \arg\max_{a'} Q_\theta(s',a')\big)
 $$
 
 **Dueling‑композиция:**
@@ -296,5 +298,6 @@ $$
 
 $$
 P(i) = \frac{p_i^{\alpha}}{\sum_k p_k^{\alpha}},\qquad
-w_i = \Big(\frac{1}{N,P(i)}\Big)^{\beta}
+w_i = \left(\frac{1}{N \cdot P(i)}\right)^{\beta},\quad
+w_i \leftarrow \frac{w_i}{\max_j w_j}
 $$

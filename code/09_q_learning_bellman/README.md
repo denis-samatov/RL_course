@@ -3,7 +3,7 @@
 Этот модуль реализует табличный Q-learning для `CartPole-v1` с дискретизацией непрерывных наблюдений и беллмановскими обновлениями. Скрипт поддерживает обучение, сохранение Q-таблицы, оценку жадной политики и запись видео эпизодов.
 
 ### Файлы
-- `cartpole_q_learning_bellman.py` — основной скрипт с агентом, тренировкой, оценкой и записью видео.
+- `q_learning_cartpole.py` — основной скрипт с агентом, тренировкой, оценкой и записью видео.
 - `cartpole/` — папка, куда сохраняются записанные видео эпизодов (создаётся автоматически при записи).
 
 ### Установка
@@ -19,7 +19,7 @@ pip install moviepy
 
 ### Запуск обучения и оценки
 ```bash
-python /Users/denissamatov/ML/RL/RL_course/code/bellman/cartpole_q_learning_bellman.py \
+python /Users/denissamatov/ML/RL/RL_course/code/09_q_learning_bellman/q_learning_cartpole.py \
   --episodes 4000 \
   --max-steps 500 \
   --lr 0.1 \

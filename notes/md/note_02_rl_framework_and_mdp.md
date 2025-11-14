@@ -2,7 +2,7 @@
 
 ## Тема: Фреймворк обучения с подкреплением (Reinforcement Learning Framework)
 
-> **Связано с:** [note_1.md](note_1.md) — Введение в Deep Reinforcement Learning
+> **Связано с:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Введение в Deep Reinforcement Learning
 
 ---
 

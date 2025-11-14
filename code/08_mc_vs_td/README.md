@@ -35,7 +35,7 @@ V(s) \leftarrow V(s) + \frac{1}{N(s)}\bigl(G_t - V(s)\bigr),
 $$
 где $N(s)$ — число первых посещений $s$ (счётчик по эпизодам).
 
-В файле `frozenlake_mc_td.py`: `monte_carlo_prediction(...)` генерирует эпизоды под $\pi$ и ведёт историю оценки стартового состояния $V(\text{start})$.
+В файле `mc_td_algorithm.py`: `monte_carlo_prediction(...)` генерирует эпизоды под $\pi$ и ведёт историю оценки стартового состояния $V(\text{start})$.
 
 ---
 
@@ -47,7 +47,7 @@ V(s) \leftarrow V(s) + \alpha\,\bigl(r + \gamma V(s') - V(s)\bigr),
 $$
 где $\alpha$ — шаг обучения.
 
-В файле `frozenlake_mc_td.py`: `td0_prediction(...)` выполняет онлайн-обновления под той же политикой $\pi$ и также копит историю $V(\text{start})$.
+В файле `mc_td_algorithm.py`: `td0_prediction(...)` выполняет онлайн-обновления под той же политикой $\pi$ и также копит историю $V(\text{start})$.
 
 ---
 
@@ -76,7 +76,7 @@ $$
 
 - Прямой запуск файла покажет графики:
 ```bash
-python /Users/denissamatov/ML/RL/RL_course/code/mc_td/frozenlake_mc_td.py
+python /Users/denissamatov/ML/RL/RL_course/code/08_mc_vs_td/mc_td_algorithm.py
 ```
 - При необходимости измените параметры в `run_comparison(...)` (внизу файла) или вызовите функцию из своего кода.
 

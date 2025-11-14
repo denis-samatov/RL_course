@@ -24,22 +24,22 @@ Policy = Callable[[int], np.ndarray]
 # ------------------------- utilities -------------------------
 
 def set_seeds(env: gym.Env, seed: int) -> None:
-    """Seed numpy and, when supported, the Gym environment RNGs.
+    """Seed the Gym environment's internal RNGs.
 
     Args:
         env: Environment whose internal random number generators should be
             reset.
-        seed: Deterministic seed forwarded to numpy and the environment.
+        seed: Deterministic seed forwarded to the environment.
 
     Notes:
-        This function seeds the environment's internal RNG but does not return
-        the initial observation. The first call to generate_episode() or reset()
-        will properly initialize the episode state.
+        This function does NOT seed the global np.random state to avoid
+        interfering with caller's RNG. All policy sampling uses explicit
+        np.random.default_rng(seed) instances for proper reproducibility.
+        
         Older Gym releases may not implement ``reset(seed=...)``; in that case
         the call is silently ignored.
     """
 
-    np.random.seed(seed)
     try:
         env.reset(seed=seed)
         if hasattr(env.action_space, "seed"):
@@ -435,12 +435,19 @@ def record_policy_rollouts(
         algorithm_name: Label embedded into filenames and frame overlays.
         top_k: Number of best episodes to persist.
         fps: Playback frame rate of the exported videos.
+        
+    Notes:
+        Uses a min-heap to maintain only top-k episodes in memory, preventing
+        memory exhaustion when sampling many episodes.
     """
+    import heapq
 
     target_dir = Path(video_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    results: List[Tuple[float, int, List[np.ndarray]]] = []
+    # Min-heap of (reward, episode_idx, frames): maintains top-k automatically
+    heap: List[Tuple[float, int, List[np.ndarray]]] = []
+    
     for episode_idx in range(episodes):
         episode_seed = seed + episode_idx
         frames, total_reward = _simulate_episode(
@@ -451,15 +458,22 @@ def record_policy_rollouts(
             algorithm_name=algorithm_name,
             episode_idx=episode_idx,
         )
-        results.append((total_reward, episode_idx, frames))
+        
+        # If heap not full, add episode
+        if len(heap) < top_k:
+            heapq.heappush(heap, (total_reward, episode_idx, frames))
+        # If current episode better than worst in heap, replace it
+        elif total_reward > heap[0][0]:
+            heapq.heapreplace(heap, (total_reward, episode_idx, frames))
+        # Otherwise discard frames immediately (no buffering)
 
-    if not results:
+    if not heap:
         return
 
-    results.sort(key=lambda item: item[0], reverse=True)
-    for rank, (total_reward, episode_idx, frames) in enumerate(
-        results[: min(top_k, len(results))], start=1
-    ):
+    # Sort heap by reward descending for proper ranking
+    results = sorted(heap, key=lambda item: item[0], reverse=True)
+    
+    for rank, (total_reward, episode_idx, frames) in enumerate(results, start=1):
         filename = (
             f"{algorithm_name.lower().replace(' ', '_')}"
             f"_top{rank:02d}_episode_{episode_idx + 1:04d}_return_{total_reward:.2f}.mp4"
@@ -497,14 +511,19 @@ def run_comparison(
 
     Side Effects:
         Displays matplotlib plots summarising learning curves and value grids.
+        
+    Notes:
+        Both MC and TD(0) now share the same environment instance and seed stream,
+        ensuring they experience identical trajectories for fair comparison.
     """
 
-    env_mc = make_env(seed, slippery)
-    env_td = make_env(seed + 1, slippery)
-    policy = uniform_policy(env_mc.action_space.n)
+    # Use a SINGLE environment instance for both algorithms
+    env = make_env(seed, slippery)
+    policy = uniform_policy(env.action_space.n)
 
+    # Both algorithms now use the same seed stream for fair comparison
     mc_values, mc_history = monte_carlo_prediction(
-        env_mc,
+        env,
         policy,
         episodes=episodes,
         gamma=gamma,
@@ -512,14 +531,17 @@ def run_comparison(
         seed=seed,
     )
 
+    # Reset environment to same initial state for TD
+    set_seeds(env, seed)
+    
     td_values, td_history = td0_prediction(
-        env_td,
+        env,
         policy,
         episodes=episodes,
         alpha=alpha,
         gamma=gamma,
         max_steps=max_steps,
-        seed=seed + 1,
+        seed=seed,  # Same seed as MC
     )
 
     plt.figure(figsize=(10, 5))
@@ -574,8 +596,7 @@ def run_comparison(
             algorithm_name="TD(0)",
         )
 
-    env_mc.close()
-    env_td.close()
+    env.close()
 
 
 if __name__ == "__main__":
