@@ -35,13 +35,14 @@ warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium")
 
 @dataclass
 class A2CConfig:
-    """Configuration for A2C training on Pendulum-v1.
+    """Конфигурация для обучения A2C на Pendulum-v1.
     
     Notes:
-        - Pendulum-v1 has 3-dim continuous state and 1-dim continuous action [-2, 2]
-        - Goal: swing up and balance inverted pendulum
-        - Reward range: approximately [-1600, 0] per episode
-        - Episode length: fixed 200 steps
+        - Pendulum-v1 имеет 3-мерное непрерывное состояние и 1-мерное
+          непрерывное действие [-2, 2].
+        - Цель: раскачать и сбалансировать перевернутый маятник.
+        - Диапазон вознаграждений: примерно [-1600, 0] за эпизод.
+        - Длина эпизода: фиксированная, 200 шагов.
     """
     num_episodes: int = 1000
     max_steps_per_episode: int = 200
@@ -63,10 +64,11 @@ class A2CConfig:
 
 
 class ActorCriticNetwork(nn.Module):
-    """Actor-Critic network with shared backbone for continuous control.
+    """Сеть Actor-Critic с общим базовым блоком для непрерывного
+    управления.
     
-    The actor outputs mean and log_std of a Gaussian distribution.
-    The critic outputs a single value estimate.
+    Актер выдает среднее значение и log_std гауссовского
+    распределения. Критик выдает единичную оценку ценности.
     """
     
     def __init__(
@@ -98,13 +100,15 @@ class ActorCriticNetwork(nn.Module):
         self.critic = nn.Linear(hidden_sizes[1], 1)
         
     def forward(self, state: torch.Tensor) -> Tuple[Normal, torch.Tensor]:
-        """Forward pass returning action distribution and value estimate.
+        """Прямой проход, возвращающий распределение действий и оценку
+        ценности.
         
         Args:
-            state: State tensor of shape (batch_size, state_dim) or (state_dim,)
+            state: Тензор состояния формы (batch_size, state_dim) или
+                (state_dim,).
             
         Returns:
-            Tuple of (action_distribution, value_estimate)
+            Кортеж (распределение_действий, оценка_ценности).
         """
         features = self.shared(state)
         
@@ -120,14 +124,15 @@ class ActorCriticNetwork(nn.Module):
         return dist, value
     
     def get_action(self, state: torch.Tensor, deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Sample action from policy.
+        """Выбирает действие из политики.
         
         Args:
-            state: State tensor
-            deterministic: If True, return mean action (no sampling)
+            state: Тензор состояния.
+            deterministic: Если True, возвращает среднее действие (без
+                сэмплирования).
             
         Returns:
-            Tuple of (action, log_prob, entropy)
+            Кортеж (действие, log_prob, энтропия).
         """
         dist, _ = self.forward(state)
         
@@ -143,7 +148,7 @@ class ActorCriticNetwork(nn.Module):
 
 
 class A2CAgent:
-    """A2C agent for continuous control."""
+    """Агент A2C для непрерывного управления."""
     
     def __init__(self, config: A2CConfig):
         self.config = config
@@ -183,14 +188,14 @@ class A2CAgent:
         np.random.seed(config.seed)
         
     def select_action(self, state: np.ndarray, deterministic: bool = False) -> Tuple[np.ndarray, torch.Tensor, torch.Tensor]:
-        """Select action using current policy.
+        """Выбирает действие, используя текущую политику.
         
         Args:
-            state: Current state observation
-            deterministic: If True, use mean action
+            state: Текущее наблюдение состояния.
+            deterministic: Если True, использовать среднее действие.
             
         Returns:
-            Tuple of (action_clipped, log_prob, entropy)
+            Кортеж (действие_обрез, log_prob, энтропия).
         """
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
         action, log_prob, entropy = self.model.get_action(state_tensor, deterministic)
@@ -210,18 +215,19 @@ class A2CAgent:
         next_state: np.ndarray,
         done: bool
     ) -> Tuple[float, float]:
-        """Perform one A2C update step.
+        """Выполняет один шаг обновления A2C.
         
         Args:
-            state: Current state
-            action_log_prob: Log probability of taken action
-            action_entropy: Entropy of action distribution
-            reward: Received reward
-            next_state: Next state
-            done: Whether episode terminated
+            state: Текущее состояние.
+            action_log_prob: Логарифм вероятности предпринятого
+                действия.
+            action_entropy: Энтропия распределения действий.
+            reward: Полученное вознаграждение.
+            next_state: Следующее состояние.
+            done: Завершился ли эпизод.
             
         Returns:
-            Tuple of (actor_loss, critic_loss)
+            Кортеж (потери_актера, потери_критика).
         """
         # Convert to tensors
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
@@ -280,10 +286,11 @@ class A2CAgent:
         return actor_loss.item(), critic_loss.item()
     
     def train_episode(self) -> Tuple[float, int, float, float]:
-        """Run one episode with online updates.
+        """Запускает один эпизод с онлайн-обновлениями.
         
         Returns:
-            Tuple of (total_reward, episode_length, avg_actor_loss, avg_critic_loss)
+            Кортеж (общее_вознаграждение, длина_эпизода,
+            средние_потери_актера, средние_потери_критика).
         """
         state, _ = self.env.reset(seed=self.config.seed + np.random.randint(0, 10000))
         episode_reward = 0.0
@@ -314,10 +321,11 @@ class A2CAgent:
         return episode_reward, t + 1, np.mean(actor_losses), np.mean(critic_losses)
     
     def train(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Train the agent for configured number of episodes.
+        """Обучает агента в течение заданного количества эпизодов.
         
         Returns:
-            Tuple of (episode_rewards, episode_lengths, actor_losses, critic_losses)
+            Кортеж (вознаграждения_за_эпизод, длины_эпизодов,
+            потери_актера, потери_критика).
         """
         episode_rewards = []
         episode_lengths = []
@@ -350,14 +358,14 @@ class A2CAgent:
         )
     
     def evaluate(self, num_episodes: int = 10, render: bool = False) -> Tuple[float, float]:
-        """Evaluate trained policy.
+        """Оценивает обученную политику.
         
         Args:
-            num_episodes: Number of evaluation episodes
-            render: Whether to render episodes
+            num_episodes: Количество эпизодов для оценки.
+            render: Отображать ли эпизоды.
             
         Returns:
-            Tuple of (mean_reward, std_reward)
+            Кортеж (среднее_вознаграждение, стандартное_отклонение_вознаграждения).
         """
         eval_env = gym.make("Pendulum-v1", render_mode="human" if render else None)
         rewards = []
@@ -379,7 +387,7 @@ class A2CAgent:
         return np.mean(rewards), np.std(rewards)
     
     def save(self, path: str):
-        """Save model."""
+        """Сохраняет модель."""
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'actor_optimizer_state_dict': self.actor_optimizer.state_dict(),
@@ -389,7 +397,7 @@ class A2CAgent:
         print(f"Model saved to {path}")
     
     def load(self, path: str):
-        """Load model."""
+        """Загружает модель."""
         checkpoint = torch.load(path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer_state_dict'])
@@ -404,7 +412,7 @@ def plot_training_curves(
     critic_losses: np.ndarray,
     window: int = 50
 ):
-    """Plot comprehensive training curves."""
+    """Строит исчерпывающие кривые обучения."""
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
     
     # Rewards
@@ -457,7 +465,7 @@ def plot_training_curves(
 
 
 def record_video(agent: A2CAgent, num_episodes: int = 5):
-    """Record video of evaluation episodes."""
+    """Записывает видео оценочных эпизодов."""
     video_path = Path(agent.config.video_folder)
     video_path.mkdir(parents=True, exist_ok=True)
     
@@ -486,7 +494,7 @@ def record_video(agent: A2CAgent, num_episodes: int = 5):
 
 
 def main(args):
-    """Main training pipeline."""
+    """Основной конвейер обучения."""
     config = A2CConfig(
         num_episodes=args.episodes,
         learning_rate_actor=args.lr_actor,
