@@ -34,12 +34,14 @@ warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium")
 
 @dataclass
 class REINFORCEConfig:
-    """Configuration for REINFORCE training on LunarLander-v2.
+    """Конфигурация для обучения REINFORCE на LunarLander-v2.
     
     Notes:
-        - LunarLander-v2 has 8-dim continuous state space and 4 discrete actions
-        - Typical episode length: 200-400 steps
-        - Solved when average reward > 200 over 100 consecutive episodes
+        - LunarLander-v2 имеет 8-мерное непрерывное пространство
+          состояний и 4 дискретных действия.
+        - Типичная длина эпизода: 200-400 шагов.
+        - Считается решенной, когда средняя награда > 200 за 100
+          последовательных эпизодов.
     """
     num_episodes: int = 2000
     max_steps_per_episode: int = 1000
@@ -59,9 +61,9 @@ class REINFORCEConfig:
 
 
 class PolicyNetwork(nn.Module):
-    """Policy network for discrete action spaces.
+    """Сеть политики для дискретных пространств действий.
     
-    Outputs a probability distribution over actions via softmax.
+    Выдает распределение вероятностей по действиям через softmax.
     """
     
     def __init__(self, state_dim: int, action_dim: int, hidden_sizes: Tuple[int, int] = (128, 128)):
@@ -71,13 +73,14 @@ class PolicyNetwork(nn.Module):
         self.fc3 = nn.Linear(hidden_sizes[1], action_dim)
         
     def forward(self, state: torch.Tensor) -> Categorical:
-        """Forward pass returning action distribution.
+        """Прямой проход, возвращающий распределение действий.
         
         Args:
-            state: State tensor of shape (batch_size, state_dim) or (state_dim,)
+            state: Тензор состояния формы (batch_size, state_dim) или
+                (state_dim,)
             
         Returns:
-            Categorical distribution over actions
+            Категориальное распределение по действиям
         """
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
@@ -86,7 +89,7 @@ class PolicyNetwork(nn.Module):
 
 
 class ValueNetwork(nn.Module):
-    """Value function network (baseline) for variance reduction."""
+    """Сеть функции ценности (baseline) для уменьшения дисперсии."""
     
     def __init__(self, state_dim: int, hidden_sizes: Tuple[int, int] = (128, 128)):
         super().__init__()
@@ -95,13 +98,14 @@ class ValueNetwork(nn.Module):
         self.fc3 = nn.Linear(hidden_sizes[1], 1)
         
     def forward(self, state: torch.Tensor) -> torch.Tensor:
-        """Forward pass returning state value.
+        """Прямой проход, возвращающий ценность состояния.
         
         Args:
-            state: State tensor of shape (batch_size, state_dim) or (state_dim,)
+            state: Тензор состояния формы (batch_size, state_dim) или
+                (state_dim,)
             
         Returns:
-            Value estimate of shape (batch_size, 1) or (1,)
+            Оценка ценности формы (batch_size, 1) или (1,)
         """
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
@@ -110,7 +114,8 @@ class ValueNetwork(nn.Module):
 
 
 class REINFORCEAgent:
-    """REINFORCE agent with optional baseline and entropy regularization."""
+    """Агент REINFORCE с опциональным baseline и энтропийной
+    регуляризацией."""
     
     def __init__(self, config: REINFORCEConfig):
         self.config = config
@@ -137,13 +142,13 @@ class REINFORCEAgent:
         np.random.seed(config.seed)
         
     def select_action(self, state: np.ndarray) -> Tuple[int, torch.Tensor, torch.Tensor]:
-        """Select action using current policy.
+        """Выбирает действие, используя текущую политику.
         
         Args:
-            state: Current state observation
+            state: Текущее наблюдение состояния.
             
         Returns:
-            Tuple of (action, log_prob, entropy)
+            Кортеж из (действие, log_prob, энтропия).
         """
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
         dist = self.policy(state_tensor)
@@ -153,13 +158,13 @@ class REINFORCEAgent:
         return action.item(), log_prob, entropy
     
     def compute_returns(self, rewards: List[float]) -> torch.Tensor:
-        """Compute discounted returns (Monte Carlo).
+        """Вычисляет дисконтированные вознаграждения (Монте-Карло).
         
         Args:
-            rewards: List of rewards from episode
+            rewards: Список вознаграждений из эпизода.
             
         Returns:
-            Tensor of discounted returns for each timestep
+            Тензор дисконтированных вознаграждений для каждого шага.
         """
         returns = []
         G = 0.0
@@ -170,13 +175,14 @@ class REINFORCEAgent:
         return returns
     
     def train_episode(self, episode_idx: int = 0) -> Tuple[float, int]:
-        """Run one episode and update policy.
+        """Запускает один эпизод и обновляет политику.
         
         Args:
-            episode_idx: Episode index for seeding (enables exploration across episodes)
+            episode_idx: Индекс эпизода для инициализации
+                (обеспечивает исследование между эпизодами).
             
         Returns:
-            Tuple of (total_reward, episode_length)
+            Кортеж (общее вознаграждение, длина эпизода).
         """
         states, log_probs, rewards, entropies = [], [], [], []
         
@@ -248,10 +254,10 @@ class REINFORCEAgent:
         return episode_reward, t + 1
     
     def train(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Train the agent for configured number of episodes.
+        """Обучает агента в течение заданного количества эпизодов.
         
         Returns:
-            Tuple of (episode_rewards, episode_lengths)
+            Кортеж (вознаграждения за эпизод, длина эпизодов).
         """
         episode_rewards = []
         episode_lengths = []
@@ -275,14 +281,15 @@ class REINFORCEAgent:
         return np.array(episode_rewards), np.array(episode_lengths)
     
     def evaluate(self, num_episodes: int = 10, render: bool = False) -> Tuple[float, float]:
-        """Evaluate trained policy.
+        """Оценивает обученную политику.
         
         Args:
-            num_episodes: Number of evaluation episodes
-            render: Whether to render episodes
+            num_episodes: Количество эпизодов для оценки.
+            render: Отображать ли эпизоды.
             
         Returns:
-            Tuple of (mean_reward, std_reward)
+            Кортеж (среднее вознаграждение, стандартное отклонение
+            вознаграждения).
         """
         eval_env = gym.make("LunarLander-v2", render_mode="human" if render else None)
         rewards = []
@@ -308,7 +315,7 @@ class REINFORCEAgent:
         return np.mean(rewards), np.std(rewards)
     
     def save(self, path: str):
-        """Save policy and value networks."""
+        """Сохраняет сети политики и ценности."""
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict() if self.value else None,
@@ -317,7 +324,7 @@ class REINFORCEAgent:
         print(f"Model saved to {path}")
     
     def load(self, path: str):
-        """Load policy and value networks."""
+        """Загружает сети политики и ценности."""
         checkpoint = torch.load(path)
         self.policy.load_state_dict(checkpoint['policy_state_dict'])
         if self.value and checkpoint['value_state_dict']:
@@ -326,7 +333,7 @@ class REINFORCEAgent:
 
 
 def plot_training_curves(rewards: np.ndarray, lengths: np.ndarray, window: int = 100):
-    """Plot training curves with rolling average."""
+    """Строит кривые обучения со скользящим средним."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
     
     # Rewards
@@ -358,7 +365,7 @@ def plot_training_curves(rewards: np.ndarray, lengths: np.ndarray, window: int =
 
 
 def record_video(agent: REINFORCEAgent, num_episodes: int = 5):
-    """Record video of best episodes."""
+    """Записывает видео лучших эпизодов."""
     video_path = Path(agent.config.video_folder)
     video_path.mkdir(parents=True, exist_ok=True)
     
@@ -392,7 +399,7 @@ def record_video(agent: REINFORCEAgent, num_episodes: int = 5):
 
 
 def main(args):
-    """Main training pipeline."""
+    """Основной конвейер обучения."""
     config = REINFORCEConfig(
         num_episodes=args.episodes,
         learning_rate_policy=args.lr,

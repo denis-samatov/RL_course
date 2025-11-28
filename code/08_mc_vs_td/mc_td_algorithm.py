@@ -19,25 +19,26 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 Policy = Callable[[int], np.ndarray]
+"""Политика — функция, отображающая состояние в распределение вероятностей по действиям."""
 
 
 # ------------------------- utilities -------------------------
 
 def set_seeds(env: gym.Env, seed: int) -> None:
-    """Seed the Gym environment's internal RNGs.
+    """Инициализирует генераторы случайных чисел (ГСЧ) среды Gym.
 
     Args:
-        env: Environment whose internal random number generators should be
-            reset.
-        seed: Deterministic seed forwarded to the environment.
+        env: Среда, внутренние ГСЧ которой должны быть сброшены.
+        seed: Детерминированный seed, передаваемый в среду.
 
     Notes:
-        This function does NOT seed the global np.random state to avoid
-        interfering with caller's RNG. All policy sampling uses explicit
-        np.random.default_rng(seed) instances for proper reproducibility.
+        Эта функция НЕ инициализирует глобальное состояние np.random, чтобы
+        избежать вмешательства в ГСЧ вызывающего кода. Все выборки политики
+        используют явные экземпляры np.random.default_rng(seed) для
+        обеспечения правильной воспроизводимости.
         
-        Older Gym releases may not implement ``reset(seed=...)``; in that case
-        the call is silently ignored.
+        Старые версии Gym могут не реализовывать ``reset(seed=...)``; в этом
+        случае вызов молча игнорируется.
     """
 
     try:
@@ -52,13 +53,13 @@ def set_seeds(env: gym.Env, seed: int) -> None:
 
 
 def reset(env: gym.Env) -> int:
-    """Reset the environment and return the initial state index.
+    """Сбрасывает среду и возвращает индекс начального состояния.
 
     Args:
-        env: Environment to reset.
+        env: Среда для сброса.
 
     Returns:
-        Integer representing the initial discrete state.
+        Целое число, представляющее начальное дискретное состояние.
     """
 
     obs, _ = env.reset()
@@ -66,15 +67,16 @@ def reset(env: gym.Env) -> int:
 
 
 def step(env: gym.Env, action: int) -> Tuple[int, float, bool, bool, Dict[str, np.ndarray]]:
-    """Execute one environment step using the Gym v0.26+ API.
+    """Выполняет один шаг в среде, используя API Gym v0.26+.
 
     Args:
-        env: Environment to interact with.
-        action: Discrete action sampled from the policy.
+        env: Среда для взаимодействия.
+        action: Дискретное действие, выбранное из политики.
 
     Returns:
-        Tuple containing the next state index, scalar reward, terminated flag,
-        truncated flag, and the info dict provided by Gym.
+        Кортеж, содержащий индекс следующего состояния, скалярную награду,
+        флаг завершения (terminated), флаг усечения (truncated) и словарь
+        с информацией (info), предоставляемый Gym.
     """
 
     obs, reward, terminated, truncated, info = env.step(action)
@@ -82,17 +84,17 @@ def step(env: gym.Env, action: int) -> Tuple[int, float, bool, bool, Dict[str, n
 
 
 def moving_average(series: Iterable[float], window: int = 100) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute a simple moving average over the supplied sequence.
+    """Вычисляет простое скользящее среднее для предоставленной последовательности.
 
     Args:
-        series: Iterable of numeric observations.
-        window: Nominal window size; automatically clipped when the sequence is
-            shorter than the requested width.
+        series: Итерируемая последовательность числовых наблюдений.
+        window: Номинальный размер окна; автоматически обрезается, если
+            последовательность короче запрашиваемой ширины.
 
     Returns:
-        Tuple of (smoothed_values, x_indices) where x_indices are adjusted
-        to reflect the center of each averaging window for correct alignment
-        when plotting.
+        Кортеж из (smoothed_values, x_indices), где x_indices скорректированы
+        так, чтобы отражать центр каждого окна усреднения для правильного
+        выравнивания при построении графиков.
     """
 
     data = np.asarray(list(series), dtype=float)
@@ -107,13 +109,14 @@ def moving_average(series: Iterable[float], window: int = 100) -> Tuple[np.ndarr
 
 
 def uniform_policy(num_actions: int) -> Policy:
-    """Construct a policy that samples every action with equal probability.
+    """Создает политику, которая выбирает каждое действие с равной вероятностью.
 
     Args:
-        num_actions: Size of the discrete action space.
+        num_actions: Размер дискретного пространства действий.
 
     Returns:
-        Callable that maps any state to an array of action probabilities.
+        Функция, которая отображает любое состояние в массив вероятностей
+        действий.
     """
 
     probs = np.full(num_actions, 1.0 / num_actions, dtype=float)
@@ -132,17 +135,19 @@ def generate_episode(
     max_steps: int,
     rng: np.random.Generator,
 ) -> Tuple[List[int], List[float]]:
-    """Roll out a single episode following the provided policy.
+    """Генерирует один эпизод, следуя предоставленной политике.
 
     Args:
-        env: Environment from which the trajectory is sampled.
-        policy: Stochastic policy returning action probabilities per state.
-        max_steps: Maximum number of transitions before truncating the episode.
-        rng: Numpy random number generator used for action sampling.
+        env: Среда, из которой генерируется траектория.
+        policy: Стохастическая политика, возвращающая вероятности действий
+            для каждого состояния.
+        max_steps: Максимальное количество переходов до усечения эпизода.
+        rng: Генератор случайных чисел Numpy, используемый для выбора
+            действий.
 
     Returns:
-        Pair of lists containing visited states (including the terminal state)
-        and rewards collected along the episode.
+        Пара списков, содержащих посещенные состояния (включая
+        терминальное состояние) и награды, собранные в ходе эпизода.
     """
 
     state = reset(env)
@@ -170,19 +175,22 @@ def monte_carlo_prediction(
     max_steps: int,
     seed: int,
 ) -> Tuple[DefaultDict[int, float], List[float]]:
-    """Estimate state values using first-visit Monte Carlo prediction.
+    """Оценивает ценность состояний, используя метод первого посещения
+    Монте-Карло.
 
     Args:
-        env: Environment to sample episodes from.
-        policy: Behaviour policy utilised during data collection.
-        episodes: Number of episodes to evaluate.
-        gamma: Discount factor applied to future returns.
-        max_steps: Limit on episode length to avoid infinite loops.
-        seed: Random seed controlling episode generation.
+        env: Среда для генерации эпизодов.
+        policy: Политика поведения, используемая при сборе данных.
+        episodes: Количество эпизодов для оценки.
+        gamma: Коэффициент дисконтирования, применяемый к будущим
+            вознаграждениям.
+        max_steps: Ограничение на длину эпизода для избежания
+            бесконечных циклов.
+        seed: Seed для управления генерацией эпизодов.
 
     Returns:
-        Dictionary mapping states to estimated values and a history of the
-        start-state estimate after each episode.
+        Словарь, отображающий состояния в их оцененные ценности, и
+        история оценки начального состояния после каждого эпизода.
     """
 
     rng = np.random.default_rng(seed)
@@ -220,24 +228,25 @@ def td0_prediction(
     max_steps: int,
     seed: int,
 ) -> Tuple[DefaultDict[int, float], List[float]]:
-    """Estimate state values using TD(0) (bootstrapped) updates.
+    """Оценивает ценность состояний с помощью обновлений TD(0).
 
     Args:
-        env: Environment interacted with online.
-        policy: Behaviour policy used for sampling transitions.
-        episodes: Number of episodes to roll out.
-        alpha: Constant step size for the TD update.
-        gamma: Discount factor.
-        max_steps: Ceiling on steps per episode.
-        seed: Random seed for reproducible sampling.
+        env: Среда, с которой взаимодействует агент в режиме онлайн.
+        policy: Политика поведения, используемая для выбора переходов.
+        episodes: Количество разыгрываемых эпизодов.
+        alpha: Постоянный размер шага для обновления TD.
+        gamma: Коэффициент дисконтирования.
+        max_steps: Максимальное количество шагов в эпизоде.
+        seed: Seed для воспроизводимого выбора.
 
     Returns:
-        Dictionary with learned state values and the trajectory of the
-        start-state estimate across episodes.
+        Словарь с изученными ценностями состояний и траектория оценки
+        начального состояния по эпизодам.
         
     Notes:
-        Bootstrap is only zeroed when episode terminates naturally (terminated=True),
-        not when merely truncated by time limit.
+        Bootstrap обнуляется только тогда, когда эпизод завершается
+        естественным образом (terminated=True), а не когда он просто
+        усекается по лимиту времени.
     """
 
     rng = np.random.default_rng(seed)
@@ -266,14 +275,16 @@ def td0_prediction(
 # ------------------------- experiment runner -------------------------
 
 def make_env(seed: int, slippery: bool) -> gym.Env:
-    """Create and seed a FrozenLake environment with optional stochasticity.
+    """Создает и инициализирует среду FrozenLake с необязательной
+    стохастичностью.
 
     Args:
-        seed: Base seed forwarded to the environment and numpy.
-        slippery: When ``True`` use the stochastic (slippery) variant.
+        seed: Базовый seed, передаваемый в среду и numpy.
+        slippery: Если ``True``, используется стохастический (скользкий)
+            вариант.
 
     Returns:
-        Initialised Gym environment ready for interaction.
+        Инициализированная среда Gym, готовая к взаимодействию.
     """
 
     env = gym.make("FrozenLake-v1", is_slippery=slippery)
@@ -282,16 +293,16 @@ def make_env(seed: int, slippery: bool) -> gym.Env:
 
 
 def value_to_grid(value: Dict[int, float], grid_size: Tuple[int, int]) -> np.ndarray:
-    """Convert a dictionary of scalar values into a 2-D grid layout.
+    """Преобразует словарь скалярных значений в двумерную сетку.
 
     Args:
-        value: Mapping from discrete state indices to values.
-        grid_size: Tuple ``(rows, cols)`` describing the grid layout.
+        value: Отображение индексов дискретных состояний в значения.
+        grid_size: Кортеж ``(rows, cols)``, описывающий размер сетки.
 
     Returns:
-        2-D numpy array with values placed according to their grid position.
-        Unvisited states are marked as NaN to distinguish them from states
-        with genuinely zero value.
+        Двумерный массив numpy со значениями, размещенными в соответствии
+        с их положением в сетке. Непосещенные состояния помечаются как
+        NaN, чтобы отличать их от состояний с нулевым значением.
     """
 
     arr = np.full(grid_size, np.nan, dtype=float)
@@ -303,7 +314,7 @@ def value_to_grid(value: Dict[int, float], grid_size: Tuple[int, int]) -> np.nda
 
 
 def _annotate_frame(frame: np.ndarray, lines: List[str]) -> np.ndarray:
-    """Overlay informational text onto a rendered RGB frame."""
+    """Накладывает информационный текст на отображаемый RGB-кадр."""
 
     if not lines:
         return frame
@@ -332,7 +343,7 @@ def _annotate_frame(frame: np.ndarray, lines: List[str]) -> np.ndarray:
 
 
 def _save_video(frames: List[np.ndarray], path: Path, fps: int = 15) -> None:
-    """Persist a list of RGB frames as an MP4 file."""
+    """Сохраняет список RGB-кадров в виде MP4-файла."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     with imageio.get_writer(path, fps=fps) as writer:
@@ -348,7 +359,7 @@ def _simulate_episode(
     algorithm_name: str,
     episode_idx: int,
 ) -> Tuple[List[np.ndarray], float]:
-    """Roll out a single episode and capture frames with overlays."""
+    """Разыгрывает один эпизод и захватывает кадры с наложениями."""
 
     env = gym.make("FrozenLake-v1", is_slippery=slippery, render_mode="rgb_array")
     obs, _ = env.reset(seed=seed)
@@ -423,22 +434,25 @@ def record_policy_rollouts(
     top_k: int = 3,
     fps: int = 15,
 ) -> None:
-    """Record the top-performing evaluation episodes with overlays.
+    """Записывает наиболее успешные эпизоды оценки с наложениями.
 
     Args:
-        policy: Behaviour policy evaluated during recording.
-        episodes: Number of evaluation episodes sampled before selecting the best.
-        max_steps: Safety limit on steps per episode.
-        seed: Seed controlling action sampling during recording.
-        slippery: Whether to use the stochastic FrozenLake dynamics.
-        video_dir: Target directory for generated video files.
-        algorithm_name: Label embedded into filenames and frame overlays.
-        top_k: Number of best episodes to persist.
-        fps: Playback frame rate of the exported videos.
+        policy: Политика поведения, оцениваемая во время записи.
+        episodes: Количество эпизодов оценки, генерируемых перед
+            выбором лучших.
+        max_steps: Ограничение на количество шагов в эпизоде.
+        seed: Seed, контролирующий выбор действий во время записи.
+        slippery: Использовать ли стохастическую динамику FrozenLake.
+        video_dir: Целевой каталог для сгенерированных видеофайлов.
+        algorithm_name: Метка, встраиваемая в имена файлов и наложения
+            кадров.
+        top_k: Количество лучших эпизодов для сохранения.
+        fps: Частота кадров воспроизведения экспортируемых видео.
         
     Notes:
-        Uses a min-heap to maintain only top-k episodes in memory, preventing
-        memory exhaustion when sampling many episodes.
+        Использует min-кучу для хранения только top-k эпизодов в памяти,
+        предотвращая исчерпание памяти при генерации большого
+        количества эпизодов.
     """
     import heapq
 
@@ -496,25 +510,30 @@ def run_comparison(
     video_dir: Optional[str] = None,
     video_episodes: int = 3,
 ) -> None:
-    """Compare MC and TD(0) predictions on FrozenLake under a uniform policy.
+    """Сравнивает предсказания MC и TD(0) на FrozenLake при равномерной
+    политике.
 
     Args:
-        episodes: Number of episodes used for learning.
-        gamma: Discount factor shared by both methods.
-        alpha: Step size for TD(0).
-        max_steps: Maximum steps allowed per episode.
-        slippery: Whether to enable stochastic transitions in FrozenLake.
-        seed: Seed controlling randomness in the comparison.
-        video_dir: Optional directory where evaluation rollouts are recorded.
-                   Set to None (default) to disable video recording.
-        video_episodes: Number of episodes to capture when recording videos.
+        episodes: Количество эпизодов, используемых для обучения.
+        gamma: Коэффициент дисконтирования, общий для обоих методов.
+        alpha: Размер шага для TD(0).
+        max_steps: Максимальное количество шагов в эпизоде.
+        slippery: Включать ли стохастические переходы в FrozenLake.
+        seed: Seed, контролирующий случайность в сравнении.
+        video_dir: Необязательный каталог для записи оценочных
+            эпизодов. Установите None (по умолчанию), чтобы
+            отключить запись видео.
+        video_episodes: Количество эпизодов для захвата при записи
+            видео.
 
     Side Effects:
-        Displays matplotlib plots summarising learning curves and value grids.
+        Отображает графики matplotlib, суммирующие кривые обучения и
+        сетки ценностей.
         
     Notes:
-        Both MC and TD(0) now share the same environment instance and seed stream,
-        ensuring they experience identical trajectories for fair comparison.
+        Оба метода, MC и TD(0), теперь используют один и тот же
+        экземпляр среды и поток seed, что обеспечивает идентичные
+        траектории для справедливого сравнения.
     """
 
     # Use a SINGLE environment instance for both algorithms

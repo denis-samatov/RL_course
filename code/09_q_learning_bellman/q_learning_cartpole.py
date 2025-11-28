@@ -32,12 +32,14 @@ warnings.filterwarnings(
 
 @dataclass
 class QLearningConfig:
-    """Configuration bundle that controls training, evaluation, and discretisation behaviour.
+    """Набор конфигураций, который управляет обучением, оценкой и
+    дискретизацией.
     
     Notes:
-        Exploration (epsilon) decays per timestep, not per episode, ensuring smooth
-        decay even in long episodes. With ~1M total steps expected, epsilon_decay_steps
-        controls the exploration schedule.
+        Исследование (эпсилон) затухает на каждом временном шаге, а не
+        на эпизоде, обеспечивая плавное затухание даже в длинных
+        эпизодах. При ожидаемом общем количестве шагов ~1 млн
+        epsilon_decay_steps контролирует график исследования.
     """
     num_episodes: int = 4000
     max_steps_per_episode: int = 500
@@ -53,16 +55,18 @@ class QLearningConfig:
 
 
 class Discretizer:
-    """Map continuous CartPole observations onto a finite lattice of bins."""
+    """Отображает непрерывные наблюдения CartPole на конечную сетку
+    значений."""
 
     def __init__(self, bins: Tuple[int, int, int, int]):
-        """Pre-compute clipping ranges and bin edges for every state dimension.
+        """Предварительно вычисляет диапазоны отсечения и границы ячеек
+        для каждого измерения состояния.
 
         Args:
-            bins: Number of bins for (x, x_dot, theta, theta_dot).
+            bins: Количество ячеек для (x, x_dot, theta, theta_dot).
         
         Raises:
-            ValueError: If any bin count is less than 1.
+            ValueError: Если количество ячеек меньше 1.
         """
         # Validate bin counts
         if any(b < 1 for b in bins):
@@ -90,13 +94,15 @@ class Discretizer:
         ]
 
     def clip_state(self, state: np.ndarray) -> np.ndarray:
-        """Clip raw observations to stabilise downstream binning.
+        """Обрезает необработанные наблюдения для стабилизации
+        последующего разбиения на ячейки.
 
         Args:
-            state: Continuous observation [x, x_dot, theta, theta_dot].
+            state: Непрерывное наблюдение [x, x_dot, theta, theta_dot].
 
         Returns:
-            Clipped observation with values limited to admissible ranges.
+            Обрезанное наблюдение со значениями, ограниченными
+            допустимыми диапазонами.
         """
         x, x_dot, theta, theta_dot = state
         x = np.clip(x, *self.x_range)
@@ -106,13 +112,14 @@ class Discretizer:
         return np.array([x, x_dot, theta, theta_dot], dtype=np.float32)
 
     def discretize(self, state: np.ndarray) -> Tuple[int, int, int, int]:
-        """Convert a continuous observation into a tuple of bin indices.
+        """Преобразует непрерывное наблюдение в кортеж индексов ячеек.
 
         Args:
-            state: Continuous observation from the environment.
+            state: Непрерывное наблюдение из среды.
 
         Returns:
-            Tuple of per-dimension bin indices after clipping and digitisation.
+            Кортеж индексов ячеек для каждого измерения после обрезки и
+            оцифровки.
         """
         clipped = self.clip_state(state)
         idxs = [int(np.digitize(clipped[i], self.bin_edges[i])) for i in range(4)]
@@ -121,13 +128,16 @@ class Discretizer:
         return tuple(idxs)
 
     def flat_index(self, indices: Tuple[int, int, int, int]) -> int:
-        """Flatten multi-dimensional bin indices into a single integer index.
+        """Преобразует многомерные индексы ячеек в один целочисленный
+        индекс.
 
         Args:
-            indices: Tuple of bin indices (i_x, i_xdot, i_theta, i_thetadot).
+            indices: Кортеж индексов ячеек (i_x, i_xdot, i_theta,
+                i_thetadot).
 
         Returns:
-            Linearised index compatible with the tabular Q-table layout.
+            Линеаризованный индекс, совместимый с табличным
+            представлением Q-таблицы.
         """
         b0, b1, b2, b3 = self.bins
         i0, i1, i2, i3 = indices
@@ -135,23 +145,27 @@ class Discretizer:
 
     @property
     def num_states(self) -> int:
-        """Total number of discrete states produced by the discretizer.
+        """Общее количество дискретных состояний, создаваемых
+        дискретизатором.
 
         Returns:
-            Number of unique discrete states across all dimensions.
+            Количество уникальных дискретных состояний по всем
+            измерениям.
         """
         return int(np.prod(self.bins))
 
 
 class QLearningAgent:
-    """Tabular epsilon-greedy Q-learning agent for discretised CartPole observations."""
+    """Табличный эпсилон-жадный агент Q-обучения для дискретизированных
+    наблюдений CartPole."""
 
     def __init__(self, env: gym.Env, config: QLearningConfig):
-        """Initialise buffers, RNG, and helper structures required for learning.
+        """Инициализирует буферы, ГСЧ и вспомогательные структуры,
+        необходимые для обучения.
 
         Args:
-            env: Gym environment exposing the CartPole dynamics.
-            config: Hyperparameters and discretisation settings.
+            env: Среда Gym, предоставляющая динамику CartPole.
+            config: Гиперпараметры и настройки дискретизации.
         """
         self.env = env
         self.config = config
@@ -161,17 +175,21 @@ class QLearningAgent:
         self.rng = np.random.default_rng(config.seed)
 
     def _epsilon(self, global_step: int) -> float:
-        """Return exploration rate for the given timestep using linear decay.
+        """Возвращает коэффициент исследования для данного временного
+        шага, используя линейное затухание.
 
         Args:
-            global_step: Total number of environment steps taken so far.
+            global_step: Общее количество шагов в среде,
+                предпринятых до сих пор.
 
         Returns:
-            Exploration probability epsilon for epsilon-greedy action selection.
+            Вероятность исследования эпсилон для выбора действия по
+            эпсилон-жадной стратегии.
             
         Notes:
-            Per-step decay ensures smooth exploration reduction even in long episodes,
-            avoiding excessive random actions late in training.
+            Затухание на каждом шаге обеспечивает плавное снижение
+            исследования даже в длинных эпизодах, избегая чрезмерных
+            случайных действий на поздних этапах обучения.
         """
         if global_step >= self.config.epsilon_decay_steps:
             return self.config.epsilon_end
@@ -179,52 +197,59 @@ class QLearningAgent:
         return self.config.epsilon_start + frac * (self.config.epsilon_end - self.config.epsilon_start)
 
     def _state_to_index(self, obs: np.ndarray) -> int:
-        """Map a continuous observation to its discrete state index.
+        """Отображает непрерывное наблюдение в его дискретный индекс
+        состояния.
 
         Args:
-            obs: Continuous observation returned by the environment.
+            obs: Непрерывное наблюдение, возвращаемое средой.
 
         Returns:
-            Integer index into the flattened Q-table.
+            Целочисленный индекс в плоской Q-таблице.
         """
         idxs = self.discretizer.discretize(obs)
         return self.discretizer.flat_index(idxs)
 
     def act(self, state_idx: int, epsilon: float) -> int:
-        """Choose an action via epsilon-greedy policy with respect to the current Q-table.
+        """Выбирает действие с помощью эпсилон-жадной политики
+        относительно текущей Q-таблицы.
 
         Args:
-            state_idx: Discrete index representing the current state.
-            epsilon: Exploration probability for the decision.
+            state_idx: Дискретный индекс, представляющий текущее
+                состояние.
+            epsilon: Вероятность исследования для принятия решения.
 
         Returns:
-            Selected action index from the discrete action space.
+            Индекс выбранного действия из дискретного пространства
+            действий.
         """
         if self.rng.random() < epsilon:
             return int(self.rng.integers(self.num_actions))
         return int(np.argmax(self.q_table[state_idx]))
     
     def act_greedy(self, state_idx: int) -> int:
-        """Choose the greedy action (no exploration) for evaluation.
+        """Выбирает жадное действие (без исследования) для оценки.
         
         Args:
-            state_idx: Discrete index representing the current state.
+            state_idx: Дискретный индекс, представляющий текущее
+                состояние.
             
         Returns:
-            Action with highest Q-value for the given state.
+            Действие с самым высоким Q-значением для данного состояния.
         """
         return int(np.argmax(self.q_table[state_idx]))
 
     def bellman_update(self, s_idx: int, a: int, r: float, s_next_idx: int, terminated: bool) -> None:
-        """Apply a single Q-learning Bellman update for state-action pair (s, a).
+        """Применяет одно обновление Беллмана Q-обучения для пары
+        состояние-действие (s, a).
         
         Args:
-            s_idx: Current state index.
-            a: Action taken.
-            r: Reward received.
-            s_next_idx: Next state index.
-            terminated: True if episode ended naturally (not by time limit).
-                       Bootstrap should be kept when episode was merely truncated.
+            s_idx: Индекс текущего состояния.
+            a: Совершенное действие.
+            r: Полученная награда.
+            s_next_idx: Индекс следующего состояния.
+            terminated: True, если эпизод завершился естественным
+                образом (не по лимиту времени). Bootstrap следует
+                сохранять, когда эпизод был просто усечен.
         """
         best_next = 0.0 if terminated else float(np.max(self.q_table[s_next_idx]))
         td_target = r + self.config.discount_factor * best_next
@@ -232,11 +257,13 @@ class QLearningAgent:
         self.q_table[s_idx, a] += self.config.learning_rate * td_error
 
     def train(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Run Q-learning for the configured number of episodes.
+        """Запускает Q-обучение для настроенного количества эпизодов.
         
         Notes:
-            Epsilon is computed per timestep (not per episode) to ensure smooth
-            exploration decay even when episodes become long late in training.
+            Эпсилон вычисляется для каждого временного шага (а не для
+            каждого эпизода), чтобы обеспечить плавное затухание
+            исследования, даже когда эпизоды становятся длинными на
+            поздних этапах обучения.
         """
         episode_returns = np.zeros(self.config.num_episodes, dtype=np.float32)
         episode_lengths = np.zeros(self.config.num_episodes, dtype=np.int32)
@@ -276,14 +303,17 @@ class QLearningAgent:
         return episode_returns, episode_lengths
 
     def evaluate(self, num_episodes: int = 10, seed_offset: int = 10_000) -> Tuple[float, float]:
-        """Evaluate a greedy policy and return mean episode return and length.
+        """Оценивает жадную политику и возвращает среднее вознаграждение
+        и длину эпизода.
         
         Args:
-            num_episodes: Number of episodes to evaluate.
-            seed_offset: Offset added to base seed for reproducible evaluation.
+            num_episodes: Количество эпизодов для оценки.
+            seed_offset: Смещение, добавляемое к базовому seed для
+                воспроизводимой оценки.
             
         Returns:
-            Tuple of (mean_return, mean_length) over evaluation episodes.
+            Кортеж (среднее вознаграждение, средняя длина) по
+            оценочным эпизодам.
         """
         returns = []
         lengths = []
@@ -296,14 +326,15 @@ class QLearningAgent:
         return float(np.mean(returns)), float(np.mean(lengths))
     
     def _run_greedy_episode(self, env: gym.Env, seed: int) -> Tuple[float, int]:
-        """Roll out a single greedy episode (shared helper for evaluation and video recording).
+        """Разыгрывает один жадный эпизод (общий помощник для оценки и
+        записи видео).
         
         Args:
-            env: Gym environment to run the episode in.
-            seed: Random seed for this episode.
+            env: Среда Gym для запуска эпизода.
+            seed: Случайное начальное число для этого эпизода.
             
         Returns:
-            Tuple of (total_reward, episode_length).
+            Кортеж (общее вознаграждение, длина эпизода).
         """
         obs, _ = env.reset(seed=seed)
         s_idx = self._state_to_index(obs)
@@ -318,23 +349,28 @@ class QLearningAgent:
         return total_reward, self.config.max_steps_per_episode
 
     def save(self, path) -> None:
-        """Persist the learned Q-table to disk, creating directories if required.
+        """Сохраняет изученную Q-таблицу на диск, создавая каталоги
+        при необходимости.
         
         Args:
-            path: File path (str or PathLike) where Q-table will be saved.
+            path: Путь к файлу (str или PathLike), где будет сохранена
+                Q-таблица.
         """
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         np.save(str(path), self.q_table)
 
     def load(self, path) -> None:
-        """Load a previously saved Q-table after validating its structure.
+        """Загружает ранее сохраненную Q-таблицу после проверки ее
+        структуры.
         
         Args:
-            path: File path (str or PathLike) to load Q-table from.
+            path: Путь к файлу (str или PathLike) для загрузки
+                Q-таблицы.
             
         Raises:
-            ValueError: If loaded Q-table shape doesn't match expected dimensions.
+            ValueError: Если форма загруженной Q-таблицы не
+                соответствует ожидаемым размерам.
         """
         arr = np.load(str(path), allow_pickle=False)
         expected_shape = (self.discretizer.num_states, self.num_actions)
@@ -347,7 +383,8 @@ class QLearningAgent:
 
 
 def train_and_evaluate(args: argparse.Namespace) -> None:
-    """Train the agent, report metrics, save artefacts, and optionally record evaluation videos."""
+    """Обучает агента, сообщает метрики, сохраняет артефакты и
+    опционально записывает видео оценки."""
     env = gym.make("CartPole-v1")
 
     try:
@@ -419,7 +456,8 @@ def train_and_evaluate(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse CLI arguments controlling training, evaluation, and output options."""
+    """Разбирает аргументы командной строки, управляющие обучением,
+    оценкой и параметрами вывода."""
     parser = argparse.ArgumentParser(description="CartPole-v1 Q-learning with Bellman optimality updates (discretized)")
     parser.add_argument("--episodes", type=int, default=4000, help="Number of training episodes")
     parser.add_argument("--max-steps", type=int, default=500, help="Max steps per episode")
