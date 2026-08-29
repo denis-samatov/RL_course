@@ -1,174 +1,180 @@
-# 🎓 Reinforcement Learning — Практический курс (2025)
+# 🎓 Reinforcement Learning — Practical Course (2025)
 
-> **Цель:** Понять и реализовать ключевые алгоритмы обучения с подкреплением (RL) — от MDP и уравнений Беллмана до RLHF (PPO, DPO).  
-> **Формат:** 10 семинаров × 1 час, с кодом на Python, Gymnasium и PyTorch.
+> **Goal:** Understand and implement the core reinforcement learning (RL) algorithms —
+> from MDPs and the Bellman equations through RLHF (PPO, DPO).
+> **Format:** 10 one-hour sessions, with code in Python, Gymnasium, and PyTorch.
 
 ---
 
-## 📘 Общая информация
+## 📘 Overview
 
-| Параметр | Описание |
+| Parameter | Description |
 |-----------|-----------|
-| **Период** | 20 октября → 28 декабря 2025 |
-| **Ритм** | 1 семинар в неделю (10 занятий × 60 минут) |
-| **Формат занятия** | 10 мин теория → 40 мин код/эксперимент → 10 мин обсуждение |
-| **Инструменты** | `python 3.10`, `gymnasium`, `torch`, `numpy`, `matplotlib`, `stable-baselines3`, `trl`, `wandb` |
-| **Оценивание** | мини-дз после каждого семинара + финальный мини-проект |
-| **Ресурсы** | CPU / GPU (желательно), `venv` окружение |
+| **Period** | October 20 → December 28, 2025 |
+| **Cadence** | 1 session per week (10 sessions × 60 minutes) |
+| **Session format** | 10 min theory → 40 min code/experiment → 10 min discussion |
+| **Tools** | `python 3.10`, `gymnasium`, `torch`, `numpy`, `matplotlib`, `stable-baselines3`, `trl`, `wandb` |
+| **Assessment** | mini-homework after each session + a final mini-project |
+| **Resources** | CPU / GPU (recommended), `venv` environment |
 
 ---
 
-## 🚀 Установка и запуск
+## 🚀 Setup
 
-### 1. Клонирование репозитория
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/ вашего-пользователя/ваш-репозиторий.git
-cd ваш-репозиторий
+git clone https://github.com/denis-samatov/reinforcement_learning_course.git
+cd reinforcement_learning_course
 ```
 
-### 2. Создание и активация виртуального окружения
+### 2. Create and activate a virtual environment
 
-Рекомендуется использовать виртуальное окружение для изоляции зависимостей.
+Using a virtual environment to isolate dependencies is recommended.
 
 ```bash
-# Создание окружения
+# Create the environment
 python3 -m venv venv
 
-# Активация на macOS/Linux
+# Activate on macOS/Linux
 source venv/bin/activate
 
-# Активация на Windows
+# Activate on Windows
 venv\Scripts\activate
 ```
 
-### 3. Установка зависимостей
+### 3. Install dependencies
 
-Все необходимые библиотеки перечислены в файле `requirements.txt`.
+All required libraries are listed in `requirements.txt`.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 🗂️ Структура проекта
+## 🗂️ Project structure
 
-- **`code/`**: Директория с практическим кодом для семинаров, сгруппированным по темам. Каждый подкаталог содержит Python-скрипты (`.py`) и/или интерактивные ноутбуки (`.ipynb`).
-- **`notes/`**: Теоретические материалы, конспекты и презентации к семинарам.
-- **`.gitignore`**: Файл, указывающий Git, какие файлы и папки игнорировать.
-- **`README.md`**: Этот файл — основная информация о курсе.
-- **`requirements.txt`**: Список зависимостей Python для проекта.
+- **`code/`**: hands-on code for each session, grouped by topic. Each subfolder
+  contains Python scripts (`.py`) and/or interactive notebooks (`.ipynb`).
+- **`notes/`**: theory notes and slides for each session.
+- **`.gitignore`**: tells Git which files/folders to ignore.
+- **`README.md`**: this file — the main course overview.
+- **`requirements.txt`**: Python dependencies for the project.
 
-## ⚡ Как запустить примеры
+## ⚡ Running the examples
 
-Каждый семинар в директории `code/` содержит свой набор скриптов и ноутбуков.
+Each session in `code/` has its own set of scripts and notebooks.
 
-**Запуск Python-скрипта:**
+**Running a Python script:**
 
-1.  Перейдите в папку нужного семинара.
-2.  Запустите основной скрипт.
+1. Go to the relevant session's folder.
+2. Run the main script.
 
 ```bash
-# Пример для семинара 8
+# Example for session 8
 cd code/08_mc_vs_td/
 python mc_td_algorithm.py
 ```
 
-**Запуск Jupyter Notebook:**
+**Running a Jupyter Notebook:**
 
-1.  Убедитесь, что у вас установлен Jupyter (`pip install jupyter`).
-2.  Запустите Jupyter Lab или Notebook из корневой директории проекта.
-3.  В интерфейсе Jupyter перейдите в нужную папку и откройте `.ipynb` файл.
+1. Make sure Jupyter is installed (`pip install jupyter`).
+2. Launch Jupyter Lab or Notebook from the project root.
+3. Navigate to the relevant folder in the Jupyter interface and open the `.ipynb` file.
 
 ```bash
 jupyter lab
 ```
 
-> **Важно:** Убедитесь, что ядро Jupyter (kernel) использует созданное вами виртуальное окружение (`venv`), чтобы все зависимости были доступны.
+> **Important:** Make sure the Jupyter kernel uses the virtual environment you created
+> (`venv`), so all dependencies are available.
 
 ---
 
-## 🗓️ План семинаров (Октябрь → Декабрь 2025)
+## 🗓️ Session plan (October → December 2025)
 
-| № | Тема | Ключевые понятия | Практика |
+| # | Topic | Key concepts | Practice |
 |---|------|------------------|-----------|
-| **1** | Введение в RL и MDP | агент–среда–награда, функции `V`, `Q`, уравнения Беллмана | `CartPole-v1` (random policy, MC-оценка) |
-| **2** | Динамическое программирование | Policy / Value Iteration, GPI | `GridWorld` — визуализация `V(s)` |
-| **3** | Монте-Карло и TD | Sarsa, Q-Learning, ε-greedy | `FrozenLake-v1` (on/off-policy) |
-| **4** | DQN и его расширения | Target-network, Replay, Double/Dueling DQN | `CartPole-v1` — PyTorch реализация |
-| **5** | Policy Gradients, REINFORCE | PG-теорема, baseline, энтропия | `LunarLander-v2` — PG с baseline |
-| **6** | Actor–Critic, A2C и SAC (идея) | GAE, A2C, max-entropy RL | `CartPole`, `Pendulum-v1` |
-| **7** | PPO и TRPO | суррогатная цель, clipping, KL-контроль | `Pendulum-v1` — PPO (SB3) |
-| **8** | RLHF: SFT → RM → PPO | KL-штраф, стабильность и drift | `trl` — PPO-fine-tune на игрушечных данных |
-| **9** | Reward Modeling и DPO | бинарная RM, DPO-обновление | `trl.DPOTrainer` — сравнение PPO vs DPO |
-| **10** | Финальный проект и безопасность | метрики reward/KL/safety, отчёт | Мини-пайплайн RLHF (SFT + RM + PPO / DPO) |
+| **1** | Intro to RL and MDPs | agent–environment–reward, `V`/`Q` functions, Bellman equations | `CartPole-v1` (random policy, MC estimation) |
+| **2** | Dynamic Programming | Policy / Value Iteration, GPI | `GridWorld` — visualizing `V(s)` |
+| **3** | Monte Carlo and TD | Sarsa, Q-Learning, ε-greedy | `FrozenLake-v1` (on/off-policy) |
+| **4** | DQN and extensions | Target network, Replay, Double/Dueling DQN | `CartPole-v1` — PyTorch implementation |
+| **5** | Policy Gradients, REINFORCE | PG theorem, baseline, entropy | `LunarLander-v2` — PG with baseline |
+| **6** | Actor–Critic, A2C, and SAC (concept) | GAE, A2C, max-entropy RL | `CartPole`, `Pendulum-v1` |
+| **7** | PPO and TRPO | surrogate objective, clipping, KL control | `Pendulum-v1` — PPO (SB3) |
+| **8** | RLHF: SFT → RM → PPO | KL penalty, stability and drift | `trl` — PPO fine-tune on toy data |
+| **9** | Reward Modeling and DPO | binary RM, DPO update | `trl.DPOTrainer` — PPO vs DPO comparison |
+| **10** | Final project and safety | reward/KL/safety metrics, report | Mini RLHF pipeline (SFT + RM + PPO / DPO) |
 
 ---
 
-## 🗂️ Структура семинаров
+## 🗂️ Session structure
 
-Все занятия оформляем по одному шаблону — это облегчает навигацию и повторное использование кода:
+Every session follows the same template, to keep navigation and code reuse easy:
 
 - `semXX_topic/`
-  - `README.md` — цели, как запускать ноутбук и скрипты, ссылки на теорию.
-  - `docs/` — теоретические конспекты (Markdown, формулы, визуализации).
-  - `notebooks/` — практические ноутбуки, где код импортируется из `src/`.
-  - `scripts/` — CLI-демки, запись видео, вспомогательные утилиты.
-  - `assets/` — результаты (например, `assets/videos/`, `assets/figures/`), игнорируются Git.
-  - `tools/` — сервисные скрипты (патчеры ноутбуков, генераторы данных).
-  - `tests/` *(опционально)* — автопроверки, мини-ДЗ, sample-solution проверки.
-- `src/rlcourse/semXX/` — модуль с алгоритмами, политиками, утилитами и фабриками сред, которые импортируются ноутбуками и скриптами.
+  - `README.md` — goals, how to run the notebook and scripts, links to theory.
+  - `docs/` — theory notes (Markdown, formulas, visualizations).
+  - `notebooks/` — hands-on notebooks that import code from `src/`.
+  - `scripts/` — CLI demos, video recording, helper utilities.
+  - `assets/` — outputs (e.g. `assets/videos/`, `assets/figures/`), Git-ignored.
+  - `tools/` — maintenance scripts (notebook patchers, data generators).
+  - `tests/` *(optional)* — self-checks, mini-homework, sample-solution checks.
+- `src/rlcourse/semXX/` — the module with algorithms, policies, utilities, and
+  environment factories imported by the notebooks and scripts.
 
-> Для новых семинаров копируйте структуру `sem01_mdp_bellman/` и заменяйте `sem01…` на нужный индекс/тему.
+> For new sessions, copy the `sem01_mdp_bellman/` structure and replace `sem01…` with
+> the new index/topic.
 
 ---
 
-## 🎯 Результаты обучения
+## 🎯 Learning outcomes
 
-| Семинар | Результат |
+| Session | Outcome |
 |----------|------------|
-| 1 | Формализует MDP, объясняет `V`, `Q`, `π` |
-| 2 | Пишет Value / Policy Iteration и анализирует сходимость |
-| 3 | Реализует Sarsa и Q-Learning, тюнит ε-greedy |
-| 4 | Создаёт DQN (PyTorch), добавляет Double / Dueling |
-| 5 | Выводит PG-формулы, снижает дисперсию (baseline/entropy) |
-| 6 | Запускает A2C, понимает GAE и идею max-entropy |
-| 7 | Тюнит PPO (clip / KL / entropy), сравнивает с A2C |
-| 8 | Понимает пайплайн RLHF и роль KL-штрафа |
-| 9 | Обучает Reward Model и делает DPO-обновление |
-| 10 | Собирает mini-RLHF pipeline и оценивает метрики |
+| 1 | Formalizes MDPs, explains `V`, `Q`, `π` |
+| 2 | Implements Value / Policy Iteration and analyzes convergence |
+| 3 | Implements Sarsa and Q-Learning, tunes ε-greedy |
+| 4 | Builds a DQN (PyTorch), adds Double / Dueling |
+| 5 | Derives the PG formulas, reduces variance (baseline/entropy) |
+| 6 | Runs A2C, understands GAE and the max-entropy idea |
+| 7 | Tunes PPO (clip / KL / entropy), compares against A2C |
+| 8 | Understands the RLHF pipeline and the role of the KL penalty |
+| 9 | Trains a Reward Model and performs a DPO update |
+| 10 | Assembles a mini-RLHF pipeline and evaluates its metrics |
 
 ---
 
-## 💡 Итоговые проекты и исследовательские направления
+## 💡 Final projects and research directions
 
-1. **Mini-RLHF** — обучение LLM на коротких инструкциях: SFT → RM (200–500 пар) → PPO / DPO.  
-2. **PPO vs DPO** — анализ стабильности и ресурсоёмкости при разных `β`, `LR`, `batch_size`.  
-3. **RL + Human Scoring** — ручной скоринг траекторий и оценка сдвига политики.
+1. **Mini-RLHF** — fine-tuning an LLM on short instructions: SFT → RM (200–500 pairs)
+   → PPO / DPO.
+2. **PPO vs DPO** — analyzing stability and resource cost across different `β`, `LR`,
+   `batch_size`.
+3. **RL + Human Scoring** — manual scoring of trajectories and measuring policy drift.
 
 ---
 
-## 📚 Рекомендуемая литература
+## 📚 Recommended reading
 
-| Источник | Содержание |
+| Source | Content |
 |-----------|-------------|
-| **Sutton & Barto** — *Reinforcement Learning: An Introduction* | классика (MDP, DP, TD, PG) :contentReference[oaicite:0]{index=0} |
-| **Maxim Lapan** — *Deep RL Hands-On* | практические реализации на PyTorch :contentReference[oaicite:1]{index=1} |
-| **Andrea Lonza** — *RL Algorithms with Python* | SARSA, Q-Learning, PPO, TRPO, DDPG / TD3 :contentReference[oaicite:2]{index=2} |
-| **RL Theory Book** — Forts & Mills | строгие выводы PG, PPO, GAE :contentReference[oaicite:3]{index=3} |
-| **Hugging Face TRL Docs** | RLHF, PPO, DPO, ORPO — современные пайплайны |
+| **Sutton & Barto** — *Reinforcement Learning: An Introduction* | the classic reference (MDPs, DP, TD, PG) |
+| **Maxim Lapan** — *Deep RL Hands-On* | practical PyTorch implementations |
+| **Andrea Lonza** — *RL Algorithms with Python* | SARSA, Q-Learning, PPO, TRPO, DDPG / TD3 |
+| **RL Theory Book** — Forts & Mills | rigorous derivations of PG, PPO, GAE |
+| **Hugging Face TRL Docs** | RLHF, PPO, DPO, ORPO — modern pipelines |
 
 ---
 
-> 💬 Разработано на основе курсов **Sutton & Barto**, **Lapan**, **Lonza**, **RL Theory Book**, **Hugging Face TRL**.  
-> Автор: *Denis Samatov, TPU / 2025*  
->  
-> 📂 Репозиторий включает:  
-> — методички (формулы, визуализации)  
-> — практические тетради с кодом  
-> — демо, запись видео, mini-MDP  
-> — общие модули (алгоритмы, политики, утилиты)  
-> — мини-проекты RL и RLHF  
->  
-> 🧭 Цель: сформировать мост между **академическим RL** и **прикладным Deep RL / RLHF**.
-
----
+> 💬 Built on ideas from **Sutton & Barto**, **Lapan**, **Lonza**, **RL Theory Book**,
+> and **Hugging Face TRL**.
+> Author: *Denis Samatov, TPU / 2025*
+>
+> 📂 This repository includes:
+> — study notes (formulas, visualizations)
+> — hands-on notebooks with code
+> — demos and video recordings, mini-MDP examples
+> — shared modules (algorithms, policies, utilities)
+> — RL and RLHF mini-projects
+>
+> 🧭 Goal: bridge **academic RL** and **applied Deep RL / RLHF**.
