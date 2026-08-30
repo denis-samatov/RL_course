@@ -1,143 +1,143 @@
-# Теоретический конспект №8
+# Theoretical Note #8
 
-## Тема: Monte Carlo vs Temporal Difference Learning (MC vs TD)
+## Topic: Monte Carlo vs Temporal Difference Learning (MC vs TD)
 
-> **Связано с:** [note_07_bellman_equation.md](note_07_bellman_equation.md) — Уравнение Беллмана · [note_06_value_based_methods.md](note_06_value_based_methods.md) — V и Q функции
-
----
-
-## 1. Почему этот блок важен?
-
-После того как мы разобрали уравнение Беллмана, возникает практический вопрос:
-
-> «Как агент может *приближённо вычислить* эту ценность, если у него нет доступа ко всей среде и всем будущим вознаграждениям?»
-
-Два базовых подхода:
-
-* **Monte Carlo (MC)** — обучение по *завершённым эпизодам*;
-* **Temporal Difference (TD)** — обучение *во время взаимодействия*, шаг за шагом.
+> **Related to:** [note_07_bellman_equation.md](note_07_bellman_equation.md) — The Bellman equation · [note_06_value_based_methods.md](note_06_value_based_methods.md) — The V and Q functions
 
 ---
 
-## 2. Monte Carlo: обучение по целому эпизоду
+## 1. Why this section matters
 
-**Интуиция:** агент **сначала доигрывает весь эпизод**, затем агрегирует вознаграждения и обновляет оценки ценностей.
+Now that we've covered the Bellman equation, a practical question arises:
 
-### Математически
+> "How can an agent *approximately compute* this value, given it doesn't have access to the whole environment or all future rewards?"
+
+Two fundamental approaches:
+
+* **Monte Carlo (MC)** — learning from *completed episodes*;
+* **Temporal Difference (TD)** — learning *during* the interaction, step by step.
+
+---
+
+## 2. Monte Carlo: learning from an entire episode
+
+**Intuition:** the agent **plays out the whole episode first**, then aggregates the rewards and updates its value estimates.
+
+### Mathematically
 
 $$
 V(S_t) \leftarrow V(S_t) + \alpha \big[G_t - V(S_t)\big]
 $$
-где совокупное вознаграждение (возврат)
+where the return
 $$
 G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots
 $$
 
-### Что происходит на практике
+### What happens in practice
 
-1. Агент начинает эпизод и действует по текущей политике (например, $\varepsilon$‑жадной).
-2. После окончания эпизода вычисляет $G_t$ для всех временных шагов.
-3. Обновляет все посещённые состояния $S_t$ с использованием соответствующих $G_t$.
+1. The agent starts an episode and acts under its current policy (e.g. $\varepsilon$-greedy).
+2. Once the episode ends, it computes $G_t$ for every time step.
+3. It updates every visited state $S_t$ using its corresponding $G_t$.
 
-### Пример
+### Example
 
-Пусть награды за эпизод: $R = [1, 0, 0, 0, 1, 1]$.
-Тогда $G_0 = 1 + 0 + 0 + 0 + 1 + 1 = 3$. При скорости обучения $\alpha = 0.1$:
+Say the episode's rewards are: $R = [1, 0, 0, 0, 1, 1]$.
+Then $G_0 = 1 + 0 + 0 + 0 + 1 + 1 = 3$. With learning rate $\alpha = 0.1$:
 $$
 V(S_0) \leftarrow 0 + 0.1\,(3 - 0) = 0.3
 $$
-После нескольких эпизодов оценки $V(S_t)$ начинают отражать ожидаемое качество состояния.
+After several episodes, the estimates $V(S_t)$ begin to reflect the expected quality of the state.
 
-### Преимущества MC
+### Advantages of MC
 
-* Прост в понимании и реализации.
-* Не требует знания динамики среды $P(s'\mid s,a)$.
-* Даёт **несмещённые** оценки $V_\pi(s)$ (при достаточной выборке).
+* Simple to understand and implement.
+* Doesn't require knowledge of the environment's dynamics $P(s'\mid s,a)$.
+* Gives **unbiased** estimates of $V_\pi(s)$ (given enough samples).
 
-### Недостатки MC
+### Drawbacks of MC
 
-* Требуется дождаться конца эпизода.
-* Неэффективен/неприменим в бесконечных задачах (continuous tasks без естественных терминальных состояний).
-* Обновления редкие → высокая дисперсия оценок.
+* Requires waiting until the episode ends.
+* Inefficient/unusable for infinite-horizon tasks (continuous tasks with no natural terminal state).
+* Updates are infrequent → high variance in the estimates.
 
 ---
 
-## 3. Temporal Difference (TD): обучение по ходу взаимодействия
+## 3. Temporal Difference (TD): learning during the interaction
 
-**Интуиция:** агент **обновляет оценки сразу после каждого шага**, не дожидаясь конца эпизода, используя текущую оценку будущей ценности $V(S_{t+1})$.
+**Intuition:** the agent **updates its estimates right after every step**, without waiting for the episode to end, using its current estimate of future value $V(S_{t+1})$.
 
-### Формула TD(0)
+### The TD(0) formula
 
 $$
 V(S_t) \leftarrow V(S_t) + \alpha \big[ R_{t+1} + \gamma V(S_{t+1}) - V(S_t) \big]
 $$
-Здесь
+Here
 $$
 R_{t+1} + \gamma V(S_{t+1})
 $$
-— **TD‑цель** (*TD target*), а выражение в квадратных скобках — **TD‑ошибка** (*TD error*, $\delta_t$):
+is the **TD target**, and the expression in brackets is the **TD error** ($\delta_t$):
 $$
 \delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t).
 $$
 
-### Интуиция (пример)
+### Intuition (an example)
 
-Если $R_{t+1}=1$ и $V(S_{t+1})=0$, то при $\alpha=0.1,\ \gamma=1$:
+If $R_{t+1}=1$ and $V(S_{t+1})=0$, then with $\alpha=0.1,\ \gamma=1$:
 $$
 V(S_0) \leftarrow 0 + 0.1\,[1 + 1\cdot 0 - 0] = 0.1.
 $$
-Мы обновили значение **сразу**, без ожидания завершения эпизода.
+We updated the value **right away**, without waiting for the episode to finish.
 
-### Ключевая особенность TD — бутстрэппинг
+### TD's key feature: bootstrapping
 
-TD *частично* опирается на собственные оценки будущего $V(S_{t+1})$ (бутстрэппинг), а не на полный возврат $G_t$ как в MC.
+TD *partially* relies on its own estimate of the future, $V(S_{t+1})$ (bootstrapping), rather than the full return $G_t$ as in MC.
 
 ---
 
-## 4. Сравнение Monte Carlo и Temporal Difference
+## 4. Comparing Monte Carlo and Temporal Difference
 
-| Критерий                       | Monte Carlo                          | Temporal Difference                          |
+| Criterion | Monte Carlo | Temporal Difference |
 | ------------------------------ | ------------------------------------ | -------------------------------------------- |
-| Основа                         | Полный эпизод                        | Один шаг                                     |
-| Что используется               | Реальное $G_t$                     | Приближённое $R_{t+1} + \gamma V(S_{t+1})$ |
-| Обновления                     | После эпизода                        | После каждого шага                           |
-| Требует завершения эпизода     | Да                                   | Нет                                          |
-| Тип оценки                     | Несмещённая, но с большой дисперсией | Смещённая, но с меньшей дисперсией           |
-| Подходит для бесконечных задач | Нет                                  | Да                                           |
-| Бутстрэппинг                   | Нет                                  | Да                                           |
-| Примеры                        | Blackjack, короткие эпизоды          | CartPole, FrozenLake                         |
+| Based on | The full episode | A single step |
+| What's used | The actual $G_t$ | The approximate $R_{t+1} + \gamma V(S_{t+1})$ |
+| Updates | After the episode | After every step |
+| Requires the episode to end | Yes | No |
+| Type of estimate | Unbiased, but high variance | Biased, but lower variance |
+| Suited to infinite-horizon tasks | No | Yes |
+| Bootstrapping | No | Yes |
+| Examples | Blackjack, short episodes | CartPole, FrozenLake |
 
 ---
 
-## 5. Объединяющая идея: TD($\lambda$)
+## 5. A unifying idea: TD($\lambda$)
 
-На практике часто комбинируют оба подхода: **MC** даёт точность, **TD** — скорость. Промежуточная форма — **TD($\lambda$)**, где $\lambda \in [0,1]$:
+In practice, both approaches are often combined: **MC** gives accuracy, **TD** gives speed. The intermediate form is **TD($\lambda$)**, where $\lambda \in [0,1]$:
 
 * $\lambda = 0$ → TD(0)
 * $\lambda = 1$ → Monte Carlo
-* Промежуточные значения $\lambda$ дают баланс между смещением и дисперсией.
+* Intermediate values of $\lambda$ trade off bias against variance.
 
-(Реализуется через **следы посещений** — eligibility traces.)
-
----
-
-## 6. Визуальная аналогия
-
-**Monte Carlo:** «Я подожду, пока всё закончится, и потом подведу итоги».
-
-**TD:** «Я уже понял тенденцию и корректируюсь на каждом шаге».
+(Implemented via **eligibility traces**.)
 
 ---
 
-## 7. Обновления в коде (интуитивно)
+## 6. A visual analogy
 
-**Примечание:** Код использует Gymnasium API (версия ≥ 0.26.0). Если вы используете старый Gym (<0.26), замените:
+**Monte Carlo:** "I'll wait until everything is over, then tally up the results."
+
+**TD:** "I've already spotted the trend, and I adjust at every step."
+
+---
+
+## 7. Code updates (intuitively)
+
+**Note:** The code uses the Gymnasium API (version >= 0.26.0). If you're using an older Gym (<0.26), replace:
 - `state, info = env.reset()` → `state = env.reset()`
 - `next_state, reward, terminated, truncated, info = env.step(action)` → `next_state, reward, done, _ = env.step(action)`
 
 ```python
-# Monte Carlo (по окончании эпизода)
-# Сначала собираем траекторию
+# Monte Carlo (at the end of an episode)
+# First, collect the trajectory
 trajectory = []  # List[(state, reward)]
 state, info = env.reset()
 done = False
@@ -149,33 +149,33 @@ while not done:
     state = next_state
     done = terminated or truncated
 
-# Затем обновляем V для каждого посещённого состояния
+# Then update V for every visited state
 G = 0
 visited_states = set()
 for state, reward in reversed(trajectory):
     G = reward + gamma * G
-    # First-visit MC: обновляем только при первом посещении
+    # First-visit MC: only update on the first visit
     state_key = tuple(state) if isinstance(state, np.ndarray) else state
     if state_key not in visited_states:
         V[state_key] = V.get(state_key, 0.0) + alpha * (G - V.get(state_key, 0.0))
         visited_states.add(state_key)
 
-# Temporal Difference (во время эпизода)
+# Temporal Difference (during the episode)
 state, info = env.reset()
 for t in range(max_steps):
     action = choose_action(state)
     next_state, reward, terminated, truncated, info = env.step(action)
     done = terminated or truncated
-    
-    # Конвертируем состояния в hashable keys
+
+    # Convert states to hashable keys
     state_key = tuple(state) if isinstance(state, np.ndarray) else state
     next_state_key = tuple(next_state) if isinstance(next_state, np.ndarray) else next_state
-    
+
     # TD(0) update
     V[state_key] = V.get(state_key, 0.0) + alpha * (
         reward + gamma * V.get(next_state_key, 0.0) - V.get(state_key, 0.0)
     )
-    
+
     state = next_state
     if done:
         break
@@ -183,20 +183,20 @@ for t in range(max_steps):
 
 ---
 
-## 8. Вывод
+## 8. Conclusion
 
-Оба метода учат **ценность состояний $$V(s)$$**, но по-разному используют опыт. TD стал основой многих алгоритмов:
+Both methods learn the **value of states, $V(s)$**, but they use experience differently. TD became the foundation of many algorithms:
 
-* **SARSA** (on‑policy TD)
-* **Q‑Learning** (off‑policy TD)
+* **SARSA** (on-policy TD)
+* **Q-Learning** (off-policy TD)
 * **Expected SARSA**
-* **TD($$\lambda$$)**
-* **DQN** (Deep Q‑Network)
+* **TD($\lambda$)**
+* **DQN** (Deep Q-Network)
 * **A3C/A2C**
 
 ---
 
-## 9. Сравнение формул (шпаргалка)
+## 9. Formula comparison (cheat sheet)
 
 **Monte Carlo:**
 $$
@@ -208,12 +208,12 @@ $$
 \boxed{ V(S_t) \leftarrow V(S_t) + \alpha [R_{t+1} + \gamma V(S_{t+1}) - V(S_t)] }
 $$
 
-Где $\delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ — TD‑ошибка.
+Where $\delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ is the TD error.
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Hugging Face Deep RL Course, Unit 2
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)

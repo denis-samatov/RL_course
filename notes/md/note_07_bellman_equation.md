@@ -1,133 +1,133 @@
-# Теоретический конспект №7
+# Theoretical Note #7
 
-## Тема: Уравнение Беллмана — основа обучения с подкреплением
+## Topic: The Bellman Equation — the Foundation of Reinforcement Learning
 
-> **Связано с:** [note_06_value_based_methods.md](note_06_value_based_methods.md) — V и Q функции · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Value-Based методы
+> **Related to:** [note_06_value_based_methods.md](note_06_value_based_methods.md) — The V and Q functions · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Value-Based methods
 
 ---
 
-## 1. Интуиция: зачем нам уравнение Беллмана?
+## 1. Intuition: why do we need the Bellman equation?
 
-До этого мы ввели понятие **функции ценности** (value function):
+Earlier we introduced the **value function**:
 
 $$
 V_\pi(s) = \mathbb{E}_\pi \left[ \sum_{k=0}^{\infty} \gamma^k R_{t+1+k} \mid S_t = s \right]
 $$
 
-Эта функция показывает:
+This function tells us:
 
-> *Какое ожидаемое вознаграждение получит агент, если начнёт в состоянии $s$ и будет следовать политике $\pi$.*
-
----
-
-### Проблема
-
-Чтобы вычислить $V_\pi(s)$, нужно просуммировать **все будущие вознаграждения**. Это дорого: агенту пришлось бы «прожить» каждую возможную траекторию до конца.
+> *What reward the agent can expect if it starts in state $s$ and follows policy $\pi$.*
 
 ---
 
-## 2. Идея Беллмана: рекуррентное определение ценности
+### The problem
 
-Ричард Беллман (1957) предложил блестящее упрощение:
+To compute $V_\pi(s)$, we'd need to sum **every future reward**. That's expensive: the agent would have to "live out" every possible trajectory to the end.
 
-> «Ценность состояния равна *немедленной награде плюс ценности следующего состояния*.»
+---
 
-### Формально
+## 2. Bellman's idea: a recursive definition of value
+
+Richard Bellman (1957) proposed a brilliant simplification:
+
+> "The value of a state equals *the immediate reward, plus the value of the next state*."
+
+### Formally
 
 $$
 V_\pi(s) = \mathbb{E}_\pi \left[ R_{t+1} + \gamma V_\pi(S_{t+1}) \mid S_t = s \right]
 $$
 
-Это и есть **уравнение Беллмана**: бесконечная сумма заменяется **рекуррентным вычислением**, где каждое значение опирается на следующее.
+This is the **Bellman equation**: the infinite sum is replaced by a **recursive computation**, where each value builds on the next.
 
-### Интуиция на примере «мышь и сыр»
+### Intuition using the "mouse and cheese" example
 
-* Агент (мышь) в состоянии $s_t$ получает награду $R_{t+1}$ за шаг.
-* Следующее состояние $s_{t+1}$ имеет ценность $V(s_{t+1})$.
-* Тогда ценность исходного состояния:
+* The agent (mouse) in state $s_t$ gets a reward $R_{t+1}$ for that step.
+* The next state $s_{t+1}$ has value $V(s_{t+1})$.
+* So the value of the starting state is:
 
 $$
 V(s_t) = R_{t+1} + \gamma V(s_{t+1})
 $$
 
-Если знаем ценности соседних состояний, можем итеративно обновлять каждое новое.
+If we know the values of neighboring states, we can iteratively update each new one.
 
 ---
 
-## 3. Ключевые параметры уравнения
+## 3. Key parameters of the equation
 
-| Параметр       | Что означает                                         | Пример                                                    |
-| -------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| $R_{t+1}$    | немедленная награда                                  | $+1$ за шаг вперёд                                      |
-| $\gamma$     | коэффициент дисконтирования $(0 \le \gamma \le 1)$ | $0.99$ — «думаем о будущем», $0.1$ — «живём моментом» |
-| $V(S_{t+1})$ | ценность следующего состояния                        | ожидаемое вознаграждение «там»                            |
+| Parameter | What it means | Example |
+| -------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
+| $R_{t+1}$ | the immediate reward | $+1$ for a step forward |
+| $\gamma$ | the discount factor $(0 \le \gamma \le 1)$ | $0.99$ — "think about the future," $0.1$ — "live in the moment" |
+| $V(S_{t+1})$ | the value of the next state | the expected reward "over there" |
 
-**Краевые случаи:**
+**Edge cases:**
 
-* Если $\gamma = 1$ → учитываем **все будущие награды** одинаково (долгосрочный планировщик).
-* Если $\gamma = 0$ → учитываем **только текущую награду** (жадный, «короткозорый» агент).
-
----
-
-## 4. Аналогия с динамическим программированием (DP)
-
-Беллман сформулировал идею **разделения задачи на подзадачи**: если знаем, сколько «стоит» текущий шаг и сколько «стоит» быть дальше, можно построить всю функцию ценности шаг за шагом.
+* If $\gamma = 1$ → we weight **all future rewards** equally (a long-term planner).
+* If $\gamma = 0$ → we only consider **the current reward** (a greedy, "short-sighted" agent).
 
 ---
 
-## 5. Расширение на Q-функцию
+## 4. The analogy with dynamic programming (DP)
 
-Иногда интересует «ценность действия в состоянии»:
+Bellman formulated the idea of **breaking a problem into subproblems**: if we know what the current step "costs" and what it "costs" to be further along, we can build the entire value function step by step.
+
+---
+
+## 5. Extending this to the Q-function
+
+Sometimes we care about "the value of an action in a state":
 
 $$
 Q_\pi(s, a) = \mathbb{E}_\pi \left[ R_{t+1} + \gamma \, V_\pi(S_{t+1}) \mid S_t=s,\ A_t=a \right].
 $$
 
-Ожидательное уравнение Беллмана для $Q_\pi$ с учётом динамики среды:
+The Bellman expectation equation for $Q_\pi$, accounting for the environment's dynamics:
 
 $$
 Q_\pi(s,a) = r(s,a) + \gamma \sum_{s'} P(s'\mid s,a) \sum_{a'} \pi(a'\mid s') \, Q_\pi(s',a').
 $$
 
-Уравнение **оптимальности** для оптимальной функции $Q^*$:
+The **optimality** equation for the optimal function $Q^*$:
 
 $$
 Q^*(s,a) = r(s,a) + \gamma \sum_{s'} P(s'\mid s,a) \, \max_{a'} Q^*(s',a').
 $$
 
-Это лежит в основе алгоритма **Q-Learning**.
+This is the foundation of the **Q-Learning** algorithm.
 
 ---
 
-## 6. Пример на числах
+## 6. A numerical example
 
-Простая цепочка состояний:
+A simple chain of states:
 
-| Состояние | Награда | Следующее состояние | $V(S_{t+1})$ | $\gamma$ | $V(S_t)$                 |
+| State | Reward | Next state | $V(S_{t+1})$ | $\gamma$ | $V(S_t)$ |
 | --------- | ------- | ------------------- | -------------- | ---------- | -------------------------- |
-| $S_1$   | $+1$  | $S_2$             | $4$          | $0.9$    | $1 + 0.9 \times 4 = 4.6$ |
-| $S_2$   | $+2$  | $S_3$             | $5$          | $0.9$    | $2 + 0.9 \times 5 = 6.5$ |
-| $S_3$   | $+5$  | (цель)              | $0$          | $0.9$    | $5 + 0.9 \times 0 = 5$   |
+| $S_1$ | $+1$ | $S_2$ | $4$ | $0.9$ | $1 + 0.9 \times 4 = 4.6$ |
+| $S_2$ | $+2$ | $S_3$ | $5$ | $0.9$ | $2 + 0.9 \times 5 = 6.5$ |
+| $S_3$ | $+5$ | (goal) | $0$ | $0.9$ | $5 + 0.9 \times 0 = 5$ |
 
 ---
 
-## 7. Главное, что нужно понять
+## 7. The key takeaways
 
-1. **Беллман — это принцип.** Любая RL‑модель опирается на идею «текущая награда + ценность будущего».
-2. **Q-Learning — частный случай Беллмана.** Реальную функцию ценности не знаем, но **аппроксимируем** её, взаимодействуя со средой.
-3. **Без Беллмана нет RL.** Он связывает теорию (ожидания, вероятности) и практику (итеративное обновление в коде).
+1. **Bellman is a principle.** Every RL model rests on the idea of "current reward + the value of the future."
+2. **Q-Learning is a special case of Bellman.** We don't know the real value function, but we **approximate** it by interacting with the environment.
+3. **There's no RL without Bellman.** It's what connects the theory (expectations, probabilities) to the practice (iterative updates in code).
 
 ---
 
-## 8. Ключевые формулы
+## 8. Key formulas
 
-### Для $V$‑функции (ожидательное уравнение)
+### For the $V$-function (the expectation equation)
 
 $$
 \boxed{ V_\pi(s) = \sum_a \pi(a\mid s) \Big[ r(s,a) + \gamma \sum_{s'} P(s'\mid s,a) \, V_\pi(s') \Big] }
 $$
 
-### Для $Q$‑функции (оптимальность)
+### For the $Q$-function (optimality)
 
 $$
 \boxed{ Q^*(s, a) = r(s,a) + \gamma \sum_{s'} P(s'\mid s,a) \, \max_{a'} Q^*(s', a') }
@@ -135,13 +135,13 @@ $$
 
 ---
 
-## 9. Что дальше
+## 9. What's next
 
-ДП на базе уравнений Беллмана приводит к **Policy Iteration** и **Value Iteration** (оценка политики ↔ её улучшение, либо итерация по оптимальности). Краткая сводка с формулами — в файле $$\texttt{rl_notes_consolidated.md}$$ (раздел 5).
+DP built on the Bellman equations leads to **Policy Iteration** and **Value Iteration** (evaluating a policy and improving it, or iterating directly on optimality). See [note_13_dynamic_programming.md](note_13_dynamic_programming.md) for the full treatment, with a hands-on implementation in [`code/13_dynamic_programming/`](../../code/13_dynamic_programming/).
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Bellman, R., *Dynamic Programming* (1957)
