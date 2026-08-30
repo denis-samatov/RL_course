@@ -1,63 +1,65 @@
-# 🚀 Семинар 14: Proximal Policy Optimization (PPO) и TRPO
+# 🚀 Session 14: Proximal Policy Optimization (PPO) and TRPO
 
-> **Теория:** [note_14_ppo_trpo.md](../../notes/md/note_14_ppo_trpo.md)  
-> **Алгоритм:** PPO-Clip с GAE, Multiple Epochs, Gradient Clipping
-
----
-
-## 📖 Обзор
-
-Полная реализация **state-of-the-art** PPO алгоритма для непрерывных действий.
-
-### Ключевые особенности:
-
-✅ **PPO-Clip** — clipping probability ratio для стабильности  
-✅ **GAE (λ=0.95)** — оптимальный компромисс bias-variance  
-✅ **Vectorized Environments** — параллельный сбор траекторий  
-✅ **Multiple Epochs** — переиспользование данных для sample efficiency  
-✅ **Gradient Clipping** — предотвращение gradient explosion  
-✅ **LR Annealing** — линейное уменьшение learning rate  
-✅ **Value Clipping** (опционально) — стабилизация critic  
+> **Theory:** [note_14_ppo_trpo.md](../../notes/md/note_14_ppo_trpo.md)  
+> **Algorithm:** PPO-Clip with GAE, Multiple Epochs, Gradient Clipping
 
 ---
 
-## 🗂️ Структура файлов
+## 📖 Overview
+
+A full implementation of the **state-of-the-art** PPO algorithm for continuous actions.
+
+### Key features:
+
+✅ **PPO-Clip** — clips the probability ratio for stability  
+✅ **GAE (λ=0.95)** — an optimal bias-variance trade-off  
+✅ **Vectorized Environments** — parallel trajectory collection  
+✅ **Multiple Epochs** — reuses data for sample efficiency  
+✅ **Gradient Clipping** — prevents gradient explosion  
+✅ **LR Annealing** — linear learning-rate decay  
+✅ **Value Clipping** (optional) — stabilizes the critic  
+
+---
+
+## 🗂️ File structure
 
 ```
 ppo_trpo/
-├── ppo_agent.py           # Полная реализация PPO
-├── train_ppo.py           # Скрипт обучения с wandb logging
-├── evaluate_ppo.py        # Evaluation и запись видео
-├── compare_a2c_ppo.py     # Сравнение с A2C
-├── README.md              # Эта документация
-└── checkpoints/           # (Создаётся при обучении)
+├── ppo_agent.py           # Full PPO implementation
+├── train_ppo.py           # Training script with wandb logging
+├── evaluate_ppo.py        # Evaluation and video recording
+├── compare_a2c_ppo.py     # Comparison against A2C
+├── README.md              # This documentation
+└── checkpoints/           # (Created during training)
     └── ppo_bipedalwalker.pt
 ```
 
+> **Note:** only `ppo_agent.py` is currently in this directory. `train_ppo.py`, `evaluate_ppo.py`, and `compare_a2c_ppo.py`, referenced below, are not present yet — treat those sections as a description of intended usage rather than commands you can run today.
+
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
-### 1. Установка зависимостей
+### 1. Installing dependencies
 
 ```bash
 pip install gymnasium[box2d] numpy torch tqdm matplotlib wandb
 ```
 
-### 2. Обучение PPO
+### 2. Training PPO
 
 ```bash
 python ppo_agent.py
 ```
 
-**Параметры по умолчанию:**
+**Default parameters:**
 - Environment: `BipedalWalker-v3`
 - Total timesteps: 1,000,000
 - Parallel envs: 4
 - Clip range: 0.2
 - GAE lambda: 0.95
 
-**Ожидаемое время:** ~30-60 минут на CPU, ~10-15 минут на GPU
+**Expected time:** ~30-60 minutes on CPU, ~10-15 minutes on GPU
 
 ---
 
@@ -69,61 +71,61 @@ python evaluate_ppo.py --model checkpoints/ppo_bipedalwalker.pt --episodes 10
 
 ---
 
-## 📊 PPO Hyperparameters
+## 📊 PPO hyperparameters
 
-| Параметр | Значение | Описание |
+| Parameter | Value | Description |
 |----------|----------|----------|
-| `clip_range` | 0.2 | Epsilon для clipping ratio |
-| `n_steps` | 2048 | Шагов для сбора траекторий |
-| `n_epochs` | 10 | Эпох оптимизации на батче |
+| `clip_range` | 0.2 | Epsilon for the clipping ratio |
+| `n_steps` | 2048 | Steps of trajectory collected |
+| `n_epochs` | 10 | Optimization epochs per batch |
 | `batch_size` | 64 | Mini-batch size |
 | `gamma` | 0.99 | Discount factor |
 | `gae_lambda` | 0.95 | GAE lambda |
-| `learning_rate` | 3e-4 | Начальный LR (с annealing) |
-| `value_coef` | 0.5 | Вес value loss |
-| `entropy_coef` | 0.01 | Вес entropy bonus |
+| `learning_rate` | 3e-4 | Initial LR (with annealing) |
+| `value_coef` | 0.5 | Weight on the value loss |
+| `entropy_coef` | 0.01 | Weight on the entropy bonus |
 | `max_grad_norm` | 0.5 | Gradient clipping |
 
 ---
 
-## 🎯 BipedalWalker-v3 Environment
+## 🎯 The BipedalWalker-v3 environment
 
-**Описание:** Двуногий робот должен научиться ходить по неровной поверхности.
+**Description:** A two-legged robot must learn to walk across uneven terrain.
 
-**Наблюдения (24D):**
-- Угловые позиции суставов
-- Угловые скорости
-- Контакты ног с поверхностью
-- LIDAR (10 лучей)
+**Observations (24D):**
+- Joint angular positions
+- Angular velocities
+- Foot contact with the ground
+- LIDAR (10 rays)
 
-**Действия (4D, непрерывные [-1, 1]):**
-- Моменты сил на 4 суставах (бедро и колено для каждой ноги)
+**Actions (4D, continuous [-1, 1]):**
+- Torques on the 4 joints (hip and knee for each leg)
 
-**Награды:**
-- +300 за прохождение дистанции
-- -100 за падение
-- Штраф за использование моторов
+**Rewards:**
+- +300 for covering the distance
+- -100 for falling
+- A penalty for using the motors
 
-**Решённая задача:** Средняя награда > 300
+**Solved criterion:** Average reward > 300
 
 ---
 
-## 📈 Результаты обучения
+## 📈 Training results
 
-### Ожидаемая кривая обучения:
+### Expected training curve:
 
 ```
 Timesteps     Mean Reward    Notes
 ---------     -----------    -----
-0 - 200k      -100 to 0      Учится стоять
-200k - 500k   0 to 150       Учится делать шаги
-500k - 800k   150 to 250     Учится ходить стабильно
-800k - 1M     250 to 300+    Fine-tuning походки
+0 - 200k      -100 to 0      Learning to stand
+200k - 500k   0 to 150       Learning to take steps
+500k - 800k   150 to 250     Learning to walk stably
+800k - 1M     250 to 300+    Fine-tuning the gait
 ```
 
-### Типичные метрики:
+### Typical metrics:
 
-| Метрика | Начало | Конец |
+| Metric | Start | End |
 |---------|--------|-------|
 | Mean Reward | -100 | 300+ |
 | Episode Length | 300 | 1600 |
@@ -134,39 +136,39 @@ Timesteps     Mean Reward    Notes
 
 ---
 
-## 🧪 Эксперименты
+## 🧪 Experiments
 
-### Эксперимент 1: Влияние clip_range
+### Experiment 1: Effect of clip_range
 
 ```bash
-# Протестировать разные epsilon
-python train_ppo.py --clip_range 0.1  # Консервативный
+# Test different epsilon values
+python train_ppo.py --clip_range 0.1  # Conservative
 python train_ppo.py --clip_range 0.2  # Baseline
-python train_ppo.py --clip_range 0.3  # Агрессивный
+python train_ppo.py --clip_range 0.3  # Aggressive
 ```
 
-**Ожидаемое:**
-- ε=0.1: Медленнее, но стабильнее
-- ε=0.2: Оптимальный баланс
-- ε=0.3: Быстрее, но может быть нестабильным
+**Expected:**
+- ε=0.1: Slower, but more stable
+- ε=0.2: An optimal balance
+- ε=0.3: Faster, but can be unstable
 
 ---
 
-### Эксперимент 2: Влияние GAE lambda
+### Experiment 2: Effect of GAE lambda
 
 ```bash
-python train_ppo.py --gae_lambda 0.90  # Больше bias
+python train_ppo.py --gae_lambda 0.90  # More bias
 python train_ppo.py --gae_lambda 0.95  # Baseline
-python train_ppo.py --gae_lambda 0.99  # Больше variance
+python train_ppo.py --gae_lambda 0.99  # More variance
 ```
 
-**Теория:**
+**Theory:**
 - λ→0: TD-like (high bias, low variance)
 - λ→1: MC-like (low bias, high variance)
 
 ---
 
-### Эксперимент 3: Shared vs Separate networks
+### Experiment 3: Shared vs separate networks
 
 ```python
 # Shared backbone (default)
@@ -177,37 +179,37 @@ config = PPOConfig(shared_backbone=False)
 ```
 
 **Trade-off:**
-- Shared: Меньше параметров, быстрее обучение
-- Separate: Больше гибкости, может быть лучше для сложных задач
+- Shared: Fewer parameters, faster training
+- Separate: More flexibility, can work better for complex tasks
 
 ---
 
-## 🔬 Сравнение с A2C
+## 🔬 Comparison with A2C
 
 ```bash
 python compare_a2c_ppo.py
 ```
 
-**Ожидаемые различия:**
+**Expected differences:**
 
-| Метрика | A2C | PPO |
+| Metric | A2C | PPO |
 |---------|-----|-----|
-| Финальная награда | 250 | 300+ |
-| Sample efficiency | Ниже | Выше |
-| Стабильность | Средняя | Высокая |
-| Скорость обучения | Быстрее (per update) | Медленнее (multiple epochs) |
-| Wall-clock время | ~40 мин | ~30 мин (эффективнее) |
+| Final reward | 250 | 300+ |
+| Sample efficiency | Lower | Higher |
+| Stability | Medium | High |
+| Training speed | Faster (per update) | Slower (multiple epochs) |
+| Wall-clock time | ~40 min | ~30 min (more efficient) |
 
-**Вывод:** PPO обычно превосходит A2C за счёт:
-- Multiple epochs на данных (sample efficiency)
-- Clipping для стабильности
-- Меньше чувствительности к гиперпараметрам
+**Takeaway:** PPO usually outperforms A2C due to:
+- Multiple epochs over the data (sample efficiency)
+- Clipping for stability
+- Lower sensitivity to hyperparameters
 
 ---
 
-## 💡 Ключевые компоненты PPO
+## 💡 Key components of PPO
 
-### 1. Probability Ratio с Clipping
+### 1. Probability ratio with clipping
 
 ```python
 # Ratio π_new / π_old
@@ -219,7 +221,7 @@ surr2 = clip(ratio, 1-ε, 1+ε) * advantages
 policy_loss = -min(surr1, surr2).mean()
 ```
 
-**Интуиция:** Если ratio далеко от 1, clipping останавливает обновление.
+**Intuition:** If the ratio strays far from 1, clipping stops the update.
 
 ---
 
@@ -233,27 +235,27 @@ for t in reversed(range(T)):
     advantages[t] = gae
 ```
 
-**Интуиция:** Экспоненциально взвешенное среднее TD-ошибок.
+**Intuition:** An exponentially weighted average of TD errors.
 
 ---
 
-### 3. Multiple Epochs
+### 3. Multiple epochs
 
 ```python
 for epoch in range(K):  # K = 10
     for batch in rollout_buffer.get_batches():
-        # Обновление на том же батче траекторий
+        # Update on the same batch of trajectories
         optimize_policy(batch)
 ```
 
-**Зачем:** Переиспользование данных для sample efficiency.
+**Why:** Reuses data for sample efficiency.
 
 ---
 
-### 4. Value Function Loss
+### 4. Value function loss
 
 ```python
-# Опционально: clipping для value
+# Optional: clipping for the value
 v_clipped = v_old + clip(v_new - v_old, -ε, ε)
 value_loss = max((v_new - returns)^2, (v_clipped - returns)^2).mean()
 ```
@@ -262,51 +264,51 @@ value_loss = max((v_new - returns)^2, (v_clipped - returns)^2).mean()
 
 ## 🐛 Troubleshooting
 
-### Проблема 1: Reward не растёт
+### Problem 1: Reward isn't increasing
 
-**Симптомы:** Застрял на ~-100 после 500k шагов
+**Symptoms:** Stuck around ~-100 after 500k steps
 
-**Возможные причины:**
-- Слишком малый clip_range → увеличьте до 0.3
-- Слишком малая entropy → увеличьте entropy_coef до 0.02
-- Слишком большой learning rate → уменьшите до 1e-4
-
----
-
-### Проблема 2: Нестабильное обучение
-
-**Симптомы:** Reward скачет вверх-вниз
-
-**Решение:**
-- Уменьшите clip_range до 0.1
-- Включите value clipping: `clip_range_vf = 0.2`
-- Уменьшите learning rate
-- Увеличьте n_steps (больше траекторий на update)
+**Possible causes:**
+- clip_range too small → increase to 0.3
+- entropy too low → increase entropy_coef to 0.02
+- learning rate too high → decrease to 1e-4
 
 ---
 
-### Проблема 3: Высокая KL divergence
+### Problem 2: Unstable training
 
-**Симптомы:** `approx_kl > 0.05` постоянно
+**Symptoms:** Reward oscillates up and down
 
-**Причина:** Политика меняется слишком быстро
-
-**Решение:**
-- Уменьшите clip_range
-- Уменьшите learning rate
-- Уменьшите n_epochs (меньше обновлений на батче)
+**Solution:**
+- Decrease clip_range to 0.1
+- Enable value clipping: `clip_range_vf = 0.2`
+- Decrease the learning rate
+- Increase n_steps (more trajectory data per update)
 
 ---
 
-## 📚 Дополнительные материалы
+### Problem 3: High KL divergence
 
-### Оригинальные статьи:
+**Symptoms:** `approx_kl > 0.05` consistently
+
+**Cause:** The policy is changing too fast
+
+**Solution:**
+- Decrease clip_range
+- Decrease the learning rate
+- Decrease n_epochs (fewer updates per batch)
+
+---
+
+## 📚 Further materials
+
+### Original papers:
 
 1. **PPO:** *Proximal Policy Optimization Algorithms* (Schulman et al., 2017)
 2. **TRPO:** *Trust Region Policy Optimization* (Schulman et al., 2015)
 3. **GAE:** *High-Dimensional Continuous Control Using GAE* (Schulman et al., 2016)
 
-### Имплементации:
+### Implementations:
 
 - [OpenAI Spinning Up: PPO](https://spinningup.openai.com/en/latest/algorithms/ppo.html)
 - [Stable-Baselines3: PPO](https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html)
@@ -314,21 +316,21 @@ value_loss = max((v_new - returns)^2, (v_clipped - returns)^2).mean()
 
 ---
 
-## 🔗 Связь с другими семинарами
+## 🔗 Connection to other sessions
 
-### Откуда пришли:
-- **[note_11_policy_gradients_reinforce.md](../../notes/md/note_11_policy_gradients_reinforce.md):** REINFORCE — baseline PG
-- **[note_12_actor_critic_a2c.md](../../notes/md/note_12_actor_critic_a2c.md):** A2C — Actor-Critic архитектура
+### Where this comes from:
+- **[note_11_policy_gradients_reinforce.md](../../notes/md/note_11_policy_gradients_reinforce.md):** REINFORCE — the baseline PG method
+- **[note_12_actor_critic_a2c.md](../../notes/md/note_12_actor_critic_a2c.md):** A2C — the Actor-Critic architecture
 
-### Куда идём:
-- **[note_15_rlhf_pipeline.md](../../notes/md/note_15_rlhf_pipeline.md):** RLHF — PPO для fine-tuning LLM
-- **[note_16_dpo_and_variants.md](../../notes/md/note_16_dpo_and_variants.md):** DPO — альтернатива PPO-RLHF
+### Where this leads:
+- **[note_15_rlhf_pipeline.md](../../notes/md/note_15_rlhf_pipeline.md):** RLHF — PPO for LLM fine-tuning
+- **[note_16_dpo_and_variants.md](../../notes/md/note_16_dpo_and_variants.md):** DPO — an alternative to PPO-RLHF
 
 ---
 
-## 💻 Примеры использования
+## 💻 Usage examples
 
-### Базовое обучение:
+### Basic training:
 
 ```python
 from ppo_agent import PPOAgent, PPOConfig
@@ -344,14 +346,14 @@ agent.train()
 agent.save("ppo_model.pt")
 ```
 
-### Кастомизация:
+### Customization:
 
 ```python
 config = PPOConfig(
-    clip_range=0.1,         # Более консервативный
-    gae_lambda=0.99,        # Меньше bias
-    n_epochs=15,            # Больше обновлений
-    entropy_coef=0.02,      # Больше exploration
+    clip_range=0.1,         # More conservative
+    gae_lambda=0.99,        # Less bias
+    n_epochs=15,            # More updates
+    entropy_coef=0.02,      # More exploration
 )
 ```
 
@@ -361,7 +363,7 @@ config = PPOConfig(
 agent = PPOAgent(config)
 agent.load("ppo_model.pt")
 
-# Запуск эпизодов
+# Run episodes
 env = gym.make("BipedalWalker-v3", render_mode="human")
 obs, _ = env.reset()
 
@@ -377,7 +379,6 @@ for _ in range(1000):
 
 ---
 
-**Автор:** Denis Samatov, TPU / 2025
+**Author:** Denis Samatov, TPU / 2025
 
-✅ **Семинар 14 завершён!** Переходим к [Семинару 15: RLHF](../15_rlhf_basics/README.md)
-
+✅ **Session 14 complete!** Moving on to [Session 15: RLHF](../15_rlhf_basics/README.md)

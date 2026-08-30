@@ -1,88 +1,88 @@
-# 🤖 Семинар 15: RLHF — Reinforcement Learning from Human Feedback
+# 🤖 Session 15: RLHF — Reinforcement Learning from Human Feedback
 
-> **Теория:** [note_15_rlhf_pipeline.md](../../notes/md/note_15_rlhf_pipeline.md)  
-> **Pipeline:** SFT → Reward Model → PPO с KL-штрафом
-
----
-
-## 📖 Обзор
-
-Упрощённая демонстрация RLHF пайплайна на игрушечной задаче.
-
-**Особенности:**
-- 3-этапный pipeline (SFT → RM → PPO)
-- Reward Model на предпочтениях
-- KL-penalty к reference policy
-- Мониторинг reward hacking
+> **Theory:** [note_15_rlhf_pipeline.md](../../notes/md/note_15_rlhf_pipeline.md)  
+> **Pipeline:** SFT → Reward Model → PPO with a KL penalty
 
 ---
 
-## 🗂️ Структура
+## 📖 Overview
+
+A simplified demonstration of the RLHF pipeline on a toy task.
+
+**Features:**
+- A 3-stage pipeline (SFT → RM → PPO)
+- A preference-based reward model
+- A KL penalty against the reference policy
+- Reward-hacking monitoring
+
+---
+
+## 🗂️ Structure
 
 ```
 rlhf_basics/
-├── simple_text_env.py      # Игрушечная среда для текстовой генерации
+├── simple_text_env.py      # A toy environment for text generation
 ├── sft_model.py            # Supervised Fine-Tuning
-├── reward_model.py         # Reward Model обучение
-├── ppo_rlhf.py             # PPO с KL-штрафом
-├── generate_data.py        # Генерация preference данных
-├── train_pipeline.py       # Полный pipeline
-├── README.md               # Эта документация
-└── data/                   # (создаётся при запуске)
+├── reward_model.py         # Reward Model training
+├── ppo_rlhf.py             # PPO with a KL penalty
+├── generate_data.py        # Preference data generation
+├── train_pipeline.py       # The full pipeline
+├── README.md               # This documentation
+└── data/                   # (created when run)
     ├── sft_data.json
     └── preferences.json
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
 ```bash
-# 1. Генерация данных
+# 1. Generate data
 python generate_data.py
 
-# 2. Полный RLHF pipeline
+# 2. The full RLHF pipeline
 python train_pipeline.py
 ```
 
-**Результат:**
-- SFT model checkpoint
-- Reward Model checkpoint
-- RLHF-aligned model
-- Графики сравнения
+**Output:**
+- An SFT model checkpoint
+- A Reward Model checkpoint
+- The RLHF-aligned model
+- Comparison plots
 
 ---
 
-## 📊 Эксперименты
+## 📊 Experiments
 
-### Эксперимент 1: Влияние β (KL-штраф)
+### Experiment 1: Effect of β (the KL penalty)
 
 ```bash
-python ppo_rlhf.py --beta 0.001  # Слабый контроль
+python ppo_rlhf.py --beta 0.001  # Weak control
 python ppo_rlhf.py --beta 0.01   # Baseline
-python ppo_rlhf.py --beta 0.1    # Сильный контроль
+python ppo_rlhf.py --beta 0.1    # Strong control
 ```
 
-**Ожидаемое:**
-- β=0.001: Высокая reward, но reward hacking
-- β=0.01: Баланс
-- β=0.1: Стабильно, но медленное улучшение
+**Expected:**
+- β=0.001: High reward, but reward hacking
+- β=0.01: A balance
+- β=0.1: Stable, but slow improvement
 
 ---
 
-### Эксперимент 2: Reward Hacking без KL
+### Experiment 2: Reward hacking without KL
 
 ```bash
-python ppo_rlhf.py --beta 0.0  # Без KL-штрафа
+python ppo_rlhf.py --beta 0.0  # No KL penalty
 ```
 
-**Ожидаемое:** Модель находит adversarial примеры с высокой reward, но бессмысленные.
+**Expected:** The model finds adversarial examples with high reward, but meaningless output.
 
 ---
 
-## 💡 Ключевые компоненты
+## 💡 Key components
 
-### 1. Reward Model Loss
+### 1. Reward Model loss
 
 ```python
 # Bradley-Terry Model
@@ -91,22 +91,21 @@ P(y_w > y_l | x) = σ(r(x, y_w) - r(x, y_l))
 loss = -log σ(r(x, y_w) - r(x, y_l))
 ```
 
-### 2. PPO с KL-penalty
+### 2. PPO with a KL penalty
 
 ```python
 total_reward = rm_reward - β * KL(π_θ || π_SFT)
 ```
 
-### 3. Мониторинг метрик
+### 3. Metrics to monitor
 
-- RM Reward (должна расти)
-- KL Divergence (должна быть < 10)
-- Response Length (не должна взорваться)
-- Perplexity (должна остаться разумной)
+- RM Reward (should increase)
+- KL Divergence (should stay < 10)
+- Response Length (shouldn't blow up)
+- Perplexity (should stay reasonable)
 
 ---
 
-**Автор:** Denis Samatov, TPU / 2025
+**Author:** Denis Samatov, TPU / 2025
 
-✅ **Семинар 15 завершён!** Переходим к [Семинару 16: DPO](../16_dpo/README.md)
-
+✅ **Session 15 complete!** Moving on to [Session 16: DPO](../16_dpo/README.md)
