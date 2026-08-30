@@ -92,6 +92,8 @@ jupyter lab
 
 ## 🗓️ Session plan (October → December 2025)
 
+> **Note on numbering:** the `#` column below uses this table's original planning order (1-10). The actual `code/` directories are numbered 08-17 and don't line up 1:1 with these rows — some environments also changed during implementation (e.g. the DQN session below lists CartPole-v1, but `code/10_deep_q_network/` implements it on LunarLander-v2). See [`notes/README.md`](notes/README.md) for the accurate note-to-code-directory mapping.
+
 | # | Topic | Key concepts | Practice |
 |---|------|------------------|-----------|
 | **1** | Intro to RL and MDPs | agent–environment–reward, `V`/`Q` functions, Bellman equations | `CartPole-v1` (random policy, MC estimation) |
@@ -109,21 +111,16 @@ jupyter lab
 
 ## 🗂️ Session structure
 
-Every session follows the same template, to keep navigation and code reuse easy:
+Every coding session under `code/` follows the same template:
 
-- `semXX_topic/`
-  - `README.md` — goals, how to run the notebook and scripts, links to theory.
-  - `docs/` — theory notes (Markdown, formulas, visualizations).
-  - `notebooks/` — hands-on notebooks that import code from `src/`.
-  - `scripts/` — CLI demos, video recording, helper utilities.
-  - `assets/` — outputs (e.g. `assets/videos/`, `assets/figures/`), Git-ignored.
-  - `tools/` — maintenance scripts (notebook patchers, data generators).
-  - `tests/` *(optional)* — self-checks, mini-homework, sample-solution checks.
-- `src/rlcourse/semXX/` — the module with algorithms, policies, utilities, and
-  environment factories imported by the notebooks and scripts.
+- `code/NN_topic/`
+  - `README.md` — goals, how to run the algorithm/notebook, links to the matching theory note.
+  - `*_algorithm.py` (or similarly named) — the core algorithm implementation.
+  - `*_demo.ipynb` — a runnable demo notebook.
+  - `homework.ipynb` — exercises for the session (with `TODO` placeholders).
+  - `homework_solution.ipynb` — worked solutions.
 
-> For new sessions, copy the `sem01_mdp_bellman/` structure and replace `sem01…` with
-> the new index/topic.
+Coding sessions are numbered 08-17 (see [`notes/README.md`](notes/README.md) for how each note maps to its coding session — notes 01-07 are theory-only, with no matching code directory).
 
 ---
 

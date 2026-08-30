@@ -1,205 +1,333 @@
-# Теоретические конспекты по Reinforcement Learning
+# Theoretical notes on Reinforcement Learning
 
-Серия структурированных заметок для изучения обучения с подкреплением.
+A series of structured notes for studying reinforcement learning.
 
-## Консолидированный обзор
+## Notes vs. coding sessions
 
-Для быстрого повторения и согласованных определений см. единый файл:
+There are 17 notes but only 10 coding sessions (`code/08_mc_vs_td` through `code/17_final_project`). Notes 01-07 are **theory-only** — they build the conceptual foundation (RL framework, MDPs, exploration/exploitation, policy vs. value methods, Bellman equations) that sessions 08 onward put into code:
 
-- rl_notes_consolidated.md — Введение → MDP → Value Functions → Bellman Equations → Policy/Value Iteration → Q-Learning → Deep RL
+| Note | Topic | Coding session |
+|---|---|---|
+| note_01 | Introduction to Deep RL | *(theory only)* |
+| note_02 | RL framework and MDP | *(theory only)* |
+| note_03 | Exploration vs exploitation | *(theory only)* |
+| note_04 | Policy-based vs value-based methods | *(theory only)* |
+| note_05 | Deep RL function approximators | *(theory only)* |
+| note_06 | Value-based methods | *(theory only)* |
+| note_07 | Bellman equation | *(theory only)* |
+| note_08 | Monte Carlo vs TD | [`code/08_mc_vs_td/`](../../code/08_mc_vs_td/) |
+| note_09 | Q-Learning | [`code/09_q_learning_bellman/`](../../code/09_q_learning_bellman/) |
+| note_10 | Deep Q-Network | [`code/10_deep_q_network/`](../../code/10_deep_q_network/) |
+| note_11 | Policy Gradients / REINFORCE | [`code/11_policy_gradient/`](../../code/11_policy_gradient/) |
+| note_12 | Actor-Critic / A2C | [`code/12_actor_critic/`](../../code/12_actor_critic/) |
+| note_13 | Dynamic Programming | [`code/13_dynamic_programming/`](../../code/13_dynamic_programming/) |
+| note_14 | PPO / TRPO | [`code/14_ppo_trpo/`](../../code/14_ppo_trpo/) |
+| note_15 | RLHF pipeline | [`code/15_rlhf_basics/`](../../code/15_rlhf_basics/) |
+| note_16 | DPO and variants | [`code/16_dpo/`](../../code/16_dpo/) |
+| note_17 | Final project | [`code/17_final_project/`](../../code/17_final_project/) |
 
-## Структура курса
+## Course structure
 
-### 📘 [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Введение в Deep Reinforcement Learning
+### 📘 [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Introduction to Deep Reinforcement Learning
 
-**Основные темы:**
+**Main topics:**
 
-* Что такое Reinforcement Learning
-* Цикл Agent-Environment
-* Марковский процесс принятия решений (MDP)
-* Пример: LunarLander
-* Stable-Baselines3: реализация PPO
-* Гипотеза вознаграждения (введение)
+* What Reinforcement Learning is
+* The Agent-Environment loop
+* The Markov Decision Process (MDP)
+* Example: LunarLander
+* Stable-Baselines3: a PPO implementation
+* The reward hypothesis (introduction)
 
-**Уровень:** Начальный, практико-ориентированный
+**Level:** Introductory, hands-on
 
 ---
 
-### 📗 [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) — Фреймворк обучения с подкреплением
+### 📗 [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) — The Reinforcement Learning Framework
 
-**Основные темы:**
+**Main topics:**
 
-* Детальный цикл взаимодействия агент-среда
-* Формализация через MDP
-* Гипотеза вознаграждения (детально)
-* Марковское свойство
-* Политика агента (стохастическая и детерминированная)
-* Состояние vs наблюдение
-* Пространства действий (дискретные и непрерывные)
-* Дисконтирование наград
+* The agent-environment interaction loop, in detail
+* Formalizing it as an MDP
+* The reward hypothesis (in depth)
+* The Markov property
+* An agent's policy (stochastic and deterministic)
+* State vs. observation
+* Action spaces (discrete and continuous)
+* Reward discounting
 
-**Уровень:** Средний, теоретический
+**Level:** Intermediate, theoretical
 
 ---
 
 ### 📙 [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md) — Exploration vs Exploitation
 
-**Основные темы:**
+**Main topics:**
 
-* Проблема баланса исследование/использование
-* Формальное представление
-* Стратегии управления балансом:
-  * ε-greedy (эпсилон-жадная)
+* The exploration/exploitation trade-off
+* A formal representation
+* Strategies for managing the trade-off:
+  * ε-greedy
   * Softmax (Boltzmann Exploration)
   * Upper Confidence Bound (UCB)
-* Практическое применение в RL-алгоритмах
+* Practical applications in RL algorithms
 
-**Уровень:** Средний, концептуальный
+**Level:** Intermediate, conceptual
 
 ---
 
-### 📕 [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based методы
+### 📕 [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based Methods
 
-**Основные темы:**
+**Main topics:**
 
-* Два подхода к решению задач RL
-* Policy-Based методы (учим политику напрямую)
+* Two approaches to solving RL problems
+* Policy-Based methods (learn the policy directly)
   * REINFORCE, PPO, Actor-Critic
-  * Стохастические и детерминированные политики
-* Value-Based методы (учим функции ценности)
-  * V-функция и Q-функция
+  * Stochastic and deterministic policies
+* Value-Based methods (learn value functions)
+  * The V-function and Q-function
   * Q-Learning, SARSA, DQN
-* Сравнение подходов и их применение
-* Actor-Critic как гибридный метод
+* Comparing the approaches and their applications
+* Actor-Critic as a hybrid method
 
-**Уровень:** Средний-продвинутый, методологический
-
----
-
-### 📕 [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — Что такое "Deep" в Deep RL
-
-**Основные темы:**
-
-* Проблема табличных методов и их ограничения
-* Нейросети как аппроксиматоры функций
-* Классический Q-Learning vs Deep Q-Learning
-* Революция DeepMind (2015) — DQN для Atari
-* Experience Replay и Target Network
-* Когда использовать Deep RL
-* Сравнение классического и Deep RL
-
-**Уровень:** Средний-продвинутый, технический
+**Level:** Intermediate-advanced, methodological
 
 ---
 
-### 📙 [note_06_value_based_methods.md](note_06_value_based_methods.md) — Два типа value-based методов
+### 📕 [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — What "Deep" Means in Deep RL
 
-**Основные темы:**
+**Main topics:**
 
-* Детальное объяснение value-функций
-* State-value function (V-функция)
-* Action-value function (Q-функция)
-* Связь между политикой и value-функцией
-* Greedy и ε-greedy стратегии
-* Связь между V и Q функциями
-* Проблема вычисления и введение в уравнение Беллмана
+* The problem with tabular methods and their limitations
+* Neural networks as function approximators
+* Classical Q-Learning vs. Deep Q-Learning
+* DeepMind's 2015 breakthrough — DQN for Atari
+* Experience Replay and the Target Network
+* When to use Deep RL
+* Comparing classical and Deep RL
 
-**Уровень:** Средний, математический
+**Level:** Intermediate-advanced, technical
 
 ---
 
-### 📘 [note_07_bellman_equation.md](note_07_bellman_equation.md) — Уравнение Беллмана
+### 📙 [note_06_value_based_methods.md](note_06_value_based_methods.md) — Two Kinds of Value-Based Methods
 
-**Основные темы:**
+**Main topics:**
 
-* Проблема прямого вычисления функций ценности
-* Идея Беллмана: рекуррентное определение
-* Уравнение Беллмана для V-функции
-* Уравнение Беллмана для Q-функции
-* Ключевые параметры (награда, дисконтирование)
-* Аналогия с динамическим программированием
-* Примеры вычислений
+* A detailed explanation of value functions
+* The state-value function (V-function)
+* The action-value function (Q-function)
+* The relationship between a policy and its value function
+* Greedy and ε-greedy strategies
+* The relationship between V and Q
+* The computation problem, and an introduction to the Bellman equation
 
-**Уровень:** Средний-продвинутый, математический
+**Level:** Intermediate, mathematical
+
+---
+
+### 📘 [note_07_bellman_equation.md](note_07_bellman_equation.md) — The Bellman Equation
+
+**Main topics:**
+
+* The problem of computing value functions directly
+* Bellman's idea: a recursive definition
+* The Bellman equation for the V-function
+* The Bellman equation for the Q-function
+* Key parameters (reward, discounting)
+* The analogy to dynamic programming
+* Worked examples
+
+**Level:** Intermediate-advanced, mathematical
 
 ---
 
 ### 📗 [note_08_monte_carlo_vs_td.md](note_08_monte_carlo_vs_td.md) — Monte Carlo vs Temporal Difference
 
-**Основные темы:**
+**Main topics:**
 
-* Два практических подхода к вычислению ценности
-* Monte Carlo: обучение по завершённым эпизодам
-* Temporal Difference: обучение шаг за шагом
-* Сравнение: точность vs скорость
-* Концепция bootstrapping
-* TD(λ) как компромисс между MC и TD
-* Примеры кода и визуализация
+* Two practical approaches to computing value
+* Monte Carlo: learning from completed episodes
+* Temporal Difference: learning step by step
+* Comparison: accuracy vs. speed
+* The concept of bootstrapping
+* TD(λ) as a compromise between MC and TD
+* Code examples and visualization
 
-**Уровень:** Средний-продвинутый, практический
+**Level:** Intermediate-advanced, hands-on
 
 ---
 
-### 📘 [note_09_q_learning.md](note_09_q_learning.md) — Q-Learning — базовый алгоритм обучения действиям
+### 📘 [note_09_q_learning.md](note_09_q_learning.md) — Q-Learning: the Foundational Action-Learning Algorithm
 
-**Основные темы:**
+**Main topics:**
 
-* Что такое Q-Learning (off-policy value-based TD)
-* Различие между Reward и Value
-* Q-таблица: память агента
-* Алгоритм Q-Learning шаг за шагом
-* Формула обновления Q-функции
-* Off-policy vs On-policy (Q-Learning vs SARSA)
+* What Q-Learning is (off-policy, value-based TD)
+* The difference between Reward and Value
+* The Q-table: the agent's memory
+* The Q-Learning algorithm, step by step
+* The Q-function update formula
+* Off-policy vs. On-policy (Q-Learning vs. SARSA)
 * ε-greedy exploration
-* Примеры обновления Q-таблицы
+* Worked examples of Q-table updates
 
-**Уровень:** Средний-продвинутый, алгоритмический
+**Level:** Intermediate-advanced, algorithmic
 
 ---
 
-## Рекомендуемый порядок изучения
+### 📘 [note_10_deep_q_network.md](note_10_deep_q_network.md) — Deep Q-Network (DQN)
+
+**Main topics:**
+
+* Scaling tabular Q-Learning to large state spaces
+* The DQN architecture (MLP Q-function approximator)
+* Experience Replay
+* The Target Network
+* The TD-target and loss
+* Companion coding session: [`code/10_deep_q_network/`](../../code/10_deep_q_network/)
+
+**Level:** Advanced, hands-on
+
+---
+
+### 📗 [note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md) — Policy Gradients and REINFORCE
+
+**Main topics:**
+
+* The Policy Gradient Theorem
+* The REINFORCE algorithm (Monte Carlo Policy Gradient)
+* Using a baseline to reduce variance
+* Entropy regularization
+* Companion coding session: [`code/11_policy_gradient/`](../../code/11_policy_gradient/)
+
+**Level:** Advanced, hands-on
+
+---
+
+### 📙 [note_12_actor_critic_a2c.md](note_12_actor_critic_a2c.md) — Actor-Critic Methods and A2C
+
+**Main topics:**
+
+* The Actor-Critic architecture
+* Advantage Actor-Critic (A2C)
+* The TD-error as an advantage estimate
+* Continuous action spaces (Gaussian policies)
+* Companion coding session: [`code/12_actor_critic/`](../../code/12_actor_critic/)
+
+**Level:** Advanced, hands-on
+
+---
+
+### 📕 [note_13_dynamic_programming.md](note_13_dynamic_programming.md) — Dynamic Programming in Reinforcement Learning
+
+**Main topics:**
+
+* Policy Evaluation, Policy Iteration, Value Iteration
+* Generalized Policy Iteration (GPI)
+* Requires a known environment model
+* Companion coding session: [`code/13_dynamic_programming/`](../../code/13_dynamic_programming/)
+
+**Level:** Advanced, mathematical
+
+---
+
+### 📘 [note_14_ppo_trpo.md](note_14_ppo_trpo.md) — Proximal Policy Optimization (PPO) and Trust Region Policy Optimization (TRPO)
+
+**Main topics:**
+
+* The PPO-Clip objective
+* Generalized Advantage Estimation (GAE)
+* TRPO's trust-region approach
+* Companion coding session: [`code/14_ppo_trpo/`](../../code/14_ppo_trpo/)
+
+**Level:** Advanced, hands-on
+
+---
+
+### 📗 [note_15_rlhf_pipeline.md](note_15_rlhf_pipeline.md) — RLHF: Reinforcement Learning from Human Feedback
+
+**Main topics:**
+
+* The 3-stage RLHF pipeline: SFT → Reward Model → PPO
+* The Bradley-Terry preference model
+* The KL penalty against the reference policy
+* Reward hacking
+* Companion coding session: [`code/15_rlhf_basics/`](../../code/15_rlhf_basics/)
+
+**Level:** Advanced, applied
+
+---
+
+### 📙 [note_16_dpo_and_variants.md](note_16_dpo_and_variants.md) — DPO: Direct Preference Optimization
+
+**Main topics:**
+
+* Optimizing directly on preferences, without a separate Reward Model
+* The DPO loss
+* Comparison with PPO-RLHF
+* Companion coding session: [`code/16_dpo/`](../../code/16_dpo/)
+
+**Level:** Advanced, applied
+
+---
+
+### 📕 [note_17_final_project.md](note_17_final_project.md) — Final Project: Course Wrap-Up and Directions Forward
+
+**Main topics:**
+
+* Integrating everything covered in the course
+* The mini-RLHF pipeline project
+* Where to go next in RL
+
+**Level:** Capstone
+
+---
+
+## Recommended study order
 
 ```text
-note_1 → note_2 → note_3 → note_4 → note_5 → note_6 → note_7 → note_8 → note_9
+note_1 → note_2 → note_3 → note_4 → note_5 → note_6 → note_7 → note_8 → note_9 → note_10 → note_11 → note_12 → note_13 → note_14 → note_15 → note_16 → note_17
 ```
 
-1. Начни с **note_1** для общего понимания и практического примера
-2. Перейди к **note_2** для глубокого понимания формального фреймворка
-3. Изучи **note_3** для освоения ключевой концепции exploration/exploitation
-4. Освой **note_4** для понимания методов решения задач RL
-5. Разберись с **note_5** — почему и как используются нейронные сети в RL
-6. Углубись в **note_6** — детальное понимание V и Q функций
-7. Изучи **note_7** — уравнение Беллмана как математическую основу RL
-8. Освой **note_8** — практические методы вычисления (MC vs TD)
-9. Реализуй **note_9** — первый практический алгоритм Q-Learning
+1. Start with **note_1** for a general overview and a hands-on example
+2. Move to **note_2** for a deep understanding of the formal framework
+3. Study **note_3** to master the core exploration/exploitation concept
+4. Work through **note_4** to understand the approaches to solving RL problems
+5. Go through **note_5** — why and how neural networks are used in RL
+6. Dig into **note_6** — a detailed understanding of the V and Q functions
+7. Study **note_7** — the Bellman equation as RL's mathematical foundation
+8. Work through **note_8** — practical estimation methods (MC vs TD)
+9. Implement **note_9** — your first practical algorithm, Q-Learning
+10. Continue through **note_10-17** as the coding sessions get more advanced, from Deep Q-Networks through PPO, RLHF, DPO, and the final project
 
 ---
 
-## Навигация
+## Navigation
 
-Все заметки связаны перекрестными ссылками. В конце каждой заметки есть раздел "Что дальше" с рекомендациями по продолжению обучения.
+All notes are cross-linked. Each note ends with a "What's next" section with recommendations for continuing.
 
-### Как информация распределена по заметкам
+### How the material is spread across the notes
 
-**Формулы и концепции вводятся постепенно:**
+**Formulas and concepts are introduced gradually:**
 
-* **note_1:** Базовые концепции (MDP, $G_t$, $\pi$) — первое знакомство
-* **note_2:** Формализация MDP, детальное объяснение $G_t$, марковское свойство
-* **note_3:** Стратегии exploration (ε-greedy, Softmax, UCB)
-* **note_4:** Введение Q-функции и базовая формула Q-Learning
-* **note_5:** Детальное объяснение Q-Learning и переход к DQN (Experience Replay, Target Network)
-* **note_6:** Глубокое понимание V и Q функций, их связь, упоминание Беллмана
-* **note_7:** Уравнение Беллмана — рекуррентное определение ценности, математическая основа
-* **note_8:** Monte Carlo vs Temporal Difference — практические методы вычисления
-* **note_9:** Q-Learning алгоритм — TD обновление Q-таблицы, off-policy обучение
+* **note_1:** Basic concepts (MDP, $G_t$, $\pi$) — a first introduction
+* **note_2:** Formalizing the MDP, a detailed explanation of $G_t$, the Markov property
+* **note_3:** Exploration strategies (ε-greedy, Softmax, UCB)
+* **note_4:** Introducing the Q-function and the basic Q-Learning formula
+* **note_5:** A detailed explanation of Q-Learning and the transition to DQN (Experience Replay, Target Network)
+* **note_6:** A deep understanding of the V and Q functions, their relationship, and a first mention of Bellman
+* **note_7:** The Bellman equation — the recursive definition of value, the mathematical foundation
+* **note_8:** Monte Carlo vs Temporal Difference — practical estimation methods
+* **note_9:** The Q-Learning algorithm — the TD update to the Q-table, off-policy learning
+* **note_10-17:** Each builds on the previous ones, moving from Deep Q-Networks through policy gradients, Actor-Critic, dynamic programming, PPO/TRPO, and RLHF/DPO to the final project
 
-Каждая заметка опирается на предыдущие, но не дублирует их содержание.
+Each note builds on the previous ones without duplicating their content.
 
 ---
 
-## Источники
+## Sources
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
 * Hadelin de Ponteves, *AI Crash Course* (2019)
 * RL Theory Book (Forts & Mills, 2022)
