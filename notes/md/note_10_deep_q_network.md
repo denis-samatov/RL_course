@@ -1,103 +1,103 @@
-# Теоретический конспект №10
+# Theoretical Note #10
 
-## Deep Q-Network (DQN): конспект семинара
+## Deep Q-Network (DQN): session notes
 
-## Цели семинара
+## Session goals
 
-* Понять, почему табличный Q‑Learning не масштабируется и чем его заменяет DQN.
-* Разобраться в математике **TD‑обучения** и целевой функции DQN.
-* Освоить конвейер: **препроцессинг кадров → CNN → реплей‑буфер → target network → ε‑greedy**.
-* Узнать устойчивые улучшения: **Double DQN, Dueling, PER, N‑step**.
-* Обсудить отладку и метрики качества, пройтись по псевдокоду обучения.
-
----
-
-## План занятия
-
-1. Интро и постановка проблемы (10 мин)
-2. От Q‑Learning к Deep Q‑Learning (интуиция → математика) (20 мин)
-3. Архитектура DQN и данные (препроцессинг, стек кадров, CNN) (15 мин)
-4. Обучение: цель, лосс, реплей‑буфер, target network (20 мин)
-5. Политика ε‑greedy и расписание ε (5 мин)
-6. Улучшения стабильности: Double/Dueling/PER/N‑step (20 мин)
-7. Практикум/дискуссия: гиперпараметры, отладка, метрики (15 мин)
-8. Q&A и домашние задания (5 мин)
+* Understand why tabular Q-Learning doesn't scale, and what DQN replaces it with.
+* Work through the math of **TD-learning** and DQN's objective function.
+* Master the pipeline: **frame preprocessing → CNN → replay buffer → target network → ε-greedy**.
+* Learn the stability improvements: **Double DQN, Dueling, PER, N-step**.
+* Discuss debugging and quality metrics, and walk through the training pseudocode.
 
 ---
 
-## 1) Проблема размерности: почему таблица не работает
+## Session plan
 
-**Состояние как изображение** (пример: Atari).
+1. Intro and problem statement (10 min)
+2. From Q-Learning to Deep Q-Learning (intuition → math) (20 min)
+3. DQN architecture and data (preprocessing, frame stacking, CNN) (15 min)
+4. Training: the objective, loss, replay buffer, target network (20 min)
+5. The ε-greedy policy and the ε schedule (5 min)
+6. Stability improvements: Double/Dueling/PER/N-step (20 min)
+7. Hands-on/discussion: hyperparameters, debugging, metrics (15 min)
+8. Q&A and homework (5 min)
+
+---
+
+## 1) The dimensionality problem: why a table doesn't work
+
+**State as an image** (example: Atari).
 
 $$
-\text{Кадр: } 210 \times 160 \times 3 \Rightarrow 100{,}800 \text{ пикселей}
+\text{Frame: } 210 \times 160 \times 3 \Rightarrow 100{,}800 \text{ pixels}
 $$
 
-Каждый пиксель принимает 256 значений. Число возможных состояний:
+Each pixel takes 256 values. The number of possible states:
 
 $$
 256^{210\times160\times3} = 256^{100800}
 $$
 
-**Вывод:** табличный хранитель значений качества действия в состоянии становится невозможным.
+**Conclusion:** storing action values in a table becomes infeasible.
 
 ---
 
-## 2) Идея аппроксимации: от таблицы к сети
+## 2) The approximation idea: from a table to a network
 
-Заменим таблицу на параметрическую функцию (нейросеть), которая предсказывает Q‑значения.
+Replace the table with a parametric function (a neural network) that predicts Q-values.
 
 $$
 Q_\theta(s,a) \approx Q^*(s,a)
 $$
 
-Обновление в классическом Q‑Learning:
+The classical Q-Learning update:
 
 $$
 Q(s,a) \leftarrow Q(s,a) + \alpha \big[r + \gamma\max_{a'}Q(s',a') - Q(s,a)\big]
 $$
 
-В DQN таблицы нет, поэтому учим параметры сети минимизировать TD‑ошибку.
+There's no table in DQN, so instead we train the network's parameters to minimize the TD error.
 
 ---
 
-## 3) Формализм DQN: цель и лосс
+## 3) DQN's formalism: the objective and the loss
 
-**TD‑цель (target)** для перехода ( (s,a,r,s',\text{done}) ):
+**The TD target** for a transition $(s,a,r,s',\text{done})$:
 
 $$
 y = \begin{cases}
-r, & \text{если } \text{done} = 1\\
-r + \gamma \max_{a'} Q_{\theta^-}(s', a'), & \text{иначе}
+r, & \text{if } \text{done} = 1\\
+r + \gamma \max_{a'} Q_{\theta^-}(s', a'), & \text{otherwise}
 \end{cases}
 $$
 
-**Лосс (MSE по минибатчу):**
+**Loss (MSE over a mini-batch):**
 
 $$
 \mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s',\text{done})\sim \mathcal{D}}\big[\big(y - Q_\theta(s,a)\big)^2\big]
 $$
 
-Градиентный шаг по параметрам (\theta).
+A gradient step on the parameters $\theta$.
 
 ---
 
-## 4) Архитектура и данные
+## 4) Architecture and data
 
-### Препроцессинг и стек кадров
+### Preprocessing and frame stacking
 
-* Переводим кадры в оттенки серого и масштабируем до 84×84.
-* Берём стек из 4 последовательных кадров, чтобы «видеть» движение.
+* Convert frames to grayscale and resize to 84x84.
+* Stack 4 consecutive frames, so the network can "see" motion.
 
-### Пример CNN (классический Nature DQN)
+### An example CNN (the classic Nature DQN)
 
 $$
-\text{Conv1: } 32,\text{фильтра } 8\times 8,\ \text{stride }4\quad\to\quad
-\text{Conv2: } 64,\text{фильтра } 4\times 4,\ \text{stride }2\quad\to\quad
-\text{Conv3: } 64,\text{фильтра } 3\times 3,\ \text{stride }1
+\text{Conv1: } 32,\text{ filters } 8\times 8,\ \text{stride }4\quad\to\quad
+\text{Conv2: } 64,\text{ filters } 4\times 4,\ \text{stride }2\quad\to\quad
+\text{Conv3: } 64,\text{ filters } 3\times 3,\ \text{stride }1
 $$
 
-Затем полносвязный слой на 512 нейронов и выход из (N) значений (по числу действий):
+Followed by a fully connected layer of 512 neurons, and an output of $N$ values (one per action):
 
 $$
 \big[Q(s,a_1),\ Q(s,a_2),\ \dots,\ Q(s,a_N)\big]
@@ -105,35 +105,35 @@ $$
 
 ---
 
-## 5) Реплей‑буфер и Target Network
+## 5) The Replay Buffer and Target Network
 
-**Реплей‑буфер** хранит переходы и позволяет обучаться на перемешанных минибатчах:
+The **replay buffer** stores transitions and lets us train on shuffled mini-batches:
 
 $$
 \mathcal{D} = \{(s_t,a_t,r_t,s_{t+1},\text{done}_t)\}_{t=1}^T
 $$
 
-**Target network** копирует параметры онлайн‑сети периодически:
+The **target network** copies the online network's parameters periodically:
 
 $$
-\theta^- \leftarrow \theta\quad\text{каждые } C \text{ шагов}
+\theta^- \leftarrow \theta\quad\text{every } C \text{ steps}
 $$
 
-Это стабилизирует целевые значения в (y).
+This stabilizes the target values $y$.
 
 ---
 
-## 6) Политика выбора действий (ε‑greedy)
+## 6) The action-selection policy (ε-greedy)
 
-С вероятностью (\varepsilon) — случайное действие, иначе — действие с максимальным предсказанным качеством.
+With probability $\varepsilon$ — a random action; otherwise — the action with the highest predicted value.
 
-Линейная деконфигурация (\varepsilon) с шагами:
+A linear ε schedule over steps:
 
 $$
 \varepsilon_t = \max\big(\varepsilon_{\min},\ \varepsilon_{\max} - k \cdot t\big)
 $$
 
-Экспоненциальная альтернатива:
+An exponential alternative:
 
 $$
 \varepsilon_t = \varepsilon_{\min} + (\varepsilon_{\max}-\varepsilon_{\min}) \cdot e^{-t/\tau}
@@ -141,11 +141,11 @@ $$
 
 ---
 
-## 7) Улучшения стабильности
+## 7) Stability improvements
 
 ### Double DQN
 
-Устраняет переоценку за счёт раздельного (\arg\max) и оценки:
+Removes overestimation by decoupling the $\arg\max$ from the evaluation:
 
 $$
 y = r + \gamma \cdot Q_{\theta^-}\Big(s',\ \arg\max_{a'} Q_\theta(s',a')\Big)
@@ -153,7 +153,7 @@ $$
 
 ### Dueling Network
 
-Разложение на ценность состояния и преимущество действия:
+Decomposes into the state value and the action advantage:
 
 $$
 Q(s,a) = V(s) + A(s,a) - \frac{1}{|\mathcal{A}|}\sum_{a'} A(s,a')
@@ -161,18 +161,18 @@ $$
 
 ### Prioritized Experience Replay (PER)
 
-Вероятность выборки по приоритету (p_i):
+Sampling probability by priority $p_i$:
 
 $$
 P(i) = \frac{p_i^{\alpha}}{\sum_k p_k^{\alpha}},\qquad
 w_i = \left(\frac{1}{N \cdot P(i)}\right)^{\beta}
 $$
 
-где веса $w_i$ нормализуются на максимум в батче: $w_i \leftarrow w_i / \max_j w_j$, чтобы не дестабилизировать обновления.
+where the weights $w_i$ are normalized against the batch max: $w_i \leftarrow w_i / \max_j w_j$, to avoid destabilizing the updates.
 
-### N‑step Returns
+### N-step Returns
 
-Многокроковая цель повышает сигнал отдалённых вознаграждений:
+A multi-step target strengthens the signal from delayed rewards:
 
 $$
 y^{(n)} = r_0 + \gamma r_1 + \dots + \gamma^{n-1} r_{n-1}
@@ -182,119 +182,119 @@ $$
 
 ---
 
-## 8) Псевдокод цикла обучения
+## 8) Training-loop pseudocode
 
-1. Инициализация (\theta), копирование в (\theta^-). Пустой буфер (\mathcal{D}).
-2. Для каждого шага:
+1. Initialize $\theta$, copy to $\theta^-$. An empty buffer $\mathcal{D}$.
+2. For every step:
 
-   1. С вероятностью (\varepsilon) выбрать случайное действие, иначе (\arg\max_a Q_\theta(s,a)).
-   2. Получить (r, s', \text{done}), положить переход в (\mathcal{D}).
-   3. Выбрать минибатч из (\mathcal{D}), посчитать (y), минимизировать (\mathcal{L}(\theta)).
-   4. Каждые (C) шагов: (\theta^- \leftarrow \theta).
-   5. Обновить (\varepsilon) по расписанию.
+   1. With probability $\varepsilon$, choose a random action; otherwise $\arg\max_a Q_\theta(s,a)$.
+   2. Get $(r, s', \text{done})$, put the transition into $\mathcal{D}$.
+   3. Sample a mini-batch from $\mathcal{D}$, compute $y$, minimize $\mathcal{L}(\theta)$.
+   4. Every $C$ steps: $\theta^- \leftarrow \theta$.
+   5. Update $\varepsilon$ per its schedule.
 
 ---
 
-## 9) Гиперпараметры (типичные для Atari)
+## 9) Hyperparameters (typical for Atari)
 
 $$
 \gamma = 0.99,\quad \text{batch} = 32,\quad |\mathcal{D}| = 10^6,\quad
 \alpha_{\text{Adam}} \approx 2.5\times10^{-4},\quad C\in[10^3,10^4]
 $$
 
-Линейная декогерентность (\varepsilon):
+A linear ε schedule:
 
 $$
-\varepsilon: 1.0 \to 0.1 \text{ за } 10^6 \text{ шагов}
+\varepsilon: 1.0 \to 0.1 \text{ over } 10^6 \text{ steps}
 $$
 
 ---
 
-## 10) Метрики и валидация
+## 10) Metrics and validation
 
-* Средняя вознаграждённость эпизода (скользящее окно):
+* Average episode reward (a rolling window):
 
 $$
 \overline{R}_t = \frac{1}{K}\sum_{i=t-K+1}^{t} R_i
 $$
 
-* Доля действий с максимальным Q (эксплойт против экслор).
-* Частота обновления target‑сети и устойчивость лосса.
+* The fraction of actions taken with maximal Q (exploit vs. explore).
+* How often the target network updates, and the loss's stability.
 
 ---
 
-## 11) Отладка и типичные ловушки
+## 11) Debugging and common pitfalls
 
-* Перепутанные оси при препроцессинге → неверный вход в CNN.
-* Необновляемая target‑сеть или слишком редкие копирования (\Rightarrow) раскачка.
-* Слишком маленький/перекоррелированный буфер (\Rightarrow) переобучение.
-* Неинициализированное «тёплое заполнение» буфера (\Rightarrow) плохой старт.
-* Несогласованность (\gamma), масштабов вознаграждений и нормировок кадров.
-
----
-
-## 12) Практические задания (для обсуждения/домашняя)
-
-1. Реализовать базовый DQN с реплеем и target‑сетью; сравнить линейную и экспоненциальную (\varepsilon)-схемы.
-2. Включить Double DQN и показать снижение переоценки (сравнить средний TD‑таргет).
-3. Добавить Dueling‑голову и оценить скорость сходимости по (\overline{R}_t).
-4. Реализовать PER и измерить эффект на выбор трудных состояний (распределение (P(i))).
-5. Провести ablation‑study: менять (C), размер буфера, размер батча.
+* Mixed-up axes during preprocessing → an incorrect CNN input.
+* A target network that doesn't update, or updates too rarely → oscillation.
+* A buffer that's too small or too correlated → overfitting.
+* No "warm-up" fill of the buffer before training → a poor start.
+* Inconsistent $\gamma$, reward scales, and frame normalization.
 
 ---
 
-## 13) Краткое резюме
+## 12) Hands-on exercises (for discussion/homework)
 
-* DQN масштабирует Q‑обучение на визуальные состояния за счёт аппроксимации (Q_\theta).
-* Ключевые элементы: CNN‑экстракция признаков, реплей‑буфер, target‑сеть, (\varepsilon)-жадная политика.
-* Улучшения (Double/Dueling/PER/N‑step) повышают стабильность и эффективность.
-
----
-
-## 14) Контрольные вопросы для семинара
-
-1. Почему табличный подход не работает на изображениях? Формально оцените размерность.
-2. Запишите целевое уравнение DQN и объясните роль (\theta^-).
-3. В чём суть Double DQN и как формируется его таргет?
-4. Зачем дьюлинг‑разложение и как устраняется неопределённость по (A)?
-5. Как (\varepsilon)-расписание влияет на ранние/поздние стадии обучения?
-6. Какие симптомы указывают на коррелированные сэмплы в буфере и как это починить?
+1. Implement a basic DQN with replay and a target network; compare linear vs. exponential $\varepsilon$ schedules.
+2. Add Double DQN and show the reduction in overestimation (compare the average TD target).
+3. Add a Dueling head and evaluate the convergence speed via $\overline{R}_t$.
+4. Implement PER and measure its effect on selecting hard states (the distribution of $P(i)$).
+5. Run an ablation study: vary $C$, buffer size, and batch size.
 
 ---
 
-## 15) Мини‑шпаргалка формул
+## 13) Brief summary
 
-**Bellman‑оптимальность:**
+* DQN scales Q-learning to visual states by approximating $Q_\theta$.
+* Key components: CNN feature extraction, a replay buffer, a target network, an ε-greedy policy.
+* The improvements (Double/Dueling/PER/N-step) increase stability and efficiency.
+
+---
+
+## 14) Review questions for the session
+
+1. Why doesn't the tabular approach work on images? Estimate the dimensionality formally.
+2. Write out DQN's target equation, and explain the role of $\theta^-$.
+3. What's the core idea of Double DQN, and how is its target formed?
+4. Why the dueling decomposition, and how does it resolve the ambiguity in $A$?
+5. How does the $\varepsilon$ schedule affect the early vs. late stages of training?
+6. What symptoms indicate correlated samples in the buffer, and how do you fix it?
+
+---
+
+## 15) A mini formula cheat sheet
+
+**Bellman optimality:**
 
 $$
 Q^*(s,a) = \mathbb{E}\big[r + \gamma\max_{a'} Q^*(s',a') \big| s,a\big]
 $$
 
-**TD‑цель DQN:**
+**DQN's TD target:**
 
 $$
 y = r + \gamma\max_{a'} Q_{\theta^-}(s', a')
 $$
 
-**Лосс:**
+**Loss:**
 
 $$
 \mathcal{L}(\theta) = \mathbb{E}\big[(y - Q_\theta(s,a))^2\big]
 $$
 
-**Double DQN‑цель:**
+**Double DQN's target:**
 
 $$
 y = r + \gamma \cdot Q_{\theta^-}\big(s',\ \arg\max_{a'} Q_\theta(s',a')\big)
 $$
 
-**Dueling‑композиция:**
+**Dueling composition:**
 
 $$
 Q(s,a) = V(s) + A(s,a) - \frac{1}{|\mathcal{A}|}\sum_{a'} A(s,a')
 $$
 
-**PER‑выборка и веса:**
+**PER sampling and weights:**
 
 $$
 P(i) = \frac{p_i^{\alpha}}{\sum_k p_k^{\alpha}},\qquad
