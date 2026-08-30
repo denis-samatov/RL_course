@@ -1,133 +1,133 @@
-# Теоретический конспект №9
+# Theoretical Note #9
 
-## Тема: **Q-Learning — базовый алгоритм обучения действиям**
-
----
-
-## 1. Что такое Q-Learning?
-
-**Q-Learning** — это *off-policy value-based* алгоритм обучения с подкреплением,
-который обучает **action-value функцию** (Q-функцию) с помощью **TD-обновления** (Temporal Difference).
+## Topic: **Q-Learning — the Foundational Action-Learning Algorithm**
 
 ---
 
-### Терминология:
+## 1. What is Q-Learning?
 
-* **Value-based** — агент не учит политику напрямую, а *оценивает* ценность действий.
-* **TD Learning** — обновление идёт после каждого шага, а не после всего эпизода.
-* **Off-policy** — обучение и выбор действий происходят с разными политиками (explore vs exploit).
+**Q-Learning** is an *off-policy, value-based* reinforcement learning algorithm
+that learns the **action-value function** (Q-function) via **TD updates** (Temporal Difference).
 
 ---
 
-### Формальное определение:
+### Terminology:
 
-**Оптимальная Q-функция** описывает ценность выполнения действия $a$ в состоянии $s$ с точки зрения оптимальной стратегии:
+* **Value-based** — the agent doesn't learn the policy directly; it *estimates* the value of actions.
+* **TD Learning** — updates happen after every step, not after the whole episode.
+* **Off-policy** — the policy being learned and the policy used to choose actions differ (explore vs. exploit).
+
+---
+
+### Formal definition:
+
+The **optimal Q-function** describes the value of taking action $a$ in state $s$, from the perspective of the optimal strategy:
 
 $$
 Q^*(s, a) = \mathbb{E} \big[ R_{t+1} + \gamma \max_{a'} Q^*(S_{t+1}, a') \mid S_t = s, A_t = a \big].
 $$
 
-Интуиция:
+Intuition:
 
-> "Если я сейчас сделаю действие $a$ в состоянии $s$,
-> то насколько хорошо это для меня в долгосрочной перспективе?"
+> "If I take action $a$ in state $s$ right now,
+> how good is that for me in the long run?"
 
 ---
 
-## 2. Различие между Reward и Value
+## 2. The difference between Reward and Value
 
-| Понятие             | Что означает                                                             |
+| Concept | What it means |
 | ------------------- | ------------------------------------------------------------------------ |
-| **Reward**          | Немедленная награда за текущее действие $R_{t+1}$                      |
-| **Value / Q-value** | Ожидаемая *кумулятивная* награда за всё будущее при оптимальной политике |
+| **Reward** | The immediate reward for the current action, $R_{t+1}$ |
+| **Value / Q-value** | The expected *cumulative* reward over the entire future, under the optimal policy |
 
-То есть:
+That is:
 
-> Reward — это мгновенный "сигнал обратной связи",
-> Value — это "насколько выгодно оказаться в этом месте и сделать это действие".
+> Reward is an instant "feedback signal,"
+> Value is "how worthwhile it is to be in this spot and take this action."
 
 ---
 
-## 3. Q-таблица: память агента
+## 3. The Q-table: the agent's memory
 
-Q-функция представляется в виде **Q-таблицы**, где:
+The Q-function is represented as a **Q-table**, where:
 
-* строки — состояния среды $S$
-* столбцы — возможные действия $A$
-* ячейка $Q(s, a)$ — значение, показывающее "качество" действия $a$ в состоянии $s$.
+* rows — the environment's states $S$
+* columns — the available actions $A$
+* cell $Q(s, a)$ — a value showing the "quality" of action $a$ in state $s$.
 
-Пример:
+Example:
 
 ```
-Состояния →    Влево   Вправо   Вверх   Вниз
+States →       Left    Right    Up      Down
 ----------------------------------------------
 S0             0.1      0.0      0.5     0.0
 S1             0.2      0.8      0.0     0.1
 S2             0.0      0.3      0.0     0.9
 ```
 
-> В этом примере агент считает, что в состоянии S1 наилучшее действие — «вправо».
+> In this example, the agent believes that in state S1, the best action is "right."
 
 ---
 
-## 4. Как работает Q-Learning — общий алгоритм
+## 4. How Q-Learning works — the general algorithm
 
-### Псевдокод:
+### Pseudocode:
 
-1. Инициализировать Q-таблицу нулями.
-2. Повторять (для каждого эпизода):
+1. Initialize the Q-table to zeros.
+2. Repeat (for every episode):
 
-   * Инициализировать начальное состояние $s$
-   * Пока эпизод не завершён:
+   * Initialize the starting state $s$
+   * While the episode hasn't ended:
 
-     1. Выбрать действие $a$ по ε-жадной политике (ε-greedy)
-     2. Выполнить действие $a$, получить награду $r$ и новое состояние $s'$
-     3. Обновить Q по формуле Беллмана:
+     1. Choose action $a$ via an ε-greedy policy
+     2. Take action $a$, get reward $r$ and the new state $s'$
+     3. Update Q via the Bellman formula:
         $$
         Q(s,a) \leftarrow Q(s,a) + \alpha \big[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \big]
         $$
-     4. Перейти в новое состояние $s'$
-3. Уменьшить ε со временем (меньше случайности → больше "эксплуатации").
+     4. Move to the new state $s'$
+3. Decay ε over time (less randomness → more "exploitation").
 
 ---
 
-## 5. Разберём шаги алгоритма
+## 5. Walking through the algorithm's steps
 
-### Шаг 1: Инициализация
+### Step 1: Initialization
 
 $$
-Q(s,a) = 0 \ \text{для всех } s, a
+Q(s,a) = 0 \ \text{for all } s, a
 $$
 
-Агент начинает без знаний — "пустая таблица".
+The agent starts with no knowledge — an "empty table."
 
 ---
 
-### Шаг 2: Выбор действия — стратегия ε-greedy
+### Step 2: Choosing an action — the ε-greedy strategy
 
 $$
 a_t =
 \begin{cases}
-\text{случайное действие}, & \text{с вероятностью } \varepsilon \\
-\arg\max_a Q(s,a), & \text{с вероятностью } 1 - \varepsilon
+\text{a random action}, & \text{with probability } \varepsilon \\
+\arg\max_a Q(s,a), & \text{with probability } 1 - \varepsilon
 \end{cases}
 $$
 
-Пример:
+Example:
 
-* В начале обучения ε = 1.0 → почти всегда выбираются случайные действия (исследование среды).
-* Со временем ε → 0.1 или 0.01 → агент использует свои знания (эксплуатация).
+* Early in training, ε = 1.0 → almost always random actions (exploring the environment).
+* Over time, ε → 0.1 or 0.01 → the agent uses what it has learned (exploitation).
 
 ---
 
-### Шаг 3: Получение опыта
+### Step 3: Gaining experience
 
-Агент выполняет действие, получает:
+The agent takes the action, and receives:
 
-* новое состояние $s'$
-* награду $r$
+* a new state $s'$
+* a reward $r$
 
-Запоминает кортеж опыта:
+It remembers the experience tuple:
 
 $$
 (s_t, a_t, r_{t+1}, s_{t+1})
@@ -135,327 +135,327 @@ $$
 
 ---
 
-### Шаг 4: Обновление Q-таблицы
+### Step 4: Updating the Q-table
 
-Теперь используется **обновление Q-Learning** (приближение оптимального уравнения Беллмана):
+Now we apply the **Q-Learning update** (an approximation of the optimal Bellman equation):
 
 $$
 Q(s,a) \leftarrow Q(s,a) + \alpha \big[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \big]
 $$
 
-Где:
+Where:
 
-* $\alpha$ — скорость обучения
-* $\gamma$ — коэффициент дисконтирования
-* $\max_{a'} Q(s',a')$ — "наилучшее возможное будущее" из следующего состояния
+* $\alpha$ — the learning rate
+* $\gamma$ — the discount factor
+* $\max_{a'} Q(s',a')$ — "the best possible future" from the next state
 
 ---
 
-### Пример обновления:
+### An update example:
 
-Допустим:
+Suppose:
 
 $$
 Q(s,a) = 0, \quad r = 1, \quad \gamma = 1, \quad \max_{a'} Q(s',a') = 5, \quad \alpha = 0.1
 $$
 
-Тогда:
+Then:
 
 $$
 Q(s,a) = 0 + 0.1 \times [1 + 1 \times 5 - 0] = 0.6
 $$
 
-Теперь значение действия (качество) в этом состоянии выросло — агент "узнал", что это действие хорошее.
+The action's value (quality) in this state has now increased — the agent has "learned" that this action is good.
 
 ---
 
-## 6. Off-policy: что это значит?
+## 6. Off-policy: what does that mean?
 
-**Off-policy** — это значит, что:
+**Off-policy** means:
 
-> Агент *обучается* на основе другой политики, чем та, которой он *действует*.
+> The agent *learns* using a different policy than the one it *acts* with.
 
-* **Действие:** выбирается по **ε-greedy** (смешанная политика — часть случайных действий).
-* **Обновление:** использует **greedy** (максимизирующее) значение $\max_{a'} Q(s', a')$.
+* **Acting:** chosen via **ε-greedy** (a mixed policy — some random actions).
+* **Updating:** uses the **greedy** (maximizing) value $\max_{a'} Q(s', a')$.
 
-То есть:
+That is:
 
-* мы *исследуем* мир с ε-жадной политикой,
-* но *учимся* так, будто всегда выбираем лучшее действие.
+* we *explore* the world with an ε-greedy policy,
+* but we *learn* as if we always chose the best action.
 
 ---
 
-## 7. Отличие от On-policy (например, SARSA)
+## 7. The difference from On-policy methods (e.g. SARSA)
 
-| Алгоритм                    | Обновление                                         | Политика обучения         |
+| Algorithm | Update | Learning policy |
 | --------------------------- | -------------------------------------------------- | ------------------------- |
-| **Q-Learning (off-policy)** | $r + \gamma \max_{a'} Q(s',a')$                  | greedy                    |
-| **SARSA (on-policy)**       | $r + \gamma Q(s',a')$ где $a'$ выбрано ε-жадно | та же, что и при действии |
+| **Q-Learning (off-policy)** | $r + \gamma \max_{a'} Q(s',a')$ | greedy |
+| **SARSA (on-policy)** | $r + \gamma Q(s',a')$ where $a'$ is chosen ε-greedily | the same one used to act |
 
-Пример интуиции:
+An intuitive example:
 
-* **Q-Learning** — учится "оптимистично", как будто всегда выбирает наилучшее действие.
-* **SARSA** — учится "реалистично", исходя из того, как реально действует агент (с учётом ε-жадности).
+* **Q-Learning** learns "optimistically," as if it always picks the best action.
+* **SARSA** learns "realistically," based on how the agent actually acts (accounting for ε-greediness).
 
 ---
 
-## 8. Итоговая визуальная схема
+## 8. Overall visual schematic
 
 ```
      ┌──────────────────────────────┐
-     │   Среда (Environment)        │
+     │   Environment                │
      │  ┌────────────────────────┐  │
-     │  │  Состояние s, награда r│  │
+     │  │  State s, reward r      │  │
      │  └────────────────────────┘  │
      └──────────────┬───────────────┘
                     │
-              действие a_t
+              action a_t
                     │
              ┌─────────────┐
-             │  Агент      │
-             │  (Q-таблица)│
+             │  Agent      │
+             │  (Q-table)  │
              └─────────────┘
                  ↑      ↓
-         обновление   выбор действия
+             update   choose action
 ```
 
 ---
 
-## 9. TL;DR — формулы Q-Learning
+## 9. TL;DR — the Q-Learning formulas
 
 $$
 Q(s,a) \leftarrow Q(s,a) + \alpha \Big[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \Big]
 $$
 
-После сходимости:
+Once converged:
 
 $$
 \pi^*(s) = \arg\max_a Q^*(s,a)
 $$
 
-То есть:
+That is:
 
-* Агент обучает таблицу Q по мере взаимодействия со средой.
-* После обучения таблица сама "содержит" оптимальную стратегию.
-
----
-
-## 10. Практический пример: мини-лабиринт
-
-### Цель:
-
-Понять, как агент **обновляет Q-таблицу шаг за шагом**,
-и как *через опыт* формируется оптимальная политика $\pi^*(s)$.
+* The agent trains its Q-table as it interacts with the environment.
+* Once trained, the table itself "contains" the optimal strategy.
 
 ---
 
-### Условие задачи
+## 10. A hands-on example: a mini maze
 
-Простое поле: мышь должна дойти до большого сыра и избегать яда.
+### Goal:
 
-**Параметры среды:**
+Understand how the agent **updates the Q-table step by step**,
+and how the optimal policy $\pi^*(s)$ **emerges through experience**.
 
-* Размер: 3×2 клетки
-* Агент стартует всегда с одной и той же позиции
-* Эпизод завершается, если:
-  * мышь съела яд (награда = −10)
-  * мышь дошла до большого сыра (награда = +10)
-  * прошло > 5 шагов (награда = 0)
+---
 
-**Функция вознаграждения:**
+### The setup
 
-| Действие                            | Награда |
+A simple grid: a mouse must reach a big piece of cheese while avoiding poison.
+
+**Environment parameters:**
+
+* Size: 3x2 cells
+* The agent always starts from the same position
+* An episode ends if:
+  * the mouse eats the poison (reward = -10)
+  * the mouse reaches the big cheese (reward = +10)
+  * more than 5 steps have passed (reward = 0)
+
+**The reward function:**
+
+| Transition | Reward |
 | ----------------------------------- | ------- |
-| Переход на пустую клетку            | +0      |
-| Переход на клетку с маленьким сыром | +1      |
-| Переход на клетку с большим сыром   | +10     |
-| Переход на клетку с ядом            | −10     |
+| Moving to an empty cell | +0 |
+| Moving to a cell with a small piece of cheese | +1 |
+| Moving to the cell with the big cheese | +10 |
+| Moving to the poison cell | -10 |
 
 ---
 
-### Начальная инициализация
+### Initial setup
 
 $$
 \alpha = 0.1, \quad \gamma = 0.99, \quad \varepsilon = 1.0
 $$
 
-Начальная Q-таблица (все значения нули):
+The starting Q-table (all values zero):
 
 | State | Up | Down | Left | Right |
 | ----- | -- | ---- | ---- | ----- |
-| S0    | 0  | 0    | 0    | 0     |
-| S1    | 0  | 0    | 0    | 0     |
-| S2    | 0  | 0    | 0    | 0     |
+| S0 | 0 | 0 | 0 | 0 |
+| S1 | 0 | 0 | 0 | 0 |
+| S2 | 0 | 0 | 0 | 0 |
 
-Агент ничего не знает — он действует случайно.
+The agent knows nothing — it acts randomly.
 
 ---
 
 ### Timestep 1
 
-**Шаг 1. Выбор действия (ε-жадная стратегия)**
+**Step 1. Choosing an action (ε-greedy strategy)**
 
 $$
 \varepsilon = 1.0
 $$
 
-→ 100% случайное действие. Мышь выбирает **направо**.
+→ 100% random action. The mouse chooses **right**.
 
-**Шаг 2. Выполнение действия**
+**Step 2. Taking the action**
 
-* Новое состояние $S_1$
-* Награда: $R_{t+1} = +1$ (нашли маленький сыр)
+* New state $S_1$
+* Reward: $R_{t+1} = +1$ (found a small piece of cheese)
 
-**Шаг 3. Обновление Q-таблицы**
+**Step 3. Updating the Q-table**
 
-Формула Q-Learning (уравнение Беллмана для Q):
+The Q-Learning formula (the Bellman equation for Q):
 
 $$
 Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \big[ R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \big]
 $$
 
-Так как все значения пока нули:
+Since every value is still zero:
 
 $$
 Q(S_0, Right) = 0 + 0.1 \big[ 1 + 0.99 \cdot 0 - 0 \big] = 0.1
 $$
 
-**Обновлённая таблица:**
+**Updated table:**
 
-| State | Up | Down | Left | Right   |
+| State | Up | Down | Left | Right |
 | ----- | -- | ---- | ---- | ------- |
-| S0    | 0  | 0    | 0    | **0.1** |
-| S1    | 0  | 0    | 0    | 0       |
-| S2    | 0  | 0    | 0    | 0       |
+| S0 | 0 | 0 | 0 | **0.1** |
+| S1 | 0 | 0 | 0 | 0 |
+| S2 | 0 | 0 | 0 | 0 |
 
-✅ Агент "запомнил": идти направо в начале — немного полезно.
+✅ The agent has "learned": going right at the start is slightly useful.
 
 ---
 
 ### Timestep 2
 
-**Шаг 1. Выбор действия**
+**Step 1. Choosing an action**
 
 $$
 \varepsilon = 0.99
 $$
 
-→ почти случайное действие. Мышь выбирает **вниз** (неудачно!).
+→ nearly random. The mouse chooses **down** (unluckily!).
 
-**Шаг 2. Результат**
+**Step 2. The result**
 
-* Новое состояние: $S_2$ — клетка с ядом
-* Награда: $R_{t+1} = -10$
-* Эпизод завершается (мышь погибла)
+* New state: $S_2$ — the poison cell
+* Reward: $R_{t+1} = -10$
+* The episode ends (the mouse died)
 
-**Шаг 3. Обновление Q-таблицы**
+**Step 3. Updating the Q-table**
 
 $$
 Q(S_1, Down) = 0 + 0.1 [ -10 + 0.99 \times 0 - 0 ] = -1
 $$
 
-**Таблица после второго шага:**
+**The table after the second step:**
 
-| State | Up | Down     | Left | Right   |
+| State | Up | Down | Left | Right |
 | ----- | -- | -------- | ---- | ------- |
-| S0    | 0  | 0        | 0    | **0.1** |
-| S1    | 0  | **−1.0** | 0    | 0       |
-| S2    | 0  | 0        | 0    | 0       |
+| S0 | 0 | 0 | 0 | **0.1** |
+| S1 | 0 | **-1.0** | 0 | 0 |
+| S2 | 0 | 0 | 0 | 0 |
 
-Теперь агент знает:
+The agent now knows:
 
-* идти **вниз** из состояния S1 — плохо,
-* идти **направо** из S0 — хорошо.
+* going **down** from state S1 is bad,
+* going **right** from S0 is good.
 
 ---
 
-### Что произошло концептуально
+### What just happened, conceptually
 
-1. **Опыт (experience tuple)**:
+1. **The experience tuple**:
    $$
    (S_t, A_t, R_{t+1}, S_{t+1})
    $$
-   сохраняет один фрагмент "жизни" агента.
+   captures one fragment of the agent's "life."
 
-2. **Q-Learning** *обновляет знания* на каждом шаге (TD-обновление).
-   Это позволяет агенту учиться **во время игры**, без необходимости ждать завершения эпизода.
+2. **Q-Learning** *updates its knowledge* at every step (a TD update).
+   This lets the agent learn **while playing**, with no need to wait for the episode to end.
 
-3. **Эпсилон-жадная стратегия** обеспечивает баланс:
-   * В начале → почти всё исследование (ε ≈ 1)
-   * Со временем → почти вся эксплуатация (ε → 0)
-
----
-
-### Наблюдение
-
-После всего двух шагов агент уже:
-
-* знает, что отравиться — плохо,
-* знает, что правое действие из начальной позиции даёт награду.
-
-При дальнейшем обучении агент:
-
-* будет всё чаще выбирать "направо" → "вниз" → "вправо" (оптимальный маршрут),
-* постепенно приблизится к **оптимальной Q-функции** $Q^*(s,a)$.
+3. **The ε-greedy strategy** provides the balance:
+   * Early on → almost all exploration (ε ≈ 1)
+   * Over time → almost all exploitation (ε → 0)
 
 ---
 
-### Повторяя эпизоды
+### Observation
 
-При десятках итераций Q-таблица начнёт стабилизироваться:
+After just two steps, the agent already:
+
+* knows that getting poisoned is bad,
+* knows that the "right" action from the starting position gives a reward.
+
+With further training, the agent will:
+
+* increasingly choose "right" → "down" → "right" (the optimal route),
+* gradually converge to the **optimal Q-function** $Q^*(s,a)$.
+
+---
+
+### Repeating episodes
+
+After tens of iterations, the Q-table starts to stabilize:
 
 $$
-Q^*(s,a) \approx \text{ожидаемое суммарное вознаграждение при оптимальной политике}
+Q^*(s,a) \approx \text{the expected total reward under the optimal policy}
 $$
 
-Когда все значения перестают сильно меняться — **Q-Learning сходится**.
+Once the values stop changing much, **Q-Learning has converged**.
 
 ---
 
-### Как агент становится "умным"
+### How the agent becomes "smart"
 
-| Стадия              | Поведение              | Q-таблица               |
+| Stage | Behavior | Q-table |
 | ------------------- | ---------------------- | ----------------------- |
-| Начало              | случайные шаги         | нулевая                 |
-| После 10 эпизодов   | знает, где яд          | негативные Q            |
-| После 100 эпизодов  | знает, где сыр         | положительные Q         |
-| После 1000 эпизодов | идёт оптимальным путём | Q-таблица ≈ оптимальная |
+| Start | random steps | all zeros |
+| After 10 episodes | knows where the poison is | negative Q values |
+| After 100 episodes | knows where the cheese is | positive Q values |
+| After 1000 episodes | takes the optimal path | Q-table ≈ optimal |
 
 ---
 
-### Финальные формулы
+### The final formulas
 
-**TD-цель (TD Target):**
+**TD Target:**
 
 $$
 r + \gamma \max_{a'} Q(s',a')
 $$
 
-**TD-ошибка (TD Error):**
+**TD Error:**
 
 $$
 \delta = \text{Target} - Q(s,a)
 $$
 
-**Обновление =** "коррекция ошибки предсказания".
+**An update = "correcting the prediction error."**
 
 ---
 
-### Вывод
+### Conclusion
 
-После многих эпизодов агент:
+After many episodes, the agent:
 
-* учит аппроксимацию оптимальной функции $Q^*(s,a)$,
-* получает оптимальную политику:
+* learns an approximation of the optimal function $Q^*(s,a)$,
+* obtains the optimal policy:
   $$
   \pi^*(s) = \arg\max_a Q^*(s,a)
   $$
-* и действует **эффективно**, почти как человек, "помня" где выгодно идти.
+* and acts **efficiently**, almost like a human "remembering" where it's worthwhile to go.
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Hugging Face Deep RL Course, Unit 2
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
