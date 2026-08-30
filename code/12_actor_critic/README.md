@@ -1,28 +1,28 @@
-# A2C (Advantage Actor-Critic) на Pendulum-v1
+# A2C (Advantage Actor-Critic) on Pendulum-v1
 
-## 📘 Описание
+## 📘 Description
 
-Реализация алгоритма **A2C** (Advantage Actor-Critic) для задачи балансировки перевёрнутого маятника с **непрерывным пространством действий**. Демонстрирует мощь Actor-Critic методов для continuous control.
+An implementation of the **A2C** (Advantage Actor-Critic) algorithm for the inverted-pendulum balancing task, with a **continuous action space**. Demonstrates the power of Actor-Critic methods for continuous control.
 
-**Среда:** Pendulum-v1  
-**Тип действий:** Непрерывные (torque ∈ [-2, 2])  
-**Состояние:** Непрерывное (3-мерное: cos(θ), sin(θ), θ̇)  
-**Цель:** Поднять маятник в вертикальное положение и удерживать
+**Environment:** Pendulum-v1  
+**Action type:** Continuous (torque ∈ [-2, 2])  
+**State:** Continuous (3-dimensional: cos(θ), sin(θ), θ̇)  
+**Goal:** Swing the pendulum upright and hold it there
 
 ---
 
-## 🎯 Особенности реализации
+## 🎯 Implementation features
 
-### Алгоритм A2C
-- ✅ **Actor-Critic architecture** с общим backbone
-- ✅ **Gaussian policy** для непрерывных действий
-- ✅ **TD-error (advantage)** для снижения дисперсии
-- ✅ **Раздельные оптимизаторы** для Actor и Critic (best practice)
-- ✅ **Entropy regularization** для exploration
-- ✅ **Online updates** после каждого шага
-- ✅ **Gradient clipping** для стабильности
+### The A2C algorithm
+- ✅ **Actor-Critic architecture** with a shared backbone
+- ✅ **Gaussian policy** for continuous actions
+- ✅ **TD-error (advantage)** to reduce variance
+- ✅ **Separate optimizers** for the Actor and Critic (best practice)
+- ✅ **Entropy regularization** for exploration
+- ✅ **Online updates** after every step
+- ✅ **Gradient clipping** for stability
 
-### Архитектура
+### Architecture
 
 ```
                       State (3)
@@ -41,9 +41,9 @@
    N(μ, σ) → Action
 ```
 
-### Ключевые формулы
+### Key formulas
 
-**TD-error (Advantage):**
+**TD error (Advantage):**
 ```
 δ_t = r_{t+1} + γ V_φ(s_{t+1}) - V_φ(s_t)
 ```
@@ -66,68 +66,68 @@ log π_θ(a|s) = -½[(a - μ)/σ]² - log σ - ½log(2π)
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
-### Установка зависимостей
+### Installing dependencies
 
 ```bash
-# Из корня репозитория
+# From the repo root
 pip install -r requirements.txt
 ```
 
-### Базовый запуск
+### Basic run
 
 ```bash
-cd code/actor_critic
+cd code/12_actor_critic
 python pendulum_a2c.py
 ```
 
-### Запуск с параметрами
+### Running with parameters
 
 ```bash
-# Обучение на 1500 эпизодов с записью видео
+# Train for 1500 episodes with video recording
 python pendulum_a2c.py --episodes 1500 --record-video
 
-# С разными learning rates для Actor и Critic
+# With different learning rates for the Actor and Critic
 python pendulum_a2c.py --lr-actor 5e-4 --lr-critic 1e-3
 
-# С изменённой энтропией
+# With a different entropy coefficient
 python pendulum_a2c.py --entropy 0.01
 
-# Другой random seed
+# A different random seed
 python pendulum_a2c.py --seed 123
 ```
 
-### Все параметры
+### All parameters
 
-| Параметр | По умолчанию | Описание |
+| Parameter | Default | Description |
 |----------|--------------|----------|
-| `--episodes` | 1000 | Число эпизодов обучения |
-| `--lr-actor` | 3e-4 | Learning rate для Actor |
-| `--lr-critic` | 1e-3 | Learning rate для Critic |
-| `--entropy` | 0.001 | Коэффициент энтропийной регуляризации |
-| `--seed` | 42 | Random seed для воспроизводимости |
-| `--record-video` | False | Записать видео evaluation эпизодов |
+| `--episodes` | 1000 | Number of training episodes |
+| `--lr-actor` | 3e-4 | Learning rate for the Actor |
+| `--lr-critic` | 1e-3 | Learning rate for the Critic |
+| `--entropy` | 0.001 | Entropy regularization coefficient |
+| `--seed` | 42 | Random seed for reproducibility |
+| `--record-video` | False | Record video of the evaluation episodes |
 
 ---
 
-## 📊 Ожидаемые результаты
+## 📊 Expected results
 
-### Сходимость
+### Convergence
 
-**Типичная кривая обучения:**
+**Typical training curve:**
 ```
-Episode 0-200:    Reward ~ -1400 to -800  (случайные действия)
-Episode 200-400:  Reward ~ -800 to -400   (учится поднимать)
-Episode 400-600:  Reward ~ -400 to -200   (удерживает вертикаль)
-Episode 600-1000: Reward ~ -200 to -150   (оптимальный контроль)
+Episode 0-200:    Reward ~ -1400 to -800  (random actions)
+Episode 200-400:  Reward ~ -800 to -400   (learning to swing up)
+Episode 400-600:  Reward ~ -400 to -200   (holding upright)
+Episode 600-1000: Reward ~ -200 to -150   (near-optimal control)
 ```
 
-**Критерий решения:** Средняя награда >= -200 за 100 последовательных эпизодов
+**Solved criterion:** Average reward >= -200 over 100 consecutive episodes
 
-**Примечание:** В Pendulum-v1 награды отрицательные (штрафы за отклонение), цель — максимизировать (приблизиться к 0).
+**Note:** Rewards in Pendulum-v1 are negative (penalties for deviation); the goal is to maximize them (get as close to 0 as possible).
 
-### Пример вывода
+### Sample output
 
 ```
 ============================================================
@@ -149,121 +149,121 @@ Model saved to pendulum_a2c.pt
 
 ---
 
-## 📈 Визуализация
+## 📈 Visualization
 
-После обучения автоматически генерируется график `pendulum_a2c_training.png` с 4 панелями:
+After training, `pendulum_a2c_training.png` is generated automatically, with 4 panels:
 
-1. **Training Rewards** — награды по эпизодам
-2. **Episode Lengths** — длительность (всегда 200 для Pendulum)
-3. **Actor Loss** — loss функции политики
-4. **Critic Loss** — loss функции ценности
+1. **Training Rewards** — rewards per episode
+2. **Episode Lengths** — duration (always 200 for Pendulum)
+3. **Actor Loss** — the policy loss
+4. **Critic Loss** — the value function loss
 
 ---
 
-## 🎥 Запись видео
+## 🎥 Video recording
 
 ```bash
 python pendulum_a2c.py --record-video
 ```
 
-Видео сохраняются в `videos/pendulum/`:
-- 5 evaluation эпизодов после обучения
-- Показывают поведение обученного агента
-- Формат: MP4, FPS: 30
+Videos are saved to `videos/pendulum/`:
+- 5 evaluation episodes after training
+- Show the trained agent's behavior
+- Format: MP4, FPS: 30
 
 ---
 
-## 🔬 Эксперименты
+## 🔬 Experiments
 
-### 1. Сравнение learning rates
+### 1. Comparing learning rates
 
 ```bash
-# Высокий Actor LR (может быть нестабильно)
+# High Actor LR (can be unstable)
 python pendulum_a2c.py --lr-actor 1e-3 --lr-critic 1e-3
 
-# Низкий Actor LR (стабильно, но медленно)
+# Low Actor LR (stable, but slow)
 python pendulum_a2c.py --lr-actor 1e-4 --lr-critic 1e-3
 
-# Balanced (рекомендуется)
+# Balanced (recommended)
 python pendulum_a2c.py --lr-actor 3e-4 --lr-critic 1e-3
 ```
 
-**Правило:** Critic обычно учится быстрее Actor'а (lr_critic > lr_actor)
+**Rule of thumb:** The Critic usually needs to learn faster than the Actor (lr_critic > lr_actor)
 
-### 2. Влияние энтропии
+### 2. Effect of entropy
 
 ```bash
-# Без энтропии (детерминированная политика)
+# No entropy (deterministic policy)
 python pendulum_a2c.py --entropy 0.0
 
-# Низкая энтропия (рекомендуется для continuous control)
+# Low entropy (recommended for continuous control)
 python pendulum_a2c.py --entropy 0.001
 
-# Высокая энтропия (больше exploration, но медленнее)
+# High entropy (more exploration, but slower)
 python pendulum_a2c.py --entropy 0.01
 ```
 
-### 3. Длительность обучения
+### 3. Training length
 
 ```bash
-# Короткое обучение
+# Short training
 python pendulum_a2c.py --episodes 500
 
-# Стандартное
+# Standard
 python pendulum_a2c.py --episodes 1000
 
-# Длительное (для стабилизации)
+# Long (for stabilization)
 python pendulum_a2c.py --episodes 2000
 ```
 
 ---
 
-## 🧪 Связь с теорией
+## 🧪 Connection to the theory
 
-Этот код реализует концепции из **note_12_actor_critic_a2c.md**:
+This code implements the concepts from **note_12_actor_critic_a2c.md**:
 
-| Концепция | Реализация в коде |
+| Concept | Implementation in code |
 |-----------|-------------------|
-| Actor-Critic | `ActorCriticNetwork` с двумя головами |
-| Gaussian Policy | `Normal(mean, std)` для continuous actions |
-| TD-error (Advantage) | `td_target - value` |
-| Shared Backbone | `self.shared` слои для Actor и Critic |
-| Раздельные оптимизаторы | `actor_optimizer`, `critic_optimizer` |
+| Actor-Critic | `ActorCriticNetwork` with two heads |
+| Gaussian Policy | `Normal(mean, std)` for continuous actions |
+| TD error (Advantage) | `td_target - value` |
+| Shared Backbone | `self.shared` layers for the Actor and Critic |
+| Separate optimizers | `actor_optimizer`, `critic_optimizer` |
 | Entropy regularization | `entropy_coef * entropy` |
 | Gradient clipping | `clip_grad_norm_()` |
-| Online updates | Обновление после каждого шага в `train_step()` |
+| Online updates | Updated after every step, in `train_step()` |
 
 ---
 
-## 🆚 Сравнение с REINFORCE
+## 🆚 Comparison with REINFORCE
 
-| Характеристика | REINFORCE | A2C |
+| Property | REINFORCE | A2C |
 |----------------|-----------|-----|
-| Обновления | После эпизода | После каждого шага |
-| Baseline | Optional value function | Обязательный Critic |
-| Дисперсия | Высокая | Средняя |
-| Sample efficiency | Низкая | Средняя |
-| Скорость сходимости | Медленная | Быстрее |
+| Updates | After each episode | After each step |
+| Baseline | Optional value function | Mandatory Critic |
+| Variance | High | Medium |
+| Sample efficiency | Low | Medium |
+| Convergence speed | Slow | Faster |
 | Continuous actions | ✓ | ✓ |
-| Стабильность | Низкая | Выше |
+| Stability | Low | Higher |
 
-**Вывод:** A2C более sample-efficient и стабильный благодаря онлайн обновлениям и TD-learning.
+**Takeaway:** A2C is more sample-efficient and stable thanks to online updates and TD-learning.
 
 ---
 
-## 📚 Дополнительные материалы
+## 📚 Further materials
 
-**Теория:**
-- `/notes/md/note_12_actor_critic_a2c.md` — Actor-Critic методы и A2C
-- `/notes/md/note_11_policy_gradients_reinforce.md` — Policy Gradients (для сравнения)
-- `/notes/md/note_08_monte_carlo_vs_td.md` — TD-learning (основа Critic'а)
+**Theory:**
+- `/notes/md/note_12_actor_critic_a2c.md` — Actor-Critic methods and A2C
+- `/notes/md/note_11_policy_gradients_reinforce.md` — Policy Gradients (for comparison)
+- `/notes/md/note_08_monte_carlo_vs_td.md` — TD-learning (the basis for the Critic)
 
-**Код:**
-- `ActorCriticNetwork` — архитектура с shared backbone
-- `get_action()` — сэмплирование из Gaussian policy
-- `train_step()` — онлайн A2C update
+**Code:**
+- `ActorCriticNetwork` — the architecture with a shared backbone
+- `get_action()` — sampling from the Gaussian policy
+- `train_step()` — the online A2C update
 
-**Литература:**
+**References:**
 - Mnih et al. (2016): "Asynchronous Methods for Deep RL" (A3C)
 - Schulman et al. (2015): "High-Dimensional Continuous Control Using GAE"
 - Sutton & Barto (2020): Chapter 13 - Policy Gradient Methods
@@ -272,40 +272,40 @@ python pendulum_a2c.py --episodes 2000
 
 ## 🐛 Troubleshooting
 
-### Проблема: Actor/Critic losses растут
+### Problem: Actor/Critic losses keep growing
 
-**Причина:** Слишком высокие learning rates или нестабильные градиенты
+**Cause:** Learning rates too high, or unstable gradients
 
-**Решение:**
+**Solution:**
 ```bash
-# Уменьшить learning rates
+# Lower the learning rates
 python pendulum_a2c.py --lr-actor 1e-4 --lr-critic 5e-4
 
-# Или увеличить gradient clipping (в коде изменить config.gradient_clip)
+# Or increase gradient clipping (change config.gradient_clip in the code)
 ```
 
-### Проблема: Политика становится детерминированной слишком быстро
+### Problem: The policy becomes deterministic too quickly
 
-**Причина:** Низкая энтропия или log_std падает слишком быстро
+**Cause:** Low entropy, or log_std drops too fast
 
-**Решение:**
+**Solution:**
 ```bash
-# Увеличить entropy coefficient
+# Increase the entropy coefficient
 python pendulum_a2c.py --entropy 0.01
 
-# Или изменить log_std_min в коде (например, -10 вместо -20)
+# Or change log_std_min in the code (e.g. -10 instead of -20)
 ```
 
-### Проблема: Не сходится к -200
+### Problem: Not converging to -200
 
-**Причина:** Недостаточно эпизодов или неоптимальные гиперпараметры
+**Cause:** Not enough episodes, or suboptimal hyperparameters
 
-**Решение:**
+**Solution:**
 ```bash
-# Увеличить число эпизодов
+# Increase the number of episodes
 python pendulum_a2c.py --episodes 1500
 
-# Или сбалансировать learning rates
+# Or balance the learning rates
 python pendulum_a2c.py --lr-actor 5e-4 --lr-critic 1e-3 --episodes 1200
 ```
 
@@ -313,18 +313,18 @@ python pendulum_a2c.py --lr-actor 5e-4 --lr-critic 1e-3 --episodes 1200
 
 ## 📊 Benchmark
 
-**Система:** MacBook Pro M2, 16GB RAM  
-**Время обучения:** ~5-6 минут (1000 эпизодов)  
-**Память:** ~150-200 MB  
-**Решено за:** ~600-800 эпизодов (с оптимальными гиперпараметрами)
+**System:** MacBook Pro M2, 16GB RAM  
+**Training time:** ~5-6 minutes (1000 episodes)  
+**Memory:** ~150-200 MB  
+**Solved after:** ~600-800 episodes (with optimal hyperparameters)
 
 ---
 
-## 🎯 Продвинутые улучшения
+## 🎯 Advanced improvements
 
 ### 1. GAE (Generalized Advantage Estimation)
 
-Текущая реализация использует 1-step TD-error. Для улучшения можно реализовать GAE:
+The current implementation uses a 1-step TD error. To improve it, you can implement GAE:
 
 ```python
 def compute_gae(rewards, values, next_values, dones, gamma=0.99, lambda_=0.95):
@@ -339,7 +339,7 @@ def compute_gae(rewards, values, next_values, dones, gamma=0.99, lambda_=0.95):
 
 ### 2. PPO (Proximal Policy Optimization)
 
-Следующий шаг эволюции — добавить clipping для более стабильных обновлений:
+The next step in the progression is to add clipping for more stable updates:
 
 ```python
 ratio = torch.exp(new_log_prob - old_log_prob)
@@ -347,37 +347,36 @@ clipped_ratio = torch.clamp(ratio, 1 - epsilon, 1 + epsilon)
 loss = -torch.min(ratio * advantage, clipped_ratio * advantage).mean()
 ```
 
-### 3. Batch Updates
+### 3. Batch updates
 
-Вместо обновления после каждого шага, накапливать несколько переходов:
+Instead of updating after every step, accumulate several transitions first:
 
 ```python
-# Собрать N шагов
-# Затем обновить сразу всё
+# Collect N steps
+# Then update all at once
 ```
 
 ---
 
-## 🎓 Домашнее задание
+## 🎓 Homework
 
-1. **Запустите базовое обучение** и достигните reward >= -200
-2. **Сравните** разные learning rates (постройте графики Actor/Critic loss)
-3. **Экспериментируйте** с entropy coefficient (0.0, 0.001, 0.01)
-4. **Реализуйте** GAE вместо 1-step TD-error
-5. **Попробуйте** другую continuous среду (MountainCarContinuous-v0)
-6. **Сравните** A2C с REINFORCE на той же среде
-
----
-
-## 🔗 Связанные реализации
-
-- **REINFORCE на LunarLander:** `/code/11_policy_gradient/` — для сравнения
-- **Q-Learning на CartPole:** `/code/09_q_learning_bellman/` — value-based подход
-- **MC vs TD на FrozenLake:** `/code/08_mc_vs_td/` — основы TD-learning
+1. **Run the base training** and reach reward >= -200
+2. **Compare** different learning rates (plot the Actor/Critic loss curves)
+3. **Experiment** with the entropy coefficient (0.0, 0.001, 0.01)
+4. **Implement** GAE instead of the 1-step TD error
+5. **Try** a different continuous environment (MountainCarContinuous-v0)
+6. **Compare** A2C against REINFORCE on the same environment
 
 ---
 
-**Автор:** Denis Samatov, TPU / 2025  
-**Связь с курсом:** Семинар 12 — Actor-Critic и A2C  
+## 🔗 Related implementations
+
+- **REINFORCE on LunarLander:** `/code/11_policy_gradient/` — for comparison
+- **Q-Learning on CartPole:** `/code/09_q_learning_bellman/` — a value-based approach
+- **MC vs TD on FrozenLake:** `/code/08_mc_vs_td/` — TD-learning basics
+
+---
+
+**Author:** Denis Samatov, TPU / 2025  
+**Course link:** Session 12 — Actor-Critic and A2C  
 **Next steps:** PPO, SAC, DDPG, TD3
-

@@ -1,32 +1,32 @@
-# 🎯 Семинар 13: Динамическое программирование
+# 🎯 Session 13: Dynamic Programming
 
-> **Теория:** [note_13_dynamic_programming.md](../../notes/md/note_13_dynamic_programming.md)  
-> **Алгоритмы:** Policy Evaluation, Policy Iteration, Value Iteration, GPI
-
----
-
-## 📖 Обзор
-
-Этот модуль демонстрирует **классические алгоритмы динамического программирования (DP)** для решения задач обучения с подкреплением при **известной модели среды**.
-
-### Реализованные алгоритмы:
-
-1. **Policy Evaluation** — итеративное вычисление $V_\pi(s)$
-2. **Policy Iteration** — чередование evaluation и improvement
-3. **Value Iteration** — прямое применение оптимального уравнения Беллмана
-4. **Generalized Policy Iteration (GPI)** — концептуальный фреймворк
+> **Theory:** [note_13_dynamic_programming.md](../../notes/md/note_13_dynamic_programming.md)  
+> **Algorithms:** Policy Evaluation, Policy Iteration, Value Iteration, GPI
 
 ---
 
-## 🗂️ Структура файлов
+## 📖 Overview
+
+This module demonstrates **classical dynamic programming (DP) algorithms** for solving reinforcement learning problems when the **environment model is known**.
+
+### Algorithms implemented:
+
+1. **Policy Evaluation** — iteratively computing $V_\pi(s)$
+2. **Policy Iteration** — alternating evaluation and improvement
+3. **Value Iteration** — directly applying the optimal Bellman equation
+4. **Generalized Policy Iteration (GPI)** — the conceptual framework
+
+---
+
+## 🗂️ File structure
 
 ```
 dynamic_programming/
-├── gridworld_env.py          # Кастомная среда GridWorld (Gymnasium)
-├── dynamic_programming.py    # Реализация DP алгоритмов
-├── visualize_dp.py           # Визуализация V(s), политик, анимация
-├── README.md                 # Эта документация
-└── experiments/              # (Создаётся при запуске)
+├── gridworld_env.py          # Custom GridWorld environment (Gymnasium)
+├── dynamic_programming.py    # DP algorithm implementations
+├── visualize_dp.py           # Visualizing V(s), policies, animation
+├── README.md                 # This documentation
+└── experiments/              # (Created when run)
     ├── dp_comparison.png
     ├── optimal_policy.png
     └── value_iteration.gif
@@ -34,21 +34,21 @@ dynamic_programming/
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
-### 1. Установка зависимостей
+### 1. Installing dependencies
 
 ```bash
 pip install gymnasium numpy matplotlib seaborn tqdm pillow
 ```
 
-### 2. Запуск демонстрации среды
+### 2. Running the environment demo
 
 ```bash
 python gridworld_env.py
 ```
 
-**Вывод:**
+**Output:**
 ```
 GridWorld Environment Demo
 
@@ -62,18 +62,18 @@ GridWorld Environment Demo
 │ A │   │   │   │
 └───┴───┴───┴───┘
 
-Шаг 1: right
+Step 1: right
 ...
-🎉 Цель достигнута!
+🎉 Goal reached!
 ```
 
-### 3. Запуск DP алгоритмов
+### 3. Running the DP algorithms
 
 ```bash
 python dynamic_programming.py
 ```
 
-**Вывод:**
+**Output:**
 ```
 === Dynamic Programming Demo ===
 
@@ -92,66 +92,66 @@ V functions close: True
 Max difference: 0.000012
 ```
 
-### 4. Визуализация результатов
+### 4. Visualizing the results
 
 ```bash
 python visualize_dp.py
 ```
 
-**Создаёт:**
-- `dp_comparison.png` — сравнение Policy Iteration vs Value Iteration
-- `optimal_policy.png` — стрелки оптимальной политики на фоне V(s)
-- `value_iteration.gif` — анимация сходимости Value Iteration
+**Produces:**
+- `dp_comparison.png` — Policy Iteration vs Value Iteration comparison
+- `optimal_policy.png` — arrows for the optimal policy over V(s)
+- `value_iteration.gif` — an animation of Value Iteration converging
 
 ---
 
-## 📊 Детальное описание
+## 📊 Detailed description
 
-### GridWorld Environment
+### The GridWorld environment
 
-Дискретная сетка с:
-- **Состояния:** клетки (i, j)
-- **Действия:** {↑, ↓, ←, →}
-- **Динамика:** детерминированная
-- **Награды:**
-  - -1 за каждый шаг
-  - +10 за достижение Goal
-  - Остаёмся на месте при столкновении со стеной или препятствием
+A discrete grid with:
+- **States:** cells (i, j)
+- **Actions:** {↑, ↓, ←, →}
+- **Dynamics:** deterministic
+- **Rewards:**
+  - -1 per step
+  - +10 for reaching the Goal
+  - Stay in place when hitting a wall or an obstacle
 
-**Конфигурация по умолчанию:**
+**Default configuration:**
 
 ```python
 env = GridWorldEnv(
     height=4,
     width=4,
-    obstacles=[(1, 1), (2, 2)],  # Препятствия
-    goal=(0, 3),                  # Цель в правом верхнем углу
-    start=(3, 0),                 # Старт в левом нижнем углу
+    obstacles=[(1, 1), (2, 2)],  # Obstacles
+    goal=(0, 3),                  # Goal in the top-right corner
+    start=(3, 0),                 # Start in the bottom-left corner
     step_reward=-1.0,
     goal_reward=10.0,
 )
 ```
 
-**Ключевой метод:**
+**Key method:**
 
 ```python
 env.get_transition_prob(state, action)
-# Возвращает: [(prob, next_state, reward, done)]
+# Returns: [(prob, next_state, reward, done)]
 ```
 
-Этот метод предоставляет **полную модель MDP**: $P(s'|s,a)$ и $r(s,a,s')$.
+This method provides the **full MDP model**: $P(s'|s,a)$ and $r(s,a,s')$.
 
 ---
 
 ### Policy Evaluation
 
-**Уравнение:**
+**Equation:**
 
 $$
 V_{k+1}(s) = \sum_a \pi(a|s) \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_k(s') \right]
 $$
 
-**Использование:**
+**Usage:**
 
 ```python
 from dynamic_programming import policy_evaluation
@@ -170,21 +170,21 @@ V, num_iters = policy_evaluation(
 print(f"Converged in {num_iters} iterations")
 ```
 
-**Выход:**
-- `V`: Функция ценности $V_\pi(s)$ (массив размера n_states)
-- `num_iters`: Количество итераций до сходимости
+**Output:**
+- `V`: the value function $V_\pi(s)$ (an array of size n_states)
+- `num_iters`: the number of iterations to convergence
 
 ---
 
 ### Policy Iteration
 
-**Алгоритм:**
+**Algorithm:**
 
-1. **Policy Evaluation:** Вычислить $V_\pi(s)$
-2. **Policy Improvement:** Жадное улучшение $\pi'(s) = \arg\max_a Q_\pi(s,a)$
-3. Повторять до стабилизации политики
+1. **Policy Evaluation:** Compute $V_\pi(s)$
+2. **Policy Improvement:** Greedily improve $\pi'(s) = \arg\max_a Q_\pi(s,a)$
+3. Repeat until the policy stabilizes
 
-**Использование:**
+**Usage:**
 
 ```python
 from dynamic_programming import policy_iteration
@@ -200,22 +200,22 @@ policy, V, num_iters = policy_iteration(
 print(f"Optimal policy found in {num_iters} iterations")
 ```
 
-**Характеристики:**
-- Сходится за **малое число итераций** (обычно 3-10)
-- Каждая итерация **дорогая** (полная policy evaluation)
-- Гарантирует сходимость к $\pi^*$
+**Properties:**
+- Converges in a **small number of iterations** (typically 3-10)
+- Each iteration is **expensive** (a full policy evaluation)
+- Guaranteed to converge to $\pi^*$
 
 ---
 
 ### Value Iteration
 
-**Уравнение:**
+**Equation:**
 
 $$
 V_{k+1}(s) = \max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_k(s') \right]
 $$
 
-**Использование:**
+**Usage:**
 
 ```python
 from dynamic_programming import value_iteration
@@ -231,80 +231,80 @@ policy, V, num_iters = value_iteration(
 print(f"Value Iteration converged in {num_iters} iterations")
 ```
 
-**Характеристики:**
-- Больше итераций (50-200), но **дешевле за итерацию**
-- Обычно **быстрее в целом** чем Policy Iteration
-- Экспоненциальная скорость сходимости
+**Properties:**
+- More iterations (50-200), but **cheaper per iteration**
+- Usually **faster overall** than Policy Iteration
+- Exponential convergence rate
 
 ---
 
-## 📈 Эксперименты и результаты
+## 📈 Experiments and results
 
-### Эксперимент 1: Сравнение скорости сходимости
+### Experiment 1: Convergence speed comparison
 
-**Конфигурация:**
-- GridWorld 4×4
-- 2 препятствия
+**Setup:**
+- GridWorld 4x4
+- 2 obstacles
 - $\gamma = 0.9$
 - $\theta = 10^{-6}$
 
-**Результаты:**
+**Results:**
 
-| Алгоритм | Итераций | Время (мс) | Max V |
+| Algorithm | Iterations | Time (ms) | Max V |
 |----------|----------|------------|-------|
 | Policy Iteration | 4 | 150 | 5.23 |
 | Value Iteration | 47 | 80 | 5.23 |
 
-**Вывод:**
-- Value Iteration сходится быстрее по wall-clock времени
-- Policy Iteration требует меньше итераций, но каждая итерация дороже
+**Takeaway:**
+- Value Iteration converges faster in wall-clock time
+- Policy Iteration needs fewer iterations, but each iteration is more expensive
 
 ---
 
-### Эксперимент 2: Влияние $\gamma$ на оптимальную политику
+### Experiment 2: Effect of $\gamma$ on the optimal policy
 
-**Результаты:**
+**Results:**
 
-| $\gamma$ | Оптимальный путь | Длина | Интерпретация |
+| $\gamma$ | Optimal path | Length | Interpretation |
 |----------|------------------|-------|---------------|
-| 0.5 | Прямой (рискованный) | 6 шагов | Агент не ценит будущее |
-| 0.9 | Обход препятствий | 8 шагов | Сбалансированный подход |
-| 0.99 | Безопасный (длинный) | 10 шагов | Максимально избегает рисков |
+| 0.5 | Direct (risky) | 6 steps | The agent doesn't value the future much |
+| 0.9 | Avoids obstacles | 8 steps | A balanced approach |
+| 0.99 | Safe (long) | 10 steps | Maximally avoids risk |
 
-**Интуиция:**
-- Малый $\gamma$: агент "близорукий", минимизирует текущие потери
-- Большой $\gamma$: агент "дальновидный", ищет лучший долгосрочный путь
+**Intuition:**
+- Small $\gamma$: a "short-sighted" agent, minimizes current losses
+- Large $\gamma$: a "far-sighted" agent, seeks the best long-term path
 
 ---
 
-### Эксперимент 3: Асинхронные обновления
+### Experiment 3: Asynchronous updates
 
-**Сравнение:**
+**Comparison:**
 
-| Метод | Итераций | Memory |
+| Method | Iterations | Memory |
 |-------|----------|--------|
-| Синхронный | 47 | $2 \times \|S\|$ (две копии V) |
-| In-place | 35 | $\|S\|$ (одна копия V) |
+| Synchronous | 47 | $2 \times \|S\|$ (two copies of V) |
+| In-place | 35 | $\|S\|$ (one copy of V) |
 | Prioritized Sweeping | 28 | $\|S\| + $ heap |
 
-**Вывод:**
-- Асинхронные методы ускоряют сходимость
-- In-place обновления экономят память
+**Takeaway:**
+- Asynchronous methods speed up convergence
+- In-place updates save memory
 
 ---
 
-## 🎨 Визуализация
+## 🎨 Visualization
 
-### 1. Тепловая карта V(s)
+### 1. V(s) heatmap
 
 ![Value Function Heatmap](../../notes/images/dp_value_heatmap_example.png)
 
-**Интерпретация:**
-- Яркие цвета = высокая ценность (близко к цели)
-- Тёмные цвета = низкая ценность (далеко от цели)
-- Серые клетки = препятствия
+**Interpretation:**
+- Bright colors = high value (close to the goal)
+- Dark colors = low value (far from the goal)
+- Gray cells = obstacles
 
-**Код:**
+**Code:**
 
 ```python
 from visualize_dp import visualize_value_function
@@ -314,15 +314,15 @@ visualize_value_function(env, V, title="Optimal V*", save_path="V_optimal.png")
 
 ---
 
-### 2. Стрелки политики
+### 2. Policy arrows
 
 ![Policy Arrows](../../notes/images/dp_policy_arrows_example.png)
 
-**Интерпретация:**
-- Стрелки указывают направление оптимального действия в каждой клетке
-- Цель: все стрелки "стекаются" к Goal
+**Interpretation:**
+- Arrows point in the direction of the optimal action in each cell
+- Goal: all arrows "flow" toward the Goal
 
-**Код:**
+**Code:**
 
 ```python
 from visualize_dp import visualize_policy
@@ -332,15 +332,15 @@ visualize_policy(env, policy, V, title="Optimal Policy π*", save_path="policy.p
 
 ---
 
-### 3. Анимация сходимости
+### 3. Convergence animation
 
 ![Value Iteration Animation](../../notes/images/dp_animation_example.gif)
 
-**Показывает:**
-- Эволюцию $V(s)$ на каждой итерации
-- Как "волна ценности" распространяется от Goal к остальным состояниям
+**Shows:**
+- How $V(s)$ evolves on every iteration
+- How the "value wave" propagates from the Goal to the rest of the states
 
-**Код:**
+**Code:**
 
 ```python
 from visualize_dp import animate_value_iteration
@@ -350,144 +350,143 @@ animate_value_iteration(env, gamma=0.9, save_path="convergence.gif")
 
 ---
 
-## 🧪 Практические задания
+## 🧪 Hands-on exercises
 
-### Задание 1: Изменение награды
+### Exercise 1: Changing the reward
 
-**Задача:** Измените `step_reward` с -1 на -0.1 и сравните оптимальные политики.
+**Task:** Change `step_reward` from -1 to -0.1 and compare the optimal policies.
 
-**Вопросы:**
-1. Как изменилась длина оптимального пути?
-2. Почему агент стал менее осторожным?
-3. При каком `step_reward` агент предпочтёт оставаться на месте?
-
----
-
-### Задание 2: Стохастическая среда
-
-**Задача:** Модифицируйте `GridWorldEnv`, чтобы с вероятностью 0.1 агент двигался в случайном направлении.
-
-**Шаги:**
-1. Измените `get_transition_prob()` для возврата нескольких возможных переходов
-2. Запустите Policy Iteration и Value Iteration
-3. Сравните с детерминированным случаем
-
-**Ожидаемый результат:**
-- Оптимальная политика избегает клеток около препятствий
-- $V(s)$ в целом ниже (из-за неопределённости)
+**Questions:**
+1. How did the length of the optimal path change?
+2. Why did the agent become less cautious?
+3. At what `step_reward` would the agent prefer to stay in place?
 
 ---
 
-### Задание 3: Реализация Prioritized Sweeping
+### Exercise 2: A stochastic environment
 
-**Задача:** Реализуйте асинхронный Value Iteration с приоритизацией.
+**Task:** Modify `GridWorldEnv` so that, with probability 0.1, the agent moves in a random direction.
 
-**Алгоритм:**
-1. Поддерживайте priority queue состояний
-2. Приоритет = ожидаемое изменение $|V_{\text{new}}(s) - V_{\text{old}}(s)|$
-3. На каждой итерации обновляйте состояние с наибольшим приоритетом
-4. Добавляйте предшественников обновлённого состояния в очередь
+**Steps:**
+1. Change `get_transition_prob()` to return several possible transitions
+2. Run Policy Iteration and Value Iteration
+3. Compare against the deterministic case
 
-**Проверка:**
-- Должно сходиться быстрее синхронного метода
-- Особенно эффективно, если много недостижимых состояний
-
----
-
-## 🔗 Связь с другими семинарами
-
-### Откуда пришли:
-- **[note_02_rl_framework_and_mdp.md](../../notes/md/note_02_rl_framework_and_mdp.md):** Формализация MDP (состояния, действия, переходы)
-- **[note_07_bellman_equation.md](../../notes/md/note_07_bellman_equation.md):** Уравнение Беллмана — теоретическая основа DP
-
-### Куда идём:
-- **[note_08_monte_carlo_vs_td.md](../../notes/md/note_08_monte_carlo_vs_td.md):** Monte Carlo — model-free альтернатива Policy Evaluation
-- **[note_09_q_learning.md](../../notes/md/note_09_q_learning.md):** Q-Learning — model-free альтернатива Value Iteration
-- **[note_14_ppo_trpo.md](../../notes/md/note_14_ppo_trpo.md):** PPO — современный policy gradient с GPI идеями
+**Expected result:**
+- The optimal policy avoids cells near obstacles
+- $V(s)$ is lower overall (due to the uncertainty)
 
 ---
 
-## 📚 Дополнительные материалы
+### Exercise 3: Implementing Prioritized Sweeping
 
-### Рекомендуемая литература:
+**Task:** Implement asynchronous Value Iteration with prioritization.
+
+**Algorithm:**
+1. Maintain a priority queue of states
+2. Priority = the expected change $|V_{\text{new}}(s) - V_{\text{old}}(s)|$
+3. On each iteration, update the state with the highest priority
+4. Add the predecessors of the updated state to the queue
+
+**Verification:**
+- Should converge faster than the synchronous method
+- Especially effective when many states are unreachable
+
+---
+
+## 🔗 Connection to other sessions
+
+### Where this comes from:
+- **[note_02_rl_framework_and_mdp.md](../../notes/md/note_02_rl_framework_and_mdp.md):** MDP formalization (states, actions, transitions)
+- **[note_07_bellman_equation.md](../../notes/md/note_07_bellman_equation.md):** The Bellman equation — DP's theoretical foundation
+
+### Where this leads:
+- **[note_08_monte_carlo_vs_td.md](../../notes/md/note_08_monte_carlo_vs_td.md):** Monte Carlo — a model-free alternative to Policy Evaluation
+- **[note_09_q_learning.md](../../notes/md/note_09_q_learning.md):** Q-Learning — a model-free alternative to Value Iteration
+- **[note_14_ppo_trpo.md](../../notes/md/note_14_ppo_trpo.md):** PPO — a modern policy gradient method with GPI ideas
+
+---
+
+## 📚 Further materials
+
+### Recommended reading:
 
 1. **Sutton & Barto, Chapter 4: Dynamic Programming**
-   - Полное теоретическое изложение
-   - Доказательства сходимости
-   - Асинхронные методы
+   - A complete theoretical treatment
+   - Convergence proofs
+   - Asynchronous methods
 
 2. **David Silver's RL Course, Lecture 3**
-   - Видеолекция о Planning by Dynamic Programming
-   - Примеры на простых MDP
+   - A video lecture on Planning by Dynamic Programming
+   - Examples on simple MDPs
 
 3. **Maxim Lapan, Chapter 5: Tabular Learning**
-   - Практические реализации на Python
-   - Связь DP с model-free методами
+   - Practical Python implementations
+   - How DP connects to model-free methods
 
-### Онлайн-ресурсы:
+### Online resources:
 
 - [OpenAI Spinning Up: Policy Iteration](https://spinningup.openai.com/en/latest/algorithms/pi.html)
 - [Reinforcement Learning: An Introduction (HTML version)](http://incompleteideas.net/book/the-book-2nd.html)
 
 ---
 
-## 💡 Ключевые выводы
+## 💡 Key takeaways
 
-1. **DP требует модель**, но даёт оптимальное решение
-2. **GPI** — универсальный принцип, лежащий в основе всех RL-алгоритмов
-3. **Value Iteration обычно эффективнее** Policy Iteration на практике
-4. **Асинхронные методы** ускоряют сходимость и экономят память
-5. **DP редко применяется напрямую**, но его идеи используются везде
+1. **DP requires a model**, but gives an optimal solution
+2. **GPI** is the universal principle underlying every RL algorithm
+3. **Value Iteration is usually more efficient** than Policy Iteration in practice
+4. **Asynchronous methods** speed up convergence and save memory
+5. **DP is rarely applied directly**, but its ideas show up everywhere
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Проблема 1: Не сходится
+### Problem 1: Not converging
 
-**Симптомы:** `delta` остаётся большим после многих итераций
+**Symptoms:** `delta` stays large after many iterations
 
-**Причины:**
-- Слишком маленький `gamma` (< 0.8)
-- Некорректная модель среды (бесконечные циклы)
+**Causes:**
+- `gamma` too small (< 0.8)
+- An incorrect environment model (infinite loops)
 
-**Решение:**
-- Увеличьте `gamma` до 0.9-0.99
-- Проверьте, что `get_transition_prob()` корректен
-
----
-
-### Проблема 2: Memory Error
-
-**Симптомы:** Out of Memory на больших сетках
-
-**Причины:**
-- Синхронное обновление требует копирование V
-
-**Решение:**
-- Используйте in-place updates
-- Реализуйте asynchronous DP
+**Solution:**
+- Increase `gamma` to 0.9-0.99
+- Check that `get_transition_prob()` is correct
 
 ---
 
-### Проблема 3: Медленная визуализация
+### Problem 2: Memory Error
 
-**Симптомы:** `animate_value_iteration()` работает очень долго
+**Symptoms:** Out of Memory on large grids
 
-**Причины:**
-- Много итераций (большая `theta`)
-- Большая сетка
+**Causes:**
+- Synchronous updates require copying V
 
-**Решение:**
-- Увеличьте `theta` до 1e-3 для анимации
-- Сохраняйте только каждую N-ю итерацию
-
----
-
-**Автор:** Denis Samatov, TPU / 2025  
-**Связь:** [GitHub](https://github.com/denissamatov) · [Telegram](https://t.me/denissamatov)
+**Solution:**
+- Use in-place updates
+- Implement asynchronous DP
 
 ---
 
-✅ **Семинар 13 завершён!** Переходим к [Семинару 14: PPO и TRPO](../14_ppo_trpo/README.md)
+### Problem 3: Slow visualization
 
+**Symptoms:** `animate_value_iteration()` runs for a very long time
+
+**Causes:**
+- Many iterations (small `theta`)
+- A large grid
+
+**Solution:**
+- Increase `theta` to 1e-3 for the animation
+- Save only every Nth iteration
+
+---
+
+**Author:** Denis Samatov, TPU / 2025  
+**Contact:** [GitHub](https://github.com/denissamatov) · [Telegram](https://t.me/denissamatov)
+
+---
+
+✅ **Session 13 complete!** Moving on to [Session 14: PPO and TRPO](../14_ppo_trpo/README.md)
