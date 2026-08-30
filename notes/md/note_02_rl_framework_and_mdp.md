@@ -1,247 +1,247 @@
-# Теоретический конспект №2
+# Theoretical Note #2
 
-## Тема: Фреймворк обучения с подкреплением (Reinforcement Learning Framework)
+## Topic: The Reinforcement Learning Framework
 
-> **Связано с:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Введение в Deep Reinforcement Learning
-
----
-
-## 1. Общая идея цикла «агент–среда»
-
-Обучение с подкреплением (RL) — это **итеративный процесс взаимодействия** между двумя компонентами:
-
-* **Агент (Agent)** — принимает решения, выбирает действия.
-* **Среда (Environment)** — реагирует на эти действия, изменяя своё состояние и возвращая вознаграждение.
+> **Related to:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) — Introduction to Deep Reinforcement Learning
 
 ---
 
-### Цикл взаимодействия (Agent–Environment Loop)
+## 1. The general idea of the agent-environment loop
 
-На каждом временном шаге $t$:
+Reinforcement learning (RL) is an **iterative interaction process** between two components:
 
-1. Агент наблюдает текущее **состояние** среды
+* **Agent** — makes decisions, chooses actions.
+* **Environment** — reacts to those actions, changing its state and returning a reward.
+
+---
+
+### The Agent-Environment Loop
+
+At every time step $t$:
+
+1. The agent observes the environment's current **state**
    $$
    s_t \in \mathcal{S}
    $$
-   где $\mathcal{S}$ — множество всех возможных состояний.
+   where $\mathcal{S}$ is the set of all possible states.
 
-2. На основе стратегии (policy) агент выбирает **действие**
+2. Based on its policy, the agent chooses an **action**
    $$
    a_t \in \mathcal{A}(s_t)
    $$
-   где $\mathcal{A}(s_t)$ — множество допустимых действий в состоянии $s_t$.
+   where $\mathcal{A}(s_t)$ is the set of actions available in state $s_t$.
 
-3. Среда выполняет это действие и возвращает:
+3. The environment executes this action and returns:
 
-   * **Новое состояние** $s_{t+1}$
-   * **Награду** (reward)
+   * A **new state** $s_{t+1}$
+   * A **reward**
      $$
      r_{t+1} = r(s_t, a_t)
      $$
 
-4. Агент обновляет своё знание/стратегию и переходит к следующему шагу.
+4. The agent updates its knowledge/policy and moves to the next step.
 
 ---
 
-Таким образом, процесс взаимодействия можно записать как **последовательность:**
+The interaction process can thus be written as a **sequence:**
 $$
 (s_0, a_0, r_1, s_1, a_1, r_2, \dots)
 $$
 
 ---
 
-## 2. Формализация через MDP
+## 2. Formalizing it as an MDP
 
-Чтобы описывать RL-агентов математически, используется модель **Марковского процесса принятия решений (Markov Decision Process, MDP)**:
+To describe RL agents mathematically, we use the **Markov Decision Process (MDP)** model:
 
 $$
 \mathcal{M} = (\mathcal{S}, \mathcal{A}, P, r, \gamma)
 $$
 
-где:
+where:
 
-| Символ | Компонент | Описание |
+| Symbol | Component | Description |
 |:------:|-----------|----------|
-| $\mathcal{S}$ | State space | Множество состояний среды |
-| $\mathcal{A}$ | Action space | Множество действий агента |
-| $P(s' \mid s,a)$ | Transition probability | Вероятность перехода из $s$ в $s'$ при действии $a$ |
-| $r(s,a)$ | Reward function | Среднее вознаграждение при выполнении $a$ в состоянии $s$ |
-| $\gamma \in [0,1)$ | Discount factor | Коэффициент дисконтирования будущих наград |
+| $\mathcal{S}$ | State space | The set of environment states |
+| $\mathcal{A}$ | Action space | The set of agent actions |
+| $P(s' \mid s,a)$ | Transition probability | The probability of transitioning from $s$ to $s'$ under action $a$ |
+| $r(s,a)$ | Reward function | The average reward for taking $a$ in state $s$ |
+| $\gamma \in [0,1)$ | Discount factor | The discount rate for future rewards |
 
 ---
 
-## 3. Цель агента
+## 3. The agent's goal
 
-Агент стремится **максимизировать ожидаемое суммарное вознаграждение** (expected return):
+The agent seeks to **maximize the expected return** (the expected cumulative reward):
 
 $$
 G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}
 $$
 
-Интуиция:
+Intuition:
 
-* $r_{t+k+1}$ — награда через $k$ шагов;
-* $\gamma^k$ — уменьшает вклад награды с течением времени;
-* чем ближе награда, тем выше её «вес» в принятии решения.
+* $r_{t+k+1}$ — the reward $k$ steps in the future;
+* $\gamma^k$ — shrinks that reward's contribution as time passes;
+* the closer a reward is, the more it "weighs" in the decision.
 
 ---
 
-## 4. Гипотеза вознаграждения (Reward Hypothesis)
+## 4. The Reward Hypothesis
 
-> **Центральный принцип Reinforcement Learning:**
+> **Reinforcement learning's central principle:**
 >
-> Любая цель может быть представлена как **максимизация ожидаемого накопленного вознаграждения**.
+> Any goal can be represented as **maximizing expected cumulative reward**.
 
-### Формализация
+### Formalization
 
-Если агент взаимодействует со средой во времени, то в момент времени $t$ он получает последовательность наград:
+If an agent interacts with the environment over time, at time $t$ it receives a sequence of rewards:
 
 $$
 r_{t+1}, r_{t+2}, r_{t+3}, \dots
 $$
 
-Тогда его **суммарное (накопленное) вознаграждение** (return, $G_t$) определяется как:
+Its **cumulative reward** (return, $G_t$) is then defined as:
 
 $$
 G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \dots = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}
 $$
 
-где $\gamma \in [0, 1)$ — коэффициент дисконтирования, уменьшающий важность будущих вознаграждений.
+where $\gamma \in [0, 1)$ is the discount factor, which reduces the importance of future rewards.
 
-### Ключевое наблюдение
+### The key observation
 
-Эта гипотеза утверждает, что **все формы целенаправленного поведения** — будь то:
+This hypothesis claims that **every form of goal-directed behavior** — whether it's
 
-* обучение ходить, играть или торговать,
-* управление ракетой или автомобилем,
-* оптимизация стратегии инвестиций,
+* learning to walk, play, or trade,
+* controlling a rocket or a car,
+* optimizing an investment strategy,
 
-— могут быть сведены к **максимизации ожидаемого суммарного вознаграждения**.
+— can be reduced to **maximizing expected cumulative reward**.
 
-> Даже если внешне цель агента — нечто сложное (например, "приземлиться на Луну"), в терминах RL она формулируется как "получить наибольшее суммарное вознаграждение от действий, ведущих к успешной посадке".
+> Even when an agent's goal looks complex on the surface (e.g. "land on the Moon"), in RL terms it's formulated as "get the highest total reward from the actions that lead to a successful landing."
 
-### Почему это важно
+### Why this matters
 
-1. **Единая математическая основа.** Любую задачу можно выразить через награды и их ожидание, что делает RL универсальной теорией обучения через опыт.
+1. **A single mathematical foundation.** Any task can be expressed in terms of rewards and their expectation, which makes RL a universal theory of learning through experience.
 
-2. **Отсутствие прямых меток (label-free learning).** В отличие от supervised learning, агент не знает «правильного ответа» — он **сам формирует стратегию** через пробу, ошибку и награды.
+2. **Label-free learning.** Unlike supervised learning, the agent doesn't know the "right answer" — it **forms its own strategy** through trial, error, and rewards.
 
-3. **Гибкость целевой функции.** Изменив определение вознаграждения, можно полностью изменить поведение агента:
-   * вознаграждение за скорость → быстрая игра;
-   * вознаграждение за точность → осторожное поведение.
+3. **A flexible objective.** Changing how the reward is defined can completely change the agent's behavior:
+   * a reward for speed → fast play;
+   * a reward for accuracy → cautious behavior.
 
-4. **Эмерджентное поведение.** Сложные навыки часто возникают *автоматически*, как побочный результат максимизации общей награды (пример — агенты, которые научились прыгать, избегая врагов, хотя им это явно не предписывалось).
+4. **Emergent behavior.** Complex skills often arise *automatically*, as a side effect of maximizing the overall reward (e.g. agents that learn to jump to avoid enemies, even though that was never explicitly specified).
 
-### Математическая формулировка цели
+### The mathematical formulation of the goal
 
-Агент стремится найти оптимальную политику $\pi^*$, максимизирующую ожидаемую сумму дисконтированных вознаграждений:
+The agent seeks to find the optimal policy $\pi^*$ that maximizes the expected sum of discounted rewards:
 
 $$
 \pi^* = \arg\max_{\pi} \mathbb{E}_{\pi}[G_t]
 $$
 
-где $\pi(a|s)$ — политика (вероятность выбрать действие $a$ в состоянии $s$).
+where $\pi(a|s)$ is the policy (the probability of choosing action $a$ in state $s$).
 
-Агент учится выполнять последовательность действий, которая **максимизирует ожидаемое значение $G_t$**.
+The agent learns a sequence of actions that **maximizes the expected value of $G_t$**.
 
 ---
 
-## 5. Марковское свойство
+## 5. The Markov Property
 
-**Определение:**
-Процесс удовлетворяет **свойству Маркова**, если:
+**Definition:**
+A process satisfies the **Markov property** if:
 $$
 P(s_{t+1} \mid s_t, a_t, s_{t-1}, a_{t-1}, \dots, s_0, a_0) = P(s_{t+1} \mid s_t, a_t)
 $$
 
-То есть:
+In other words:
 
-> Будущее зависит **только от текущего состояния и действия**, а не от всей истории.
+> The future depends **only on the current state and action**, not on the entire history.
 
-Это свойство делает MDP (Markov Decision Process) **управляемым** — мы можем рассматривать обучение агента, опираясь лишь на текущее наблюдение.
-
----
-
-## 6. Простая иллюстрация (пример с игрой)
-
-Допустим, агент обучается играть в простую платформенную игру:
-
-1. **Состояние $s_t$** — кадр с изображением уровня.
-2. **Действие $a_t$** — движение вправо, прыжок и т. д.
-3. **Награда $r_t$** — +1 за сбор монеты, -10 за смерть.
-4. **Новое состояние $s_{t+1}$** — следующий кадр.
-
-Агент проходит через этот цикл тысячи раз, пока не выработает стратегию, **максимизирующую общую награду**.
+This property is what makes an MDP (Markov Decision Process) **tractable** — we can reason about an agent's learning based only on the current observation.
 
 ---
 
-## 7. Политика агента (Policy)
+## 6. A simple illustration (a game example)
 
-Политика — это способ, по которому агент выбирает действия:
+Suppose an agent is learning to play a simple platformer:
 
-* **Стохастическая политика:**
+1. **State $s_t$** — the current frame of the level.
+2. **Action $a_t$** — move right, jump, etc.
+3. **Reward $r_t$** — +1 for collecting a coin, -10 for dying.
+4. **New state $s_{t+1}$** — the next frame.
+
+The agent goes through this loop thousands of times, until it develops a strategy that **maximizes the total reward**.
+
+---
+
+## 7. The agent's policy
+
+A policy is how the agent chooses actions:
+
+* **Stochastic policy:**
   $$
   \pi(a|s) = P(A_t = a \mid S_t = s)
   $$
-* **Детерминированная политика:**
+* **Deterministic policy:**
   $$
   a_t = \pi(s_t)
   $$
 
-Цель обучения — найти **оптимальную политику** $\pi^*$, при которой:
+The learning goal is to find the **optimal policy** $\pi^*$, such that:
 $$
 \pi^* = \arg\max_{\pi} \mathbb{E}_{\pi}[G_t]
 $$
 
 ---
 
-## 8. Различие между состоянием и наблюдением
+## 8. The difference between state and observation
 
-Иногда агент не видит всё состояние мира (частично наблюдаемая среда):
+Sometimes the agent doesn't see the whole state of the world (a partially observable environment):
 
-| Тип среды | Что видит агент | Пример |
+| Environment type | What the agent sees | Example |
 |-----------|-----------------|--------|
-| **Полностью наблюдаемая** | Всё состояние $s_t$ | Шахматы (вся доска видна) |
-| **Частично наблюдаемая** | Лишь наблюдение $o_t$ | Super Mario (виден фрагмент уровня) |
+| **Fully observable** | The whole state $s_t$ | Chess (the whole board is visible) |
+| **Partially observable** | Only an observation $o_t$ | Super Mario (only a fragment of the level is visible) |
 
 ---
 
-## 9. Пространства действий
+## 9. Action spaces
 
-* **Дискретное пространство:** конечное число действий (влево, вправо, прыгнуть).
-* **Непрерывное пространство:** действие может принимать любое значение (например, угол поворота руля в автопилоте).
+* **Discrete space:** a finite number of actions (left, right, jump).
+* **Continuous space:** an action can take any value (e.g. the steering angle in an autopilot).
 
 ---
 
-## 10. Дисконтирование наград
+## 10. Reward discounting
 
-Чтобы не переоценивать далёкие вознаграждения, используется **дисконтирование**:
+To avoid over-valuing distant rewards, we use **discounting**:
 
 $$
 G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \dots
 $$
 
-Если $\gamma = 0.9$, то через 3 шага вес награды составит $0.9^3 = 0.729$.
+If $\gamma = 0.9$, then after 3 steps a reward's weight is $0.9^3 = 0.729$.
 
-→ Таким образом, агент **балансирует** между краткосрочными и долгосрочными выгодами.
+→ In this way, the agent **balances** short-term and long-term gains.
 
 ---
 
-## Краткий итог
+## Summary
 
-| Компонент | Обозначение | Описание |
+| Component | Symbol | Description |
 |-----------|-------------|----------|
-| Состояние | $s_t$ | описание среды |
-| Действие | $a_t$ | выбор агента |
-| Награда | $r_t$ | обратная связь |
-| Переход | $P(s' \mid s,a)$ | динамика среды |
-| Политика | $\pi(a \mid s)$ | стратегия агента |
-| Цель | $\max_\pi \mathbb{E}[G_t]$ | максимизация ожидаемого вознаграждения |
+| State | $s_t$ | a description of the environment |
+| Action | $a_t$ | the agent's choice |
+| Reward | $r_t$ | the feedback signal |
+| Transition | $P(s' \mid s,a)$ | the environment's dynamics |
+| Policy | $\pi(a \mid s)$ | the agent's strategy |
+| Goal | $\max_\pi \mathbb{E}[G_t]$ | maximizing expected reward |
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
 * RL Theory Book (Forts & Mills, 2022)

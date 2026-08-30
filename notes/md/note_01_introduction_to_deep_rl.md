@@ -1,51 +1,51 @@
-# Теоретический конспект №1
+# Theoretical Note #1
 
-## Тема: Введение в Deep Reinforcement Learning
-
----
-
-## 1. Что такое Reinforcement Learning (RL)
-
-**Reinforcement Learning (обучение с подкреплением)** — раздел машинного обучения, в котором **агент** взаимодействует со **средой (environment)**, выполняя **действия (actions)**, чтобы **максимизировать вознаграждение (reward)**, получаемое со временем.
-Главная идея:
-
-> «Учиться на собственном опыте через пробу и ошибку.»
+## Topic: Introduction to Deep Reinforcement Learning
 
 ---
 
-### Цикл Agent–Environment
+## 1. What is Reinforcement Learning (RL)
 
-1. Агент находится в состоянии среды $s_t$
-2. Он выбирает действие $a_t$
-3. Среда возвращает:
+**Reinforcement Learning** is a branch of machine learning in which an **agent** interacts with an **environment** by taking **actions**, in order to **maximize the reward** it receives over time.
+The core idea:
 
-   * новое состояние $s_{t+1}$
-   * и вознаграждение $r_{t+1}$
-4. Агент обновляет стратегию $\pi(a|s)$, чтобы **максимизировать суммарное вознаграждение**.
+> "Learn from your own experience through trial and error."
+
+---
+
+### The Agent-Environment loop
+
+1. The agent is in the environment's state $s_t$
+2. It chooses an action $a_t$
+3. The environment returns:
+
+   * a new state $s_{t+1}$
+   * and a reward $r_{t+1}$
+4. The agent updates its policy $\pi(a|s)$ to **maximize the total reward**.
 
 $$
 s_t \xrightarrow{a_t} (r_{t+1}, s_{t+1})
 $$
 
-![Цикл Agent–Environment](images/Screenshot%202025-10-24%20at%2009.59.06.png)
+![The Agent-Environment loop](images/Screenshot%202025-10-24%20at%2009.59.06.png)
 
 ---
 
-### Марковский процесс принятия решений (MDP)
+### The Markov Decision Process (MDP)
 
-Интуитивно: среда описывается состояниями, действиями, вероятностями переходов, вознаграждениями и дисконтированием. Полная формальная запись и разбор компонентов (включая связь $r(s,a)=\mathbb{E}[R_{t+1}\mid s,a]$) — в [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md).
+Intuitively: the environment is described by states, actions, transition probabilities, rewards, and discounting. The full formal definition and a breakdown of the components (including the relationship $r(s,a)=\mathbb{E}[R_{t+1}\mid s,a]$) are in [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md).
 
 ---
 
-### Цель агента
+### The agent's goal
 
-Максимизация **ожидаемой суммы дисконтированных наград**:
+Maximize the **expected sum of discounted rewards**:
 
 $$
 G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}
 $$
 
-Найти **оптимальную политику** $\pi^*(a|s)$, такую что:
+Find the **optimal policy** $\pi^*(a|s)$ such that:
 
 $$
 \pi^* = \arg\max_\pi \mathbb{E}_\pi [G_t]
@@ -53,57 +53,57 @@ $$
 
 ---
 
-## 2. Почему *Deep* Reinforcement Learning?
+## 2. Why *Deep* Reinforcement Learning?
 
-Классическое RL использовало таблицы (например, Q-таблицы), но при больших пространствах состояний это невозможно.
-Решение — **глубокие нейронные сети**, которые аппроксимируют функции ценности или политики.
+Classical RL used tables (e.g. Q-tables), but this is infeasible for large state spaces.
+The solution is **deep neural networks**, which approximate value functions or policies.
 
-| Классический RL | Deep RL |
+| Classical RL | Deep RL |
 |-----------------|---------|
-| Табличные методы | Нейронные сети |
-| Простые среды | Сложные задачи (видео, роботы) |
-| Ограниченная масштабируемость | Высокая обобщающая способность |
+| Tabular methods | Neural networks |
+| Simple environments | Complex tasks (video, robotics) |
+| Limited scalability | High generalization capacity |
 
-Примеры трансформации:
+Examples of the transformation:
 
 * Q-Learning → **Deep Q-Learning (DQN)**
 * Policy Gradient → **Deep Policy Gradient**
 * Actor-Critic → **Deep Actor-Critic**
 
-> **Подробнее о том, как и почему работают нейронные сети в RL:** см. [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md)
+> **For more on how and why neural networks work in RL:** see [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md)
 
 ---
 
-## 3. Пример: LunarLander
+## 3. Example: LunarLander
 
-Среда `LunarLander-v2` из **Gymnasium**.
+The `LunarLander-v2` environment from **Gymnasium**.
 
-**Задача:** посадить лунный модуль между флагами, используя минимальное топливо.
+**Task:** land the lunar module between the flags, using the minimum amount of fuel.
 
-**Состояние $s_t$:**
+**State $s_t$:**
 
-* координаты (x, y)
-* скорости (vx, vy)
-* угол и угловая скорость
-* флаги касания (0/1)
+* coordinates (x, y)
+* velocities (vx, vy)
+* angle and angular velocity
+* leg contact flags (0/1)
 
-**Действия $a_t$:**
+**Actions $a_t$:**
 
-1. ничего не делать
-2. включить левый двигатель
-3. включить главный двигатель
-4. включить правый двигатель
+1. do nothing
+2. fire the left engine
+3. fire the main engine
+4. fire the right engine
 
-**Вознаграждения:**
+**Rewards:**
 
-* +100...+140 — успешная посадка
-* -100 — крушение
-* -0.3 — за использование топлива
-* +10 — за касание без крушения
+* +100...+140 — a successful landing
+* -100 — a crash
+* -0.3 — for using fuel
+* +10 — for touching down without crashing
 
 ---
 
-## 4. Stable-Baselines3: реализация PPO
+## 4. Stable-Baselines3: a PPO implementation
 
 ```python
 import gymnasium as gym
@@ -117,41 +117,41 @@ model.save("lunar_lander_agent")
 
 ---
 
-## 5. Что ты освоишь
+## 5. What you'll learn
 
-* Поймёшь фундаментальные принципы RL
-* Запустишь первую среду (`LunarLander-v2`)
-* Обучишь агента с помощью PPO или DQN
-* Проверишь его поведение
-* Загрузишь модель на Hugging Face Hub
+* Understand the fundamental principles of RL
+* Run your first environment (`LunarLander-v2`)
+* Train an agent using PPO or DQN
+* Evaluate its behavior
+* Upload the model to the Hugging Face Hub
 
 ---
 
-## 6. Гипотеза вознаграждения (Reward Hypothesis)
+## 6. The Reward Hypothesis
 
-> **Reward Hypothesis — центральная идея RL:**
+> **The Reward Hypothesis — RL's central idea:**
 >
-> Любую цель можно описать как задачу **максимизации ожидаемого суммарного вознаграждения**.
+> Any goal can be described as the problem of **maximizing expected cumulative reward**.
 
-**Почему это важно?**
+**Why does this matter?**
 
-Обучение с подкреплением основано на фундаментальной идее: любую целевую задачу — будь то обучение ходить, играть в игры, управлять роботом или торговать на бирже — можно представить как максимизацию ожидаемого суммарного вознаграждения.
+Reinforcement learning rests on a fundamental idea: any goal task — whether it's learning to walk, playing games, controlling a robot, or trading stocks — can be represented as maximizing expected cumulative reward.
 
-**Ключевые следствия:**
+**Key consequences:**
 
-* **Единая математическая основа** для всех задач RL
-* **Отсутствие прямых меток** — агент сам формирует стратегию через опыт
-* **Гибкость** — изменив награды, можно полностью изменить поведение агента
+* **A single mathematical foundation** for every RL task
+* **No direct labels** — the agent forms its own strategy through experience
+* **Flexibility** — changing the rewards can completely change the agent's behavior
 
-> Даже если внешне цель агента сложна (например, "посадить лунный модуль"), в терминах RL она формулируется как "максимизировать суммарное вознаграждение от действий".
+> Even when an agent's goal looks complex on the surface (e.g. "land the lunar module"), in RL terms it's formulated as "maximize the cumulative reward from its actions."
 
-**Подробное объяснение:** математическая формализация, примеры и детальный анализ → см. раздел 4 в [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md)
+**Detailed explanation:** for the mathematical formalization, examples, and a detailed analysis, see section 4 of [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md)
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
 * Hadelin de Ponteves, *AI Crash Course* (2019)
 * RL Theory Book (Forts & Mills, 2022)
