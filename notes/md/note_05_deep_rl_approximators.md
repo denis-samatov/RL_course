@@ -1,70 +1,70 @@
-# Теоретический конспект №5
+# Theoretical Note #5
 
-## Тема: «Deep» в Deep Reinforcement Learning
+## Topic: What "Deep" Means in Deep Reinforcement Learning
 
-> **Связано с:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) · [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) · [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md) · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md)
+> **Related to:** [note_01_introduction_to_deep_rl.md](note_01_introduction_to_deep_rl.md) · [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) · [note_03_exploration_vs_exploitation.md](note_03_exploration_vs_exploitation.md) · [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md)
 
 ---
 
-## 1. Напоминание: классическое Reinforcement Learning
+## 1. A reminder: classical Reinforcement Learning
 
-До 2013–2014 годов большинство RL-алгоритмов использовали **табличные методы**.
+Before 2013-2014, most RL algorithms used **tabular methods**.
 
-**Пример — Q-Learning.**
-Он хранит таблицу $Q(s, a)$, где каждая ячейка соответствует «ценности» выполнения действия $a$ в состоянии $s$.
+**Example — Q-Learning.**
+It stores a table $Q(s, a)$, where each cell holds the "value" of taking action $a$ in state $s$.
 
 $$
 Q(s, a) \leftarrow Q(s, a) + \alpha \Big[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\Big]
 $$
 
-Эта таблица обновляется с опытом агента.
+This table is updated as the agent gains experience.
 
-![Пример Q-таблицы](images/Screenshot%202025-10-24%20at%2010.06.31.png)
-
----
-
-### Проблема табличного подхода
-
-Он **работает только при малом числе состояний**.
-
-Например:
-
-* В игре «FrozenLake» (4×4) — всего 16 состояний → ок.
-* В игре «Atari Breakout» (экран 210×160×3) →
-  $210 \times 160 \times 3 = 100{,}800$ пикселей!
-  Невозможно построить таблицу на миллионы состояний.
+![A Q-table example](images/Screenshot%202025-10-24%20at%2010.06.31.png)
 
 ---
 
-## 2. Появление "Deep" — нейросетевой аппроксиматор
+### The problem with the tabular approach
 
-Здесь начинается **революция Deep RL**
+It **only works when the number of states is small**.
 
-Вместо таблицы $Q(s,a)$,
-мы используем **глубокую нейронную сеть**, которая **аппроксимирует (приближает)** функцию $Q(s,a)$:
+For example:
+
+* In FrozenLake (4x4) — only 16 states → fine.
+* In Atari Breakout (a 210x160x3 screen) →
+  $210 \times 160 \times 3 = 100{,}800$ pixels!
+  You can't build a table over millions of states.
+
+---
+
+## 2. Enter "Deep" — a neural-network approximator
+
+This is where the **Deep RL revolution** begins.
+
+Instead of a table $Q(s,a)$,
+we use a **deep neural network** that **approximates** the function $Q(s,a)$:
 
 $$
 Q(s,a; \theta) \approx Q^*(s,a)
 $$
 
-где:
+where:
 
-* $\theta$ — параметры (веса) нейросети;
-* вход — состояние $s$ (например, картинка с игры);
-* выход — вектор из оценок $Q(s,a)$ для всех действий.
+* $\theta$ — the neural network's parameters (weights);
+* the input — state $s$ (e.g. a frame from the game);
+* the output — a vector of $Q(s,a)$ estimates for every action.
 
 ---
 
-### Пример
+### Example
 
-Вместо таблицы:
+Instead of a table:
 
-| Состояние | Действие | Q |
+| State | Action | Q |
 |-----------|----------|---|
 | s₁ | a₁ | 0.6 |
 | s₁ | a₂ | 0.2 |
 
-Теперь нейросеть получает на вход **изображение кадра** и **выдаёт значения Q для всех действий**:
+Now the neural network takes a **frame image** as input and **outputs Q values for every action**:
 
 $$
 \text{output} = [Q(s, a_1), Q(s, a_2), Q(s, a_3), \dots]
@@ -72,95 +72,95 @@ $$
 
 ---
 
-## 3. Что мы выиграли
+## 3. What we gain
 
-| Преимущество | Объяснение |
+| Benefit | Explanation |
 |--------------|------------|
-| **Масштабируемость** | Нейросеть обобщает знания — не нужно хранить Q для всех состояний. |
-| **Работа с изображениями и сенсорными данными** | Нейросеть извлекает признаки (features) автоматически. |
-| **Эффект "внутреннего представления"** | Модель учится понимать структуру среды (например, где находится игрок, цель, враги). |
-| **Интеграция с DL-инфраструктурой** | Используем PyTorch, TensorFlow, GPU — ускорение в сотни раз. |
+| **Scalability** | The network generalizes — no need to store Q for every state. |
+| **Working with images and sensor data** | The network extracts features automatically. |
+| **An "internal representation" effect** | The model learns the structure of the environment (e.g. where the player, the goal, and enemies are). |
+| **Integration with DL infrastructure** | We can use PyTorch, TensorFlow, GPUs — hundreds of times faster. |
 
 ---
 
-## 4. Пример: классический Q-Learning vs Deep Q-Learning
+## 4. Example: classical Q-Learning vs. Deep Q-Learning
 
-| Характеристика | Q-Learning | Deep Q-Learning (DQN) |
+| Property | Q-Learning | Deep Q-Learning (DQN) |
 |----------------|------------|----------------------|
-| Представление Q | Таблица | Нейросеть |
-| Тип среды | Малые дискретные | Большие, визуальные |
-| Память | Огромная | Аппроксимированная |
-| Генерализация | Нет | Да |
-| Пример | FrozenLake | Atari, CarRacing |
+| How Q is represented | A table | A neural network |
+| Environment type | Small, discrete | Large, visual |
+| Memory | Enormous | Approximated |
+| Generalization | No | Yes |
+| Example | FrozenLake | Atari, CarRacing |
 
 ---
 
-## 5. Как работает Deep Q-Learning (интуиция)
+## 5. How Deep Q-Learning works (the intuition)
 
-Мы заменяем Q-таблицу на нейросеть и обучаем её с помощью **метода обратного распространения ошибки** (backpropagation).
+We replace the Q-table with a neural network and train it via **backpropagation**.
 
-### Целевая функция потерь
+### The loss function
 
 $$
 L(\theta) = \mathbb{E}\left[\Big(y - Q(s,a;\theta)\Big)^2\right]
 $$
 
-где
+where
 
 $$
 y = r + \gamma \max_{a'} Q(s', a'; \theta^-)
 $$
 
-— целевое значение (target), вычисленное с использованием **замороженной сети** $\theta^-$.
+is the target value, computed using a **frozen network** $\theta^-$.
 
 ---
 
-### Ключевые улучшения от DeepMind (2015)
+### Key improvements from DeepMind (2015)
 
-1. **Experience Replay** — буфер памяти, где агент хранит опыт $(s, a, r, s')$ и обучается на случайных мини-батчах.
-   → уменьшает корреляцию данных.
+1. **Experience Replay** — a memory buffer where the agent stores experience $(s, a, r, s')$ and trains on random mini-batches.
+   → reduces data correlation.
 
-2. **Target Network** — копия основной сети, обновляется реже.
-   → стабилизирует обучение.
+2. **Target Network** — a copy of the main network, updated less often.
+   → stabilizes training.
 
-**Результат:**
-DeepMind обучила агента **играть в Atari 2600** без знания правил игры — только по пикселям!
-Это стало **вехой в истории RL (Nature, 2015)**.
+**Result:**
+DeepMind trained an agent to **play Atari 2600 games** without knowing the rules — from pixels alone!
+This became **a landmark moment in RL history (Nature, 2015)**.
 
 ---
 
-## 6. Когда "Deep" помогает, а когда — нет
+## 6. When "Deep" helps, and when it doesn't
 
-| Ситуация | Подход |
+| Situation | Approach |
 |----------|--------|
-| Простая дискретная среда (FrozenLake, GridWorld) | Классический RL |
-| Сложные визуальные данные (Atari, Doom, Robot sensors) | Deep RL |
-| Ограниченные данные или вычислительная мощность | Классический RL |
-| Большие состояния и непрерывные действия | Deep RL (PPO, SAC, TD3 и др.) |
+| A simple discrete environment (FrozenLake, GridWorld) | Classical RL |
+| Complex visual data (Atari, Doom, robot sensors) | Deep RL |
+| Limited data or compute | Classical RL |
+| Large state spaces and continuous actions | Deep RL (PPO, SAC, TD3, etc.) |
 
 ---
 
-## 7. Итог
+## 7. Summary
 
-> Deep Reinforcement Learning — это симбиоз **обучения с подкреплением** и **глубоких нейросетей**,
-> где нейросеть служит **аппроксиматором** для функций ценности, политики или обеих сразу.
+> Deep Reinforcement Learning is the combination of **reinforcement learning** and **deep neural networks**,
+> where the network serves as an **approximator** for the value function, the policy, or both at once.
 
 ---
 
-## Главное запомнить
+## Key takeaways
 
-| Компонент | Классический RL | Deep RL |
+| Component | Classical RL | Deep RL |
 |-----------|----------------|---------|
-| Представление состояния | Вектор/индекс | Картинка, сигнал, embedding |
-| Функция $Q(s,a)$ | Таблица | Нейросеть |
-| Аппроксимация | Нет | Есть |
-| Обучение | Табличное обновление | Градиентный спуск |
-| Применение | Простые среды | Сложные визуальные и непрерывные задачи |
+| State representation | A vector/index | An image, signal, or embedding |
+| The function $Q(s,a)$ | A table | A neural network |
+| Approximation | No | Yes |
+| Training | Tabular updates | Gradient descent |
+| Applications | Simple environments | Complex visual and continuous tasks |
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Mnih et al., *Human-level control through deep reinforcement learning* (Nature, 2015)
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)

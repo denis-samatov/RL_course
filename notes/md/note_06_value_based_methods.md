@@ -1,95 +1,95 @@
-# Теоретический конспект №6
+# Theoretical Note #6
 
-## Тема: Два типа value-based методов
+## Topic: The Two Kinds of Value-Based Methods
 
-> **Связано с:** [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based методы · [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — Deep RL
-
----
-
-## 1. Напоминание: зачем нужны value-based методы
-
-В *value-based* подходах агент **не учит политику напрямую**, как в policy-based методах. Вместо этого он учится **оценивать "ценность" состояний или действий**, а затем **выбирает наилучшее** на основе этих оценок.
-
-> Мы не говорим агенту: «делай так», мы учим его понимать: «насколько хорошо находиться в этом состоянии и что стоит сделать дальше».
+> **Related to:** [note_04_policy_vs_value_methods.md](note_04_policy_vs_value_methods.md) — Policy-Based vs Value-Based methods · [note_05_deep_rl_approximators.md](note_05_deep_rl_approximators.md) — Deep RL
 
 ---
 
-## 2. Определение value-функции
+## 1. A reminder: why value-based methods exist
 
-**Value-функция** отображает состояние (или состояние+действие) в ожидаемое **дисконтированное вознаграждение** (expected discounted return):
+In *value-based* approaches, the agent **doesn't learn the policy directly**, as in policy-based methods. Instead, it learns to **estimate the "value" of states or actions**, then **picks the best one** based on those estimates.
+
+> We don't tell the agent "do this" — we teach it to understand "how good is it to be in this state, and what's worth doing next."
+
+---
+
+## 2. Defining the value function
+
+A **value function** maps a state (or a state+action) to the expected **discounted return**:
 
 $$
 V_\pi(s) = \mathbb{E}_{\pi} \Big[ R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots \ \Big| \ S_t = s \Big].
 $$
 
-Где:
+Where:
 
-* $V_\pi(s)$ — ценность состояния $s$ при политике $\pi$;
-* $\gamma \in [0,1)$ — коэффициент дисконтирования;
-* $R_{t+1}, R_{t+2}, \dots$ — будущие награды.
+* $V_\pi(s)$ — the value of state $s$ under policy $\pi$;
+* $\gamma \in [0,1)$ — the discount factor;
+* $R_{t+1}, R_{t+2}, \dots$ — future rewards.
 
 ---
 
-## 3. Связь между политикой и value-функцией
+## 3. The relationship between a policy and a value function
 
-В value-based методах политика **не обучается напрямую**, но **всё равно существует**. Обычно это **жадная политика (greedy policy)**:
+In value-based methods, the policy **isn't learned directly**, but it **still exists**. It's usually a **greedy policy**:
 
 $$
 \pi(s) = \arg\max_a Q(s,a)
 $$
 
-То есть агент **действует на основе ценности $Q$**, выбирая действие с максимальным значением. Таким образом: **обучая value-функцию → получаем оптимальную политику**.
+That is, the agent **acts based on the value $Q$**, choosing the action with the highest value. So: **learning the value function → gets us the optimal policy**.
 
 ---
 
-## 4. Два типа value-функций
+## 4. The two kinds of value functions
 
-### 1) State-value function (V-функция)
+### 1) The state-value function (V-function)
 
 $$
 V_\pi(s) = \mathbb{E}_{\pi} [G_t \mid S_t = s]
 $$
 
-Интерпретация: «Ожидаемое суммарное вознаграждение, если я начну в состоянии $s$ и буду следовать политике $\pi$».
+Interpretation: "The expected total reward if I start in state $s$ and follow policy $\pi$."
 
-**Пример (FrozenLake):** если агент находится на клетке $s_5$, то $V(s_5) = 0.72$ означает ожидание награды $0.72$ (с учётом вероятностей и дисконтирования).
+**Example (FrozenLake):** if the agent is on cell $s_5$, then $V(s_5) = 0.72$ means it expects a reward of $0.72$ (accounting for probabilities and discounting).
 
-### 2) Action-value function (Q-функция)
+### 2) The action-value function (Q-function)
 
 $$
 Q_\pi(s,a) = \mathbb{E}_{\pi} [G_t \mid S_t = s, A_t = a]
 $$
 
-Интерпретация: «Ожидаемое суммарное вознаграждение, если я в состоянии $s$ выполню действие $a$, а затем продолжу следовать политике $\pi$».
+Interpretation: "The expected total reward if, in state $s$, I take action $a$, and then continue following policy $\pi$."
 
-**Пример:** если агент стоит на клетке $s_5$ и может пойти:
+**Example:** if the agent is standing on cell $s_5$ and can go:
 
-* вправо: $Q(s_5, \text{вправо}) = 0.75$,
-* вверх: $Q(s_5, \text{вверх}) = 0.32$,
-* вниз: $Q(s_5, \text{вниз}) = -0.1$.
+* right: $Q(s_5, \text{right}) = 0.75$,
+* up: $Q(s_5, \text{up}) = 0.32$,
+* down: $Q(s_5, \text{down}) = -0.1$.
 
-Тогда оптимальное действие:
+Then the optimal action is:
 
 $$
-a^* = \arg\max_a Q(s_5,a) = \text{вправо}.
+a^* = \arg\max_a Q(s_5,a) = \text{right}.
 $$
 
 ---
 
-## 5. Почему два типа?
+## 5. Why two kinds?
 
-| Что        | Что оценивает                    | Применение                    |
+| What | What it evaluates | Used when |
 | ---------- | -------------------------------- | ----------------------------- |
-| $$V(s)$$   | ценность состояния               | когда политика фиксирована    |
-| $$Q(s,a)$$ | ценность пары состояние–действие | когда агент выбирает действие |
+| $$V(s)$$ | the value of a state | the policy is fixed |
+| $$Q(s,a)$$ | the value of a state-action pair | the agent needs to choose an action |
 
-$Q$-функция более гибкая, потому что напрямую отвечает на вопрос: «Что делать сейчас?» Поэтому **Q-Learning строится на $Q(s,a)$**.
+The $Q$-function is more flexible, because it directly answers the question "what should I do now?" That's why **Q-Learning is built on $Q(s,a)$**.
 
 ---
 
-## 6. Как из value-функции получить политику
+## 6. Getting a policy out of a value function
 
-Даже если политика не обучается явно, она **необходима** для действий агента.
+Even though the policy isn't learned explicitly, it's **still needed** for the agent to act.
 
 ### Greedy Policy
 
@@ -102,36 +102,36 @@ $$
 $$
 \pi_\varepsilon(a\mid s) =
 \begin{cases}
-1 - \varepsilon + \dfrac{\varepsilon}{|\mathcal{A}|}, & \text{если } a = \arg\max\limits_a Q(s,a) \\
-\dfrac{\varepsilon}{|\mathcal{A}|}, & \text{иначе}
+1 - \varepsilon + \dfrac{\varepsilon}{|\mathcal{A}|}, & \text{if } a = \arg\max\limits_a Q(s,a) \\
+\dfrac{\varepsilon}{|\mathcal{A}|}, & \text{otherwise}
 \end{cases}
 $$
 
-Где $\varepsilon$ добавляет исследование (exploration), чтобы агент не застревал в локальных максимумах.
+Here $\varepsilon$ adds exploration, so the agent doesn't get stuck at local maxima.
 
 ---
 
-## 7. Связь $V$ и $Q$ через политику
+## 7. The relationship between $V$ and $Q$ through the policy
 
 $$
 V_\pi(s) = \sum_a \pi(a\mid s) \, Q_\pi(s,a)
 $$
 
-То есть ценность состояния — это **средневзвешенная ценность всех действий** в нём (взвешенная вероятностями политики).
+That is, the value of a state is the **weighted average value of every action** available in it (weighted by the policy's probabilities).
 
 ---
 
-## 8. Интуитивный пример
+## 8. An intuitive example
 
-Представим среду (например, платформер). Пусть на некоторых состояниях оценки такие:
+Imagine an environment (say, a platformer). Suppose the estimates at some states are:
 
-| Состояние   | Возможные действия | Q-ценности     | Выбор                        |
+| State | Available actions | Q-values | Choice |
 | ----------- | ------------------ | -------------- | ---------------------------- |
-| Start       | Jump, Run          | $Q=0.5,\ 0.6$ | $\Rightarrow\ \text{Run}$  |
-| Middle      | Jump, Run          | $Q=0.9,\ 0.7$ | $\Rightarrow\ \text{Jump}$ |
-| Near Finish | Jump, Run          | $Q=0.1,\ 1.0$ | $\Rightarrow\ \text{Run}$  |
+| Start | Jump, Run | $Q=0.5,\ 0.6$ | $\Rightarrow\ \text{Run}$ |
+| Middle | Jump, Run | $Q=0.9,\ 0.7$ | $\Rightarrow\ \text{Jump}$ |
+| Near Finish | Jump, Run | $Q=0.1,\ 1.0$ | $\Rightarrow\ \text{Run}$ |
 
-Итоговая политика:
+The resulting policy:
 
 $$
 \pi(s) = \arg\max_a Q(s,a)
@@ -139,50 +139,50 @@ $$
 
 ---
 
-## 9. Почему вычисление value-функции трудное
+## 9. Why computing the value function directly is hard
 
-Чтобы посчитать $V(s)$ или $Q(s,a)$ напрямую, нужно суммировать все возможные будущие награды для всех траекторий — это **экспоненциально сложно**.
+To compute $V(s)$ or $Q(s,a)$ directly, we'd need to sum over all possible future rewards across every trajectory — this is **exponentially hard**.
 
-**Пример:** при 10 шагах и 4 действиях на каждом: $4^{10} = 1{,}048{,}576$ возможных путей.
+**Example:** with 10 steps and 4 actions at each: $4^{10} = 1{,}048{,}576$ possible paths.
 
-Невозможно вычислить аналитически в реальных задачах — нужна рекуррентная аппроксимация.
+There's no way to compute this analytically for real problems — a recursive approximation is needed.
 
 ---
 
-## 10. Подготовка к уравнениям Беллмана
+## 10. Setting up the Bellman equations
 
-Чтобы избежать прямого суммирования наград, используем **рекуррентные определения**:
+To avoid summing rewards directly, we use **recursive definitions**:
 
 $$
 V_\pi(s) = \mathbb{E}_{\pi} \big[ R_{t+1} + \gamma V_\pi(S_{t+1}) \mid S_t = s \big]
 $$
 
-и аналогично для $Q$-функции:
+and similarly for the $Q$-function:
 
 $$
 Q_\pi(s,a) = \mathbb{E}_{\pi} \big[ R_{t+1} + \gamma Q_\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a \big]
 $$
 
-Идея: ценность текущего состояния равна текущей награде плюс дисконтированной ценности следующего состояния.
+The idea: the value of the current state equals the current reward plus the discounted value of the next state.
 
-Это **основа для Q-Learning, SARSA, TD(0)** и даже **DQN**.
+This is **the foundation for Q-Learning, SARSA, TD(0)**, and even **DQN**.
 
 ---
 
-## Итоговая таблица
+## Summary table
 
-| Понятие                           | Формула                                                      | Интуиция                                 |
+| Concept | Formula | Intuition |
 | --------------------------------- | ------------------------------------------------------------ | ---------------------------------------- |
-| **V-функция**                     | $V_\pi(s) = \mathbb{E}_{\pi}[G_t \mid S_t = s]$            | «насколько хорошо быть в этом состоянии» |
-| **Q-функция**                     | $Q_\pi(s,a) = \mathbb{E}_{\pi}[G_t \mid S_t = s, A_t = a]$ | «насколько хорошо сделать это действие»  |
-| **Greedy Policy**                 | $\pi(s)=\arg\max_a Q(s,a)$                                 | выбор действия с наибольшим $Q$        |
-| **$\varepsilon$-Greedy Policy** | $\pi_\varepsilon(a\mid s)$ как выше                        | компромисс исследование/использование    |
-| **Беллман-идея**                  | $V = R + \gamma V'$                                        | рекурсивное приближение ценности         |
+| **V-function** | $V_\pi(s) = \mathbb{E}_{\pi}[G_t \mid S_t = s]$ | "how good is it to be in this state" |
+| **Q-function** | $Q_\pi(s,a) = \mathbb{E}_{\pi}[G_t \mid S_t = s, A_t = a]$ | "how good is it to take this action" |
+| **Greedy Policy** | $\pi(s)=\arg\max_a Q(s,a)$ | picks the action with the highest $Q$ |
+| **$\varepsilon$-Greedy Policy** | $\pi_\varepsilon(a\mid s)$ as above | balances exploration/exploitation |
+| **The Bellman idea** | $V = R + \gamma V'$ | a recursive approximation of value |
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Hugging Face Deep RL Course, Unit 2
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
