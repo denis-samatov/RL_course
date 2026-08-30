@@ -76,7 +76,7 @@ $$
 
 - Прямой запуск файла покажет графики:
 ```bash
-python /Users/denissamatov/ML/RL/RL_course/code/08_mc_vs_td/mc_td_algorithm.py
+python code/08_mc_vs_td/mc_td_algorithm.py
 ```
 - При необходимости измените параметры в `run_comparison(...)` (внизу файла) или вызовите функцию из своего кода.
 

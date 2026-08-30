@@ -19,7 +19,7 @@ pip install moviepy
 
 ### Запуск обучения и оценки
 ```bash
-python /Users/denissamatov/ML/RL/RL_course/code/09_q_learning_bellman/q_learning_cartpole.py \
+python code/09_q_learning_bellman/q_learning_cartpole.py \
   --episodes 4000 \
   --max-steps 500 \
   --lr 0.1 \
