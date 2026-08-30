@@ -1,44 +1,44 @@
-# 🎯 Семинар 10: Deep Q-Network (DQN)
+# 🎯 Session 10: Deep Q-Network (DQN)
 
-> **Теория:** [note_10_deep_q_network.md](../../notes/md/note_10_deep_q_network.md)  
-> **Алгоритм:** Deep Q-Network с Experience Replay и Target Network
-
----
-
-## 📖 Обзор
-
-Полная реализация **Deep Q-Network (DQN)** — первого успешного применения глубоких нейронных сетей в Reinforcement Learning. DQN решает проблему масштабирования табличного Q-Learning на большие пространства состояний.
-
-**Среда:** LunarLander-v2  
-**Тип действий:** Дискретные (4 действия)  
-**Состояние:** Непрерывное (8-мерное)  
-**Цель:** Посадить лунный модуль между флагами, минимизируя расход топлива
+> **Theory:** [note_10_deep_q_network.md](../../notes/md/note_10_deep_q_network.md)  
+> **Algorithm:** Deep Q-Network with Experience Replay and a Target Network
 
 ---
 
-## 🎯 Особенности реализации
+## 📖 Overview
 
-### Алгоритм DQN
+A full implementation of **Deep Q-Network (DQN)** — the first successful application of deep neural networks to Reinforcement Learning. DQN solves the problem of scaling tabular Q-Learning to large state spaces.
 
-- ✅ **Deep Q-Network** — MLP для аппроксимации Q-функции
-- ✅ **Experience Replay** — буфер для хранения и переиспользования переходов
-- ✅ **Target Network** — стабилизация обучения через периодическое копирование весов
-- ✅ **ε-greedy exploration** — баланс между exploration и exploitation
-- ✅ **Gradient clipping** — предотвращение gradient explosion
+**Environment:** LunarLander-v2  
+**Action type:** Discrete (4 actions)  
+**State:** Continuous (8-dimensional)  
+**Goal:** Land the lunar module between the flags while minimizing fuel use
 
-### Архитектура
+---
+
+## 🎯 Implementation features
+
+### The DQN algorithm
+
+- ✅ **Deep Q-Network** — an MLP approximating the Q-function
+- ✅ **Experience Replay** — a buffer for storing and reusing transitions
+- ✅ **Target Network** — stabilizes training via periodic weight copying
+- ✅ **ε-greedy exploration** — balances exploration and exploitation
+- ✅ **Gradient clipping** — prevents gradient explosion
+
+### Architecture
 
 ```text
 State (8) → FC(128) → ReLU → FC(128) → ReLU → Q-values(4)
 ```
 
-### Ключевые формулы
+### Key formulas
 
-**TD-target:**
+**TD target:**
 
 ```text
-y = r + γ * max_a' Q_target(s', a')  (если не done)
-y = r                                 (если done)
+y = r + γ * max_a' Q_target(s', a')  (if not done)
+y = r                                 (if done)
 ```
 
 **Loss (MSE):**
@@ -47,76 +47,76 @@ y = r                                 (если done)
 L(θ) = E[(y - Q_θ(s, a))²]
 ```
 
-**Target Network Update:**
+**Target network update:**
 
 ```text
-θ_target ← θ  (каждые C шагов)
+θ_target ← θ  (every C steps)
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
-### Установка зависимостей
+### Installing dependencies
 
 ```bash
 pip install gymnasium[box2d] torch numpy matplotlib tqdm
 ```
 
-### Базовый запуск
+### Basic run
 
 ```bash
 cd code/10_deep_q_network
 python dqn_algorithm.py
 ```
 
-### Запуск с параметрами
+### Running with parameters
 
 ```bash
-# Обучение на 80k шагов
+# Train for 80k steps
 python dqn_algorithm.py --total-steps 80000
 
-# С другим learning rate
+# With a different learning rate
 python dqn_algorithm.py --lr 5e-4
 
-# С увеличенным буфером
+# With a larger buffer
 python dqn_algorithm.py --buffer-size 100000
 ```
 
-### Все параметры
+### All parameters
 
-| Параметр | По умолчанию | Описание |
+| Parameter | Default | Description |
 |----------|--------------|----------|
-| `--total-steps` | 50000 | Общее число шагов обучения |
+| `--total-steps` | 50000 | Total number of training steps |
 | `--lr` | 1e-3 | Learning rate |
 | `--gamma` | 0.99 | Discount factor |
-| `--epsilon-start` | 1.0 | Начальный epsilon |
-| `--epsilon-end` | 0.05 | Конечный epsilon |
-| `--epsilon-decay` | 0.997 | Экспоненциальный decay |
-| `--buffer-size` | 50000 | Размер replay buffer |
-| `--batch-size` | 64 | Размер mini-batch |
-| `--target-update` | 1000 | Частота обновления target network |
-| `--warmup-steps` | 2000 | Шагов до начала обучения |
+| `--epsilon-start` | 1.0 | Starting epsilon |
+| `--epsilon-end` | 0.05 | Final epsilon |
+| `--epsilon-decay` | 0.997 | Exponential decay |
+| `--buffer-size` | 50000 | Replay buffer size |
+| `--batch-size` | 64 | Mini-batch size |
+| `--target-update` | 1000 | Target network update frequency |
+| `--warmup-steps` | 2000 | Steps before training starts |
 | `--seed` | 42 | Random seed |
 
 ---
 
-## 📊 Ожидаемые результаты
+## 📊 Expected results
 
-### Сходимость
+### Convergence
 
-**Типичная кривая обучения:**
+**Typical training curve:**
 
 ```text
-Steps 0-10000:   Reward ~ -200 to 0    (жёсткие посадки)
-Steps 10000-25000: Reward ~ 0 to 150    (учится мягкой посадке)
-Steps 25000-40000: Reward ~ 150 to 220  (стабильная посадка)
-Steps 40000-50000: Reward ~ 220 to 260  (оптимальная стратегия)
+Steps 0-10000:   Reward ~ -200 to 0    (hard landings)
+Steps 10000-25000: Reward ~ 0 to 150    (learning a soft landing)
+Steps 25000-40000: Reward ~ 150 to 220  (stable landing)
+Steps 40000-50000: Reward ~ 220 to 260  (near-optimal strategy)
 ```
 
-**Критерий решения:** Средняя награда >= 200 за 100 последовательных эпизодов
+**Solved criterion:** Average reward >= 200 over 100 consecutive episodes
 
-### Пример вывода
+### Sample output
 
 ```text
 ==========================================================
@@ -139,72 +139,72 @@ Model saved to dqn_lunarlander.pt
 
 ---
 
-## 📈 Визуализация
+## 📈 Visualization
 
-После обучения автоматически генерируется график `dqn_training.png`:
+After training, `dqn_training.png` is generated automatically:
 
-- **Левая панель:** Награды по эпизодам с rolling average
-- **Правая панель:** Epsilon decay schedule
-- **Красная линия:** Порог решения (reward = 200)
+- **Left panel:** Rewards per episode with a rolling average
+- **Right panel:** Epsilon decay schedule
+- **Red line:** Solved threshold (reward = 200)
 
 ---
 
-## 🔬 Эксперименты
+## 🔬 Experiments
 
-### 1. Влияние Target Network
+### 1. Effect of the target network
 
 ```bash
-# С target network (стабильное обучение)
+# With a target network (stable training)
 python dqn_algorithm.py --target-update 1000
 
-# Без target network (нестабильное)
+# Without a target network (unstable)
 python dqn_algorithm.py --target-update 1
 ```
 
-**Ожидаемый результат:** С target network сходимость стабильнее на 30-40%
+**Expected result:** Convergence is 30-40% more stable with a target network
 
-### 2. Влияние Replay Buffer
+### 2. Effect of the replay buffer
 
 ```bash
-# Большой буфер (лучше для стабильности)
+# Large buffer (better for stability)
 python dqn_algorithm.py --buffer-size 100000
 
-# Маленький буфер (быстрее, но нестабильнее)
+# Small buffer (faster, but less stable)
 python dqn_algorithm.py --buffer-size 10000
 ```
 
-### 3. Разные расписания epsilon
+### 3. Different epsilon schedules
 
 ```bash
-# Быстрый decay (быстрее exploitation)
+# Fast decay (faster exploitation)
 python dqn_algorithm.py --epsilon-decay 0.995
 
-# Медленный decay (больше exploration)
+# Slow decay (more exploration)
 python dqn_algorithm.py --epsilon-decay 0.999
 ```
 
 ---
 
-## 🧪 Связь с теорией
+## 🧪 Connection to the theory
 
-Этот код реализует концепции из **note_10_deep_q_network.md**:
+This code implements the concepts from **note_10_deep_q_network.md**:
 
-| Концепция | Реализация в коде |
+| Concept | Implementation in code |
 |-----------|-------------------|
-| Deep Q-Network | `DQN` класс — MLP для Q(s,a) |
-| Experience Replay | `ReplayBuffer` — хранение и сэмплирование переходов |
-| Target Network | `target_net.load_state_dict(...)` каждые N шагов |
-| TD-target | `compute_td_target()` — r + γ * max Q_target |
+| Deep Q-Network | `DQN` class — an MLP for Q(s,a) |
+| Experience Replay | `ReplayBuffer` — stores and samples transitions |
+| Target Network | `target_net.load_state_dict(...)` every N steps |
+| TD target | `compute_td_target()` — r + γ * max Q_target |
 | ε-greedy | `epsilon_schedule()` + `select_action()` |
 | Gradient clipping | `torch.nn.utils.clip_grad_norm_()` |
 
-**Код:**
+**Code:**
 
-- `dqn_algorithm.py` — полная реализация DQN для LunarLander-v2
-- `homework.ipynb` — практические задания
-- `homework_solution.ipynb` — решения с комментариями
+- `dqn_algorithm.py` — the full DQN implementation for LunarLander-v2
+- `homework.ipynb` — hands-on exercises
+- `homework_solution.ipynb` — annotated solutions
 
-**Литература:**
+**References:**
 
 - Mnih et al. (2015): "Human-level control through deep reinforcement learning" (Nature DQN)
 - Van Hasselt et al. (2016): "Deep Reinforcement Learning with Double Q-learning" (Double DQN)
@@ -214,39 +214,39 @@ python dqn_algorithm.py --epsilon-decay 0.999
 
 ## 🐛 Troubleshooting
 
-### Проблема: Не сходится после 50000 шагов
+### Problem: Not converging after 50000 steps
 
-**Решение:**
+**Solution:**
 
 ```bash
-# Увеличить число шагов
+# Increase the number of steps
 python dqn_algorithm.py --total-steps 80000
 
-# Или уменьшить learning rate
+# Or lower the learning rate
 python dqn_algorithm.py --lr 5e-4 --total-steps 20000
 ```
 
-### Проблема: Нестабильное обучение
+### Problem: Unstable training
 
-**Решение:**
+**Solution:**
 
 ```bash
-# Увеличить частоту обновления target network
+# Increase how often the target network updates
 python dqn_algorithm.py --target-update 500
 
-# Увеличить размер буфера
+# Increase the buffer size
 python dqn_algorithm.py --buffer-size 100000
 ```
 
-### Проблема: Слишком медленное обучение
+### Problem: Training is too slow
 
-**Решение:**
+**Solution:**
 
 ```bash
-# Увеличить learning rate
+# Increase the learning rate
 python dqn_algorithm.py --lr 2e-3
 
-# Уменьшить batch size (больше обновлений)
+# Decrease the batch size (more updates)
 python dqn_algorithm.py --batch-size 32
 ```
 
@@ -254,22 +254,22 @@ python dqn_algorithm.py --batch-size 32
 
 ## 📊 Benchmark
 
-**Система:** MacBook Pro M2, 16GB RAM  
-**Время обучения:** ~12-15 минут (50000 шагов)  
-**Память:** ~300-400 MB  
-**Решено за:** ~40000-50000 шагов
+**System:** MacBook Pro M2, 16GB RAM  
+**Training time:** ~12-15 minutes (50000 steps)  
+**Memory:** ~300-400 MB  
+**Solved after:** ~40000-50000 steps
 
 ---
 
-## 🎓 Домашнее задание
+## 🎓 Homework
 
-1. **Запустите базовое обучение** и достигните reward >= 200
-2. **Сравните** DQN с/без target network (постройте графики)
-3. **Экспериментируйте** с размером replay buffer (10K, 50K, 100K)
-4. **Реализуйте** Double DQN (см. homework.ipynb)
-5. **Добавьте** Prioritized Experience Replay или Dueling Network
+1. **Run the base training** and reach reward >= 200
+2. **Compare** DQN with/without the target network (plot the curves)
+3. **Experiment** with the replay buffer size (10K, 50K, 100K)
+4. **Implement** Double DQN (see homework.ipynb)
+5. **Add** Prioritized Experience Replay or a Dueling Network
 
 ---
 
-**Автор:** Denis Samatov, TPU / 2025  
-**Связь с курсом:** Семинар 10 — Deep Q-Network
+**Author:** Denis Samatov, TPU / 2025  
+**Course link:** Session 10 — Deep Q-Network

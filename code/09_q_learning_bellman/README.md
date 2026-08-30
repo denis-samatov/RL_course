@@ -1,23 +1,23 @@
-## CartPole-v1 — Q-learning с беллмановским обновлением (дискретизация состояний)
+## CartPole-v1 — Q-learning with the Bellman update (state discretization)
 
-Этот модуль реализует табличный Q-learning для `CartPole-v1` с дискретизацией непрерывных наблюдений и беллмановскими обновлениями. Скрипт поддерживает обучение, сохранение Q-таблицы, оценку жадной политики и запись видео эпизодов.
+This module implements tabular Q-learning for `CartPole-v1` with discretization of the continuous observations and Bellman updates. The script supports training, saving the Q-table, evaluating the greedy policy, and recording episode videos.
 
-### Файлы
-- `q_learning_cartpole.py` — основной скрипт с агентом, тренировкой, оценкой и записью видео.
-- `cartpole/` — папка, куда сохраняются записанные видео эпизодов (создаётся автоматически при записи).
+### Files
+- `q_learning_cartpole.py` — the main script with the agent, training, evaluation, and video recording.
+- `cartpole/` — folder where recorded episode videos are saved (created automatically when recording).
 
-### Установка
-Зависимости указаны в корневом `requirements.txt`. При необходимости установите недостающие пакеты:
+### Installation
+Dependencies are listed in the root `requirements.txt`. Install any missing packages if needed:
 ```bash
 pip install gym numpy tqdm
 ```
-Для записи видео (и кодеков) потребуется поддержка видео-пайплайна (FFmpeg) и обёртка Gym для записи:
+Recording video (and its codecs) requires a video pipeline (FFmpeg) and Gym's recording wrapper:
 ```bash
 pip install moviepy
-# при необходимости установите FFmpeg в систему, например через brew: brew install ffmpeg
+# install FFmpeg on your system if needed, e.g. via brew: brew install ffmpeg
 ```
 
-### Запуск обучения и оценки
+### Running training and evaluation
 ```bash
 python code/09_q_learning_bellman/q_learning_cartpole.py \
   --episodes 4000 \
@@ -33,39 +33,39 @@ python code/09_q_learning_bellman/q_learning_cartpole.py \
   --video-dir videos/cartpole \
   --video-episodes 3
 ```
-- После обучения скрипт выведет среднюю награду за последние 100 эпизодов, выполнит оценку жадной политики и сохранит Q-таблицу.
-- Если указана `--video-dir`, будут записаны `--video-episodes` жадных эпизодов.
+- After training, the script prints the average reward over the last 100 episodes, evaluates the greedy policy, and saves the Q-table.
+- If `--video-dir` is given, `--video-episodes` greedy episodes will be recorded.
 
-### Ключевые идеи и математика
-- Непрерывное состояние $s=(x,\dot{x},\theta,\dot{\theta})$ дискретизируется по каждой координате на указанное число бинов. Индекс состояния — это развёрнутый индекс 4D-сетки.
-- Действия дискретны: $a \in \{0,1\}$.
-- Обновление Q-learning (off-policy, беллмановское):
+### Key ideas and math
+- The continuous state $s=(x,\dot{x},\theta,\dot{\theta})$ is discretized along each coordinate into the given number of bins. The state index is the flattened index of the 4D grid.
+- Actions are discrete: $a \in \{0,1\}$.
+- The Q-learning update (off-policy, Bellman-based):
 
 $$
 Q(s,a) \leftarrow Q(s,a) + \alpha\,\bigl(r + \gamma \max_{a'} Q(s',a') - Q(s,a)\bigr).
 $$
 
-- Исследование: $\varepsilon$-жадная политика с линейным спадом $\varepsilon$ от `eps_start` до `eps_end` за `eps_decay_episodes`.
+- Exploration: an $\varepsilon$-greedy policy with $\varepsilon$ linearly decayed from `eps_start` to `eps_end` over `eps_decay_episodes`.
 
-### Гиперпараметры по умолчанию
-- Эпизоды: `4000`, шаги на эпизод: `500`
-- Обучение: `lr=0.1`, `gamma=0.99`
-- Эпсилон: `1.0 → 0.05` за `2000` эпизодов
-- Бины дискретизации: `x=8, x_dot=8, theta=16, theta_dot=16`
+### Default hyperparameters
+- Episodes: `4000`, steps per episode: `500`
+- Training: `lr=0.1`, `gamma=0.99`
+- Epsilon: `1.0 → 0.05` over `2000` episodes
+- Discretization bins: `x=8, x_dot=8, theta=16, theta_dot=16`
 
-### Аргументы CLI
+### CLI arguments
 - `--episodes`, `--max-steps`, `--lr`, `--gamma`
 - `--eps-start`, `--eps-end`, `--eps-decay-episodes`
 - `--bins-x`, `--bins-xdot`, `--bins-theta`, `--bins-thetadot`
 - `--eval-episodes`
-- `--output` — путь для сохранения Q-таблицы (`.npy`)
-- `--video-dir` — папка для видео (пустая строка — отключить запись)
-- `--video-episodes` — сколько оценочных эпизодов записать
+- `--output` — path to save the Q-table to (`.npy`)
+- `--video-dir` — folder for videos (empty string disables recording)
+- `--video-episodes` — how many evaluation episodes to record
 
-### Оценка и видео
-- Оценка: после обучения вызывается `evaluate(...)`, которая гоняет жадную политику $\arg\max_a Q(s,a)$ и печатает среднюю награду и длину эпизода.
-- Видео: при указании `--video-dir` записываются эпизоды через `RecordVideo`; учтите предупреждение о перезаписи, если папка уже существует.
+### Evaluation and video
+- Evaluation: after training, `evaluate(...)` is called, which runs the greedy policy $\arg\max_a Q(s,a)$ and prints the average reward and episode length.
+- Video: when `--video-dir` is given, episodes are recorded via `RecordVideo`; note the overwrite warning if the folder already exists.
 
-### Советы
-- Увеличение числа бинов повышает размер пространства состояний: балансируйте детальность и обучаемость.
-- Если обучение нестабильно, попробуйте уменьшить `lr`, увеличить эпизоды, скорректировать диапазоны клиппинга для дискретизации.
+### Tips
+- Increasing the number of bins increases the size of the state space: balance granularity against learnability.
+- If training is unstable, try lowering `lr`, increasing the number of episodes, or adjusting the clipping ranges used for discretization.

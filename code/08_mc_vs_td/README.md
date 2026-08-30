@@ -1,21 +1,21 @@
-### FrozenLake-v1: MC-предсказание vs TD(0) под фиксированной политикой
+### FrozenLake-v1: MC prediction vs TD(0) under a fixed policy
 
-- **Среда**: `FrozenLake-v1` — дискретная MDP на решётке льда (4×4). Цель — добраться до цели, избегая провалов.
-- **Состояния**: конечное множество $\mathcal{S}$; **действия**: конечное множество $\mathcal{A}$.
-- **Динамика**: стохастическая при `is_slippery=True`. Вознаграждение $r \in \{0,1\}$ только при достижении цели.
+- **Environment**: `FrozenLake-v1` — a discrete MDP on a 4x4 ice grid. The goal is to reach the target while avoiding holes.
+- **States**: a finite set $\mathcal{S}$; **actions**: a finite set $\mathcal{A}$.
+- **Dynamics**: stochastic when `is_slippery=True`. Reward $r \in \{0,1\}$, given only on reaching the goal.
 
-Этот эксперимент не решает контрольную задачу (не ищет оптимальную стратегию), а сравнивает два подхода к оценке $V_\pi(s)$ для фиксированной политики $\pi$:
+This experiment does not solve the control problem (it does not search for an optimal policy); instead it compares two approaches to estimating $V_\pi(s)$ for a fixed policy $\pi$:
 - First-visit Monte Carlo (MC) prediction
 - Temporal Difference TD(0) prediction
 
-В коде используется равномерная политика $\pi$ (все действия равновероятны):
+The code uses a uniform policy $\pi$ (all actions equally likely):
 $$
-\pi(a\mid s) = \tfrac{1}{|\mathcal{A}|} \quad \text{для всех } s, a.
+\pi(a\mid s) = \tfrac{1}{|\mathcal{A}|} \quad \text{for all } s, a.
 $$
 
-### Постановка (оценивание $V^\pi$)
+### Problem statement (estimating $V^\pi$)
 
-Оценить функцию ценности состояний при заданной политике $\pi$:
+Estimate the state-value function under a given policy $\pi$:
 $$
 V_\pi(s) = \mathbb{E}_{\pi} \left[ \sum_{t=0}^{\infty} \gamma^t r_{t+1} \mid s_0 = s \right], \quad \gamma \in [0,1).
 $$
@@ -24,75 +24,75 @@ $$
 
 ## Monte Carlo prediction (first-visit)
 
-MC использует полные возвраты без бутстрэппинга.
-- Возврат из шага $t$:
+MC uses complete returns without bootstrapping.
+- Return from step $t$:
 $$
 G_t = \sum_{k=t}^{T-1} \gamma^{\,k-t}\, r_{k+1}.
 $$
-- Оценка первого посещения обновляет $V(s)$ только при первом появлении состояния $s$ в эпизоде, инкрементным средним:
+- The first-visit estimate updates $V(s)$ only on the first occurrence of state $s$ in an episode, via an incremental average:
 $$
 V(s) \leftarrow V(s) + \frac{1}{N(s)}\bigl(G_t - V(s)\bigr),
 $$
-где $N(s)$ — число первых посещений $s$ (счётчик по эпизодам).
+where $N(s)$ is the number of first visits to $s$ (a per-episode counter).
 
-В файле `mc_td_algorithm.py`: `monte_carlo_prediction(...)` генерирует эпизоды под $\pi$ и ведёт историю оценки стартового состояния $V(\text{start})$.
+In `mc_td_algorithm.py`: `monte_carlo_prediction(...)` generates episodes under $\pi$ and tracks the history of the starting state's estimate $V(\text{start})$.
 
 ---
 
 ## TD(0) prediction
 
-TD(0) использует бутстрэппинг по одному шагу, обновляя оценку на основе текущей оценки следующего состояния:
+TD(0) uses one-step bootstrapping, updating the estimate based on the current estimate of the next state:
 $$
 V(s) \leftarrow V(s) + \alpha\,\bigl(r + \gamma V(s') - V(s)\bigr),
 $$
-где $\alpha$ — шаг обучения.
+where $\alpha$ is the learning rate.
 
-В файле `mc_td_algorithm.py`: `td0_prediction(...)` выполняет онлайн-обновления под той же политикой $\pi$ и также копит историю $V(\text{start})$.
-
----
-
-## Что сравнивается и что выводится
-
-- **Кривые сходимости**: строится график скользящего среднего оценок $V(\text{start})$ для MC (first-visit) и TD(0), что позволяет сравнить скорость и стабильность сходимости.
-- **Карты ценностей**: рисуются тепловые карты оценок $V(s)$ для всех состояний сетки 4×4, отдельно для MC и TD(0).
+In `mc_td_algorithm.py`: `td0_prediction(...)` performs online updates under the same policy $\pi$, and likewise accumulates a history of $V(\text{start})$.
 
 ---
 
-## Параметры эксперимента
+## What's compared and what's plotted
 
-Функция `run_comparison(...)` принимает:
-- `episodes` — число эпизодов обучения (по умолчанию 5000)
-- `gamma` — дисконт-фактор
-- `alpha` — шаг обучения для TD(0)
-- `max_steps` — максимум шагов на эпизод
-- `slippery` — использовать ли стохастические переходы среды
-- `seed` — базовый seed
-
-Политика — равномерная (см. `uniform_policy(...)`). Генерация эпизодов и шаг среды используют API Gym v0.26+.
+- **Convergence curves**: a plot of the moving average of the $V(\text{start})$ estimates for MC (first-visit) and TD(0), letting you compare convergence speed and stability.
+- **Value maps**: heatmaps of the $V(s)$ estimates for every state in the 4x4 grid, for MC and TD(0) separately.
 
 ---
 
-## Как запустить
+## Experiment parameters
 
-- Прямой запуск файла покажет графики:
+The `run_comparison(...)` function takes:
+- `episodes` — number of training episodes (default 5000)
+- `gamma` — discount factor
+- `alpha` — learning rate for TD(0)
+- `max_steps` — maximum steps per episode
+- `slippery` — whether to use stochastic environment transitions
+- `seed` — base seed
+
+The policy is uniform (see `uniform_policy(...)`). Episode generation and the environment step use the Gym v0.26+ API.
+
+---
+
+## How to run
+
+- Running the file directly will show the plots:
 ```bash
 python code/08_mc_vs_td/mc_td_algorithm.py
 ```
-- При необходимости измените параметры в `run_comparison(...)` (внизу файла) или вызовите функцию из своего кода.
+- If needed, change the parameters in `run_comparison(...)` (at the bottom of the file), or call the function from your own code.
 
 ---
 
-## Ключевые отличия MC vs TD(0)
+## Key differences: MC vs TD(0)
 
-- **Источник информации**: MC — только полные возвраты; TD — бутстрэппинг через текущие оценки.
-- **Смещение/дисперсия**: MC — несмещённо, но с высокой дисперсией; TD — смещённо, но с меньшей дисперсией.
-- **Онлайн-обучение**: TD может обучаться инкрементально каждый шаг; MC требует завершённых эпизодов.
+- **Source of information**: MC uses only complete returns; TD bootstraps via current estimates.
+- **Bias/variance**: MC is unbiased but high-variance; TD is biased but lower-variance.
+- **Online learning**: TD can learn incrementally at every step; MC requires completed episodes.
 
 ---
 
-## Сопоставление с кодом
+## Mapping to the code
 
-- `monte_carlo_prediction` — first-visit MC оценивание $V^\pi$.
-- `td0_prediction` — TD(0) оценивание $V_\pi$.
-- `uniform_policy` — фиксированная равномерная политика $\pi$.
-- `run_comparison` — запуск двух методов, построение кривых $V(\text{start})$ и тепловых карт $V(s)$.
+- `monte_carlo_prediction` — first-visit MC estimation of $V^\pi$.
+- `td0_prediction` — TD(0) estimation of $V_\pi$.
+- `uniform_policy` — the fixed uniform policy $\pi$.
+- `run_comparison` — runs both methods, plotting $V(\text{start})$ curves and $V(s)$ heatmaps.

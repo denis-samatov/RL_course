@@ -1,109 +1,109 @@
-# Policy Gradient (REINFORCE) на LunarLander-v2
+# Policy Gradient (REINFORCE) on LunarLander-v2
 
-## 📘 Описание
+## 📘 Description
 
-Реализация алгоритма **REINFORCE** (Monte Carlo Policy Gradient) для задачи посадки лунного модуля. Демонстрирует **policy-based методы**, которые напрямую учат стохастическую политику через градиентный подъём по ожидаемому вознаграждению.
+An implementation of the **REINFORCE** algorithm (Monte Carlo Policy Gradient) for the lunar-lander task. Demonstrates **policy-based methods**, which directly learn a stochastic policy via gradient ascent on expected reward.
 
-**Среда:** LunarLander-v2  
-**Тип действий:** Дискретные (4 действия)  
-**Состояние:** Непрерывное (8-мерное)  
-**Цель:** Посадить лунный модуль между флагами, минимизируя расход топлива
+**Environment:** LunarLander-v2  
+**Action type:** Discrete (4 actions)  
+**State:** Continuous (8-dimensional)  
+**Goal:** Land the lunar module between the flags while minimizing fuel use
 
 ---
 
-## 🎯 Особенности реализации
+## 🎯 Implementation features
 
-### Алгоритм REINFORCE
-- ✅ **Чистый policy gradient** с Monte Carlo оценкой возврата
-- ✅ **Baseline (value function)** для снижения дисперсии градиента
-- ✅ **Entropy regularization** для поддержания exploration
-- ✅ **Gradient clipping** для стабильности обучения
-- ✅ **Advantage normalization** для улучшения сходимости
+### The REINFORCE algorithm
+- ✅ **Pure policy gradient** with a Monte Carlo return estimate
+- ✅ **Baseline (value function)** to reduce gradient variance
+- ✅ **Entropy regularization** to maintain exploration
+- ✅ **Gradient clipping** for training stability
+- ✅ **Advantage normalization** to improve convergence
 
-### Архитектура
+### Architecture
 ```
 State (8) → FC(128) → ReLU → FC(128) → ReLU → Logits(4) → Softmax → Policy
 State (8) → FC(128) → ReLU → FC(128) → ReLU → Value(1)
 ```
 
-### Ключевые формулы
+### Key formulas
 
 **Policy Gradient Theorem:**
 ```
 ∇_θ J(θ) = E_τ [ Σ_t ∇_θ log π_θ(a_t|s_t) · (G_t - V(s_t)) ]
 ```
 
-**Advantage (с baseline):**
+**Advantage (with a baseline):**
 ```
 A_t = G_t - V_φ(s_t)
-где G_t = Σ_{k=t}^T γ^(k-t) r_{k+1}
+where G_t = Σ_{k=t}^T γ^(k-t) r_{k+1}
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick start
 
-### Установка зависимостей
+### Installing dependencies
 
 ```bash
-# Из корня репозитория
+# From the repo root
 pip install -r requirements.txt
 
-# Дополнительно для LunarLander
+# Additionally, for LunarLander
 pip install gymnasium[box2d]
 ```
 
-### Базовый запуск
+### Basic run
 
 ```bash
-cd code/policy_gradient
+cd code/11_policy_gradient
 python lunarlander_reinforce.py
 ```
 
-### Запуск с параметрами
+### Running with parameters
 
 ```bash
-# Обучение на 3000 эпизодов с записью видео
+# Train for 3000 episodes with video recording
 python lunarlander_reinforce.py --episodes 3000 --record-video
 
-# Без baseline (чистый REINFORCE)
+# Without a baseline (pure REINFORCE)
 python lunarlander_reinforce.py --baseline False --episodes 2000
 
-# С увеличенной энтропией для exploration
+# With increased entropy for exploration
 python lunarlander_reinforce.py --entropy 0.05
 
-# Изменить learning rate
+# Change the learning rate
 python lunarlander_reinforce.py --lr 1e-3
 ```
 
-### Все параметры
+### All parameters
 
-| Параметр | По умолчанию | Описание |
+| Parameter | Default | Description |
 |----------|--------------|----------|
-| `--episodes` | 2000 | Число эпизодов обучения |
-| `--lr` | 3e-4 | Learning rate для политики |
-| `--baseline` | True | Использовать value baseline |
-| `--entropy` | 0.01 | Коэффициент энтропийной регуляризации |
-| `--seed` | 42 | Random seed для воспроизводимости |
-| `--record-video` | False | Записать видео лучших эпизодов |
+| `--episodes` | 2000 | Number of training episodes |
+| `--lr` | 3e-4 | Learning rate for the policy |
+| `--baseline` | True | Use the value baseline |
+| `--entropy` | 0.01 | Entropy regularization coefficient |
+| `--seed` | 42 | Random seed for reproducibility |
+| `--record-video` | False | Record video of the best episodes |
 
 ---
 
-## 📊 Ожидаемые результаты
+## 📊 Expected results
 
-### Сходимость
+### Convergence
 
-**Типичная кривая обучения:**
+**Typical training curve:**
 ```
-Episode 0-500:    Reward ~ -300 to -100 (случайные действия)
-Episode 500-1000: Reward ~ -100 to 0    (учится мягкой посадке)
-Episode 1000-1500: Reward ~ 0 to 150   (стабильная посадка)
-Episode 1500-2000: Reward ~ 150 to 250 (оптимальная стратегия)
+Episode 0-500:    Reward ~ -300 to -100 (random actions)
+Episode 500-1000: Reward ~ -100 to 0    (learning a soft landing)
+Episode 1000-1500: Reward ~ 0 to 150   (stable landing)
+Episode 1500-2000: Reward ~ 150 to 250 (near-optimal strategy)
 ```
 
-**Критерий решения:** Средняя награда >= 200 за 100 последовательных эпизодов
+**Solved criterion:** Average reward >= 200 over 100 consecutive episodes
 
-### Пример вывода
+### Sample output
 
 ```
 ==========================================================
@@ -125,90 +125,90 @@ Model saved to lunarlander_reinforce.pt
 
 ---
 
-## 📈 Визуализация
+## 📈 Visualization
 
-После обучения автоматически генерируется график `lunarlander_reinforce_training.png`:
+After training, `lunarlander_reinforce_training.png` is generated automatically:
 
-- **Левая панель:** Награды по эпизодам с rolling average
-- **Правая панель:** Длительность эпизодов
-- **Красная линия:** Порог решения (reward = 200)
+- **Left panel:** Rewards per episode with a rolling average
+- **Right panel:** Episode lengths
+- **Red line:** Solved threshold (reward = 200)
 
 ---
 
-## 🎥 Запись видео
+## 🎥 Video recording
 
 ```bash
 python lunarlander_reinforce.py --record-video
 ```
 
-Видео сохраняются в `videos/lunarlander/`:
-- 5 лучших эпизодов после обучения
-- Формат: MP4
+Videos are saved to `videos/lunarlander/`:
+- The 5 best episodes after training
+- Format: MP4
 - FPS: 30
 
 ---
 
-## 🔬 Эксперименты
+## 🔬 Experiments
 
-### 1. Влияние baseline
+### 1. Effect of the baseline
 
 ```bash
-# С baseline (низкая дисперсия)
+# With a baseline (low variance)
 python lunarlander_reinforce.py --baseline --episodes 1500
 
-# Без baseline (высокая дисперсия)
+# Without a baseline (high variance)
 python lunarlander_reinforce.py --episodes 1500
 ```
 
-**Ожидаемый результат:** С baseline сходимость быстрее на ~30-40%
+**Expected result:** Convergence is ~30-40% faster with a baseline
 
-### 2. Влияние энтропии
+### 2. Effect of entropy
 
 ```bash
-# Низкая энтропия (быстрая сходимость, риск локального минимума)
+# Low entropy (faster convergence, risk of a local minimum)
 python lunarlander_reinforce.py --entropy 0.001
 
-# Высокая энтропия (медленнее, но лучше exploration)
+# High entropy (slower, but better exploration)
 python lunarlander_reinforce.py --entropy 0.05
 ```
 
-### 3. Разные learning rates
+### 3. Different learning rates
 
 ```bash
-python lunarlander_reinforce.py --lr 1e-3  # Быстрее, но нестабильнее
-python lunarlander_reinforce.py --lr 1e-4  # Медленнее, но стабильнее
-python lunarlander_reinforce.py --lr 5e-4  # Компромисс
+python lunarlander_reinforce.py --lr 1e-3  # Faster, but less stable
+python lunarlander_reinforce.py --lr 1e-4  # Slower, but more stable
+python lunarlander_reinforce.py --lr 5e-4  # A middle ground
 ```
 
 ---
 
-## 🧪 Связь с теорией
+## 🧪 Connection to the theory
 
-Этот код реализует концепции из **note_11_policy_gradients_reinforce.md**:
+This code implements the concepts from **note_11_policy_gradients_reinforce.md**:
 
-| Концепция | Реализация в коде |
+| Concept | Implementation in code |
 |-----------|-------------------|
-| Policy Gradient Theorem | `train_episode()` → вычисление градиента |
-| REINFORCE | Полный Monte Carlo возврат `compute_returns()` |
-| Baseline | `ValueNetwork` и вычитание `values.detach()` |
+| Policy Gradient Theorem | `train_episode()` → gradient computation |
+| REINFORCE | The full Monte Carlo return, `compute_returns()` |
+| Baseline | `ValueNetwork` and subtracting `values.detach()` |
 | Advantage | `advantages = returns - values.detach()` |
 | Entropy regularization | `entropy_loss = -entropies.mean()` |
 | Gradient clipping | `torch.nn.utils.clip_grad_norm_()` |
 
 ---
 
-## 📚 Дополнительные материалы
+## 📚 Further materials
 
-**Теория:**
-- `/notes/md/note_11_policy_gradients_reinforce.md` — Policy Gradients и REINFORCE
-- `/notes/md/note_04_policy_vs_value_methods.md` — Policy-Based vs Value-Based методы
+**Theory:**
+- `/notes/md/note_11_policy_gradients_reinforce.md` — Policy Gradients and REINFORCE
+- `/notes/md/note_04_policy_vs_value_methods.md` — Policy-Based vs Value-Based methods
 
-**Код:**
-- `PolicyNetwork` — дискретная стохастическая политика
-- `ValueNetwork` — baseline для снижения дисперсии
-- `compute_returns()` — Monte Carlo оценка возврата
+**Code:**
+- `PolicyNetwork` — the discrete stochastic policy
+- `ValueNetwork` — the baseline for variance reduction
+- `compute_returns()` — the Monte Carlo return estimate
 
-**Литература:**
+**References:**
 - Williams (1992): "Simple Statistical Gradient-Following Algorithms"
 - Sutton & Barto (2020): Chapter 13 - Policy Gradient Methods
 - Schulman et al. (2015): "High-Dimensional Continuous Control Using GAE"
@@ -217,34 +217,34 @@ python lunarlander_reinforce.py --lr 5e-4  # Компромисс
 
 ## 🐛 Troubleshooting
 
-### Проблема: Не сходится после 2000 эпизодов
+### Problem: Not converging after 2000 episodes
 
-**Решение:**
+**Solution:**
 ```bash
-# Увеличить число эпизодов
+# Increase the number of episodes
 python lunarlander_reinforce.py --episodes 3000
 
-# Или уменьшить learning rate
+# Or lower the learning rate
 python lunarlander_reinforce.py --lr 1e-4 --episodes 2000
 ```
 
-### Проблема: Слишком высокая дисперсия наград
+### Problem: Reward variance is too high
 
-**Решение:**
+**Solution:**
 ```bash
-# Убедиться, что baseline включен
+# Make sure the baseline is enabled
 python lunarlander_reinforce.py --baseline
 
-# Увеличить размер сети
-# (в коде изменить hidden_sizes)
+# Increase the network size
+# (change hidden_sizes in the code)
 ```
 
-### Проблема: ImportError для box2d
+### Problem: ImportError for box2d
 
-**Решение:**
+**Solution:**
 ```bash
 pip install gymnasium[box2d]
-# или
+# or
 pip install box2d-py swig
 ```
 
@@ -252,23 +252,22 @@ pip install box2d-py swig
 
 ## 📊 Benchmark
 
-**Система:** MacBook Pro M2, 16GB RAM  
-**Время обучения:** ~12-15 минут (2000 эпизодов)  
-**Память:** ~200-300 MB  
-**Решено за:** ~1500-1800 эпизодов (с baseline)
+**System:** MacBook Pro M2, 16GB RAM  
+**Training time:** ~12-15 minutes (2000 episodes)  
+**Memory:** ~200-300 MB  
+**Solved after:** ~1500-1800 episodes (with a baseline)
 
 ---
 
-## 🎓 Домашнее задание
+## 🎓 Homework
 
-1. **Запустите базовое обучение** и достигните reward >= 200
-2. **Сравните** REINFORCE с/без baseline (постройте графики)
-3. **Экспериментируйте** с entropy coefficient (0.001, 0.01, 0.05)
-4. **Реализуйте** n-step returns вместо полного MC
-5. **Попробуйте** другую среду (CartPole-v1)
+1. **Run the base training** and reach reward >= 200
+2. **Compare** REINFORCE with/without a baseline (plot the curves)
+3. **Experiment** with the entropy coefficient (0.001, 0.01, 0.05)
+4. **Implement** n-step returns instead of the full MC return
+5. **Try** a different environment (CartPole-v1)
 
 ---
 
-**Автор:** Denis Samatov, TPU / 2025  
-**Связь с курсом:** Семинар 11 — Policy Gradient Methods
-
+**Author:** Denis Samatov, TPU / 2025  
+**Course link:** Session 11 — Policy Gradient Methods
