@@ -7,7 +7,7 @@ Implementations of dynamic programming algorithms:
 Every algorithm operates on discrete Gymnasium environments with a known model.
 """
 
-from typing import Dict, Tuple, Callable, Optional
+from typing import Dict, Tuple, Optional
 import numpy as np
 from tqdm import tqdm
 

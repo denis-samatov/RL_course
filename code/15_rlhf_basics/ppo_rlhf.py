@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 
@@ -70,7 +69,6 @@ def ppo_train(
 
 def run(beta: float, output_dir: Path) -> None:
     env = SimpleTextEnv(seed=0)
-    base = Path(__file__).parent
     ckpt_dir = output_dir
     actor_path = ckpt_dir / "sft_policy.npy"
     rm_path = ckpt_dir / "reward_model.npy"

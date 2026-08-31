@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 
-from simple_text_env import CANDIDATES, PROMPTS
 
 
 def featurize(prompt: str, response: str) -> np.ndarray:

@@ -6,7 +6,6 @@ A fully observable, deterministic environment for studying DP.
 """
 
 from typing import Tuple, List, Optional, Dict
-import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 

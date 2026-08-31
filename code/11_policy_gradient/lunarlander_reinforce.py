@@ -15,7 +15,6 @@ Key features:
 import argparse
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple
 
@@ -276,7 +275,7 @@ class REINFORCEAgent:
                     pbar.set_postfix({
                         'reward': f'{reward:.1f}',
                         'avg_100': f'{avg_reward:.1f}',
-                        'length': f'{length}'
+                        'avg_length': f'{avg_length:.1f}'
                     })
 
         return np.array(episode_rewards), np.array(episode_lengths)

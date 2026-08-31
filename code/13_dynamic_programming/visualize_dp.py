@@ -4,7 +4,7 @@ Visualizations for Dynamic Programming results.
 Produces heatmaps of V(s), policy arrows, and a convergence animation.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -15,7 +15,6 @@ from gridworld_env import GridWorldEnv
 from dynamic_programming import (
     policy_iteration,
     value_iteration,
-    policy_evaluation,
 )
 
 
@@ -114,7 +113,7 @@ def visualize_policy(
 
     # Background heatmap
     im = ax.imshow(V_grid, cmap="YlGnBu", alpha=0.6)
-    cbar = plt.colorbar(im, ax=ax, label="Value")
+    plt.colorbar(im, ax=ax, label="Value")
 
     # Arrow directions
     action_to_arrow = {
@@ -307,8 +306,8 @@ def animate_value_iteration(
 
         for i in range(env.height):
             for j in range(env.width):
-                text = ax.text(j, i, f"{V_grid[i, j]:.2f}",
-                              ha="center", va="center", color="black")
+                ax.text(j, i, f"{V_grid[i, j]:.2f}",
+                       ha="center", va="center", color="black")
 
         # Obstacles and the goal
         for obs in env.obstacles:

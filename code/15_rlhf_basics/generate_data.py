@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from simple_text_env import CANDIDATES, PROMPTS, SimpleTextEnv
 

@@ -10,7 +10,7 @@ Features:
 """
 
 from dataclasses import dataclass
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, Optional, Dict
 import numpy as np
 import torch
 import torch.nn as nn
