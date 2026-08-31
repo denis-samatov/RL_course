@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Lint algorithm/utility scripts under code/
+        run: ruff check --select E4,E7,E9,F --exclude '*.ipynb' code/
+
+  notebooks-valid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check every notebook is valid JSON
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r -d '' f; do
+            python -c "import json,sys; json.load(open(sys.argv[1]))" "$f" || { echo "Invalid notebook: $f"; fail=1; }
+          done < <(find code notes -name '*.ipynb' -print0)
+          exit $fail
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install numpy
+      - name: Run the RLHF toy pipeline end to end
+        working-directory: code/15_rlhf_basics
+        run: python train_pipeline.py
