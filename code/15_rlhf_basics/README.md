@@ -28,10 +28,16 @@ rlhf_basics/
 ├── generate_data.py        # Preference data generation
 ├── train_pipeline.py       # The full pipeline
 ├── README.md               # This documentation
-└── data/                   # (created when run)
-    ├── sft_data.json
-    └── preferences.json
+└── data/                   # All files below are reproducible via `python train_pipeline.py`
+                             # (seeded from SimpleTextEnv(seed=0), deterministic)
+    ├── sft_data.json           # From generate_data.py
+    ├── preferences.json        # From generate_data.py
+    ├── sft_policy.npy          # SFT checkpoint (sft_model.py)
+    ├── reward_model.npy        # Reward Model checkpoint (reward_model.py)
+    └── ppo_actor_beta_0.01.npy # PPO-aligned policy at the default beta (ppo_rlhf.py)
 ```
+
+The `.json`/`.npy` files under `data/` are checked in as reference example output — they're small (under 20KB total) and fully reproducible by running `python train_pipeline.py`, so there's nothing hidden or hand-edited about them.
 
 ---
 
