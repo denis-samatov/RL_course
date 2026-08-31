@@ -3,6 +3,11 @@
 [![CI](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+A practical, code-first reinforcement learning course for anyone who wants to build and
+run RL algorithms themselves rather than only read about them — from tabular Q-learning
+through policy gradients to RLHF (PPO, DPO), with runnable sessions in Python, Gymnasium,
+and PyTorch. Licensed under [MIT](LICENSE).
+
 > **Goal:** Understand and implement the core reinforcement learning (RL) algorithms —
 > from MDPs and the Bellman equations through RLHF (PPO, DPO).
 > **Format:** 10 one-hour sessions, with code in Python, Gymnasium, and PyTorch.
