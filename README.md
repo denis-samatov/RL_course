@@ -1,5 +1,8 @@
 # 🎓 Reinforcement Learning — Practical Course (2025)
 
+[![CI](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 > **Goal:** Understand and implement the core reinforcement learning (RL) algorithms —
 > from MDPs and the Bellman equations through RLHF (PPO, DPO).
 > **Format:** 10 one-hour sessions, with code in Python, Gymnasium, and PyTorch.
