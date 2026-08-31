@@ -1,89 +1,89 @@
-# Теоретический конспект №12
+# Theoretical Note #12
 
-## Тема: Actor-Critic методы и A2C
+## Topic: Actor-Critic Methods and A2C
 
-> **Связано с:** [note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md) — Policy Gradients и REINFORCE · [note_09_q_learning.md](note_09_q_learning.md) — Q-Learning · [note_10_deep_q_network.md](note_10_deep_q_network.md) — Deep Q-Network
+> **Related to:** [note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md) — Policy Gradients and REINFORCE · [note_09_q_learning.md](note_09_q_learning.md) — Q-Learning · [note_10_deep_q_network.md](note_10_deep_q_network.md) — Deep Q-Network
 
 ---
 
-## 1. Мотивация: объединение Policy-Based и Value-Based подходов
+## 1. Motivation: combining Policy-Based and Value-Based approaches
 
-В предыдущих конспектах мы изучили два основных подхода:
+In earlier notes we studied two main approaches:
 
-| Подход | Что учит | Преимущества | Недостатки |
+| Approach | What it learns | Advantages | Drawbacks |
 |--------|----------|--------------|------------|
-| **Value-Based** (DQN) | Q-функцию $Q(s,a)$ | Низкая дисперсия, sample-efficient | Только дискретные действия, детерминированная политика |
-| **Policy-Based** (REINFORCE) | Политику $\pi_\theta(a\|s)$ | Непрерывные действия, стохастическая политика | Высокая дисперсия, медленная сходимость |
+| **Value-Based** (DQN) | The Q-function $Q(s,a)$ | Low variance, sample-efficient | Discrete actions only, deterministic policy |
+| **Policy-Based** (REINFORCE) | The policy $\pi_\theta(a\|s)$ | Continuous actions, stochastic policy | High variance, slow convergence |
 
-**Идея Actor-Critic:** объединить оба подхода, чтобы получить преимущества каждого и нивелировать недостатки.
+**The Actor-Critic idea:** combine both approaches to get the advantages of each while offsetting their drawbacks.
 
 ---
 
-## 2. Архитектура Actor-Critic
+## 2. The Actor-Critic architecture
 
-### Два компонента
+### Two components
 
-1. **Actor (актёр)** — политика $\pi_\theta(a|s)$, которая выбирает действия.
-2. **Critic (критик)** — value-функция $V_\phi(s)$ или $Q_\phi(s,a)$, которая оценивает качество действий.
+1. **Actor** — the policy $\pi_\theta(a|s)$, which chooses actions.
+2. **Critic** — a value function $V_\phi(s)$ or $Q_\phi(s,a)$, which evaluates the quality of actions.
 
-### Как они взаимодействуют
+### How they interact
 
 ```
         ┌─────────────────────────┐
-        │      Среда (Env)        │
+        │      Environment (Env)   │
         └───────────┬─────────────┘
                     │ state, reward
                     ↓
         ┌─────────────────────────┐
-        │   Actor (π_θ)           │ ← Выбирает действие
-        │   "Что делать?"         │
+        │   Actor (π_θ)           │ ← Chooses the action
+        │   "What should I do?"   │
         └───────────┬─────────────┘
                     │ action
                     ↓
         ┌─────────────────────────┐
-        │   Critic (V_φ или Q_φ)  │ ← Оценивает действие
-        │   "Насколько хорошо?"   │
+        │   Critic (V_φ or Q_φ)   │ ← Evaluates the action
+        │   "How good was that?"  │
         └─────────────────────────┘
                     │
-                    ↓ TD-error / Advantage
+                    ↓ TD error / Advantage
         ┌─────────────────────────┐
-        │   Обновление параметров │
+        │   Parameter update       │
         │   θ ← θ + α∇J           │
         │   φ ← φ - α∇L           │
         └─────────────────────────┘
 ```
 
-**Интуиция:**
+**Intuition:**
 
-> Actor учится принимать решения, а Critic учится их оценивать. Critic помогает Actor'у понять, какие действия хороши, а какие нет.
+> The Actor learns to make decisions, and the Critic learns to evaluate them. The Critic helps the Actor understand which actions are good and which aren't.
 
 ---
 
-## 3. Математическая формализация
+## 3. Mathematical formalization
 
-### Обновление Actor'а (политики)
+### The Actor (policy) update
 
-Используем Policy Gradient, но вместо полного возврата $G_t$ используем **оценку Critic'а**:
+We use Policy Gradient, but instead of the full return $G_t$ we use the **Critic's estimate**:
 
 $$
 \nabla_\theta J(\theta) = \mathbb{E} \left[ \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \delta_t \right]
 $$
 
-где $\delta_t$ — **TD-ошибка** (temporal difference error):
+where $\delta_t$ is the **TD error** (temporal difference error):
 
 $$
 \delta_t = r_{t+1} + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
 $$
 
-### Обновление Critic'а (value-функции)
+### The Critic (value function) update
 
-Минимизируем квадратичную ошибку между предсказанием и целью:
+We minimize the squared error between the prediction and the target:
 
 $$
 L(\phi) = \mathbb{E} \left[ \big(r_{t+1} + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)\big)^2 \right]
 $$
 
-Градиент:
+The gradient:
 
 $$
 \nabla_\phi L(\phi) = - \mathbb{E} \left[ \delta_t \cdot \nabla_\phi V_\phi(s_t) \right]
@@ -91,56 +91,56 @@ $$
 
 ---
 
-## 4. Почему Actor-Critic лучше REINFORCE?
+## 4. Why is Actor-Critic better than REINFORCE?
 
-### Сравнение градиентов
+### Comparing the gradients
 
-| Метод | Градиент | Оценка |
+| Method | Gradient | Estimate |
 |-------|----------|--------|
-| **REINFORCE** | $\nabla \log \pi \cdot G_t$ | Полный возврат $G_t$ (высокая дисперсия) |
-| **Actor-Critic** | $\nabla \log \pi \cdot \delta_t$ | TD-ошибка $\delta_t$ (низкая дисперсия) |
+| **REINFORCE** | $\nabla \log \pi \cdot G_t$ | The full return $G_t$ (high variance) |
+| **Actor-Critic** | $\nabla \log \pi \cdot \delta_t$ | The TD error $\delta_t$ (low variance) |
 
-### Преимущества TD-ошибки
+### The advantages of the TD error
 
-1. **Меньше дисперсия** — $\delta_t$ основана на одном шаге, а не на всём эпизоде.
-2. **Онлайн обучение** — можно обновлять параметры после каждого шага, не дожидаясь конца эпизода.
-3. **Бутстрэппинг** — используем оценку $V_\phi(s_{t+1})$ вместо полного возврата.
+1. **Lower variance** — $\delta_t$ is based on a single step, not the whole episode.
+2. **Online learning** — parameters can be updated after every step, without waiting for the episode to end.
+3. **Bootstrapping** — we use the estimate $V_\phi(s_{t+1})$ instead of the full return.
 
 ---
 
-## 5. Advantage Actor-Critic (A2C): улучшенная версия
+## 5. Advantage Actor-Critic (A2C): an improved version
 
-### Проблема TD-ошибки
+### The problem with the TD error
 
-TD-ошибка $\delta_t = r + \gamma V(s') - V(s)$ может быть смещённой, если $V_\phi$ ещё плохо обучена.
+The TD error $\delta_t = r + \gamma V(s') - V(s)$ can be biased if $V_\phi$ hasn't been well trained yet.
 
-### Решение: Advantage Function
+### The solution: the Advantage Function
 
-Вместо TD-ошибки используем **функцию преимущества** (advantage):
+Instead of the TD error, we use the **advantage function**:
 
 $$
 A_t = Q(s_t, a_t) - V(s_t)
 $$
 
-Интуиция:
+Intuition:
 
-> «Насколько действие $a_t$ **лучше среднего** для состояния $s_t$?»
+> "How much **better than average** was action $a_t$ for state $s_t$?"
 
-### Оценка Advantage через TD-ошибку
+### Estimating Advantage via the TD error
 
-Поскольку $Q(s,a) = r + \gamma V(s')$, можно записать:
+Since $Q(s,a) = r + \gamma V(s')$, we can write:
 
 $$
 A_t \approx \delta_t = r_{t+1} + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
 $$
 
-Это **одношаговая оценка advantage** (1-step advantage).
+This is the **one-step advantage estimate**.
 
 ---
 
 ## 6. Generalized Advantage Estimation (GAE)
 
-Для дальнейшего снижения дисперсии и смещения используют **GAE** — взвешенную комбинацию n-step advantage'ей.
+To further reduce variance and bias, a weighted combination of n-step advantages, called **GAE**, is used.
 
 ### N-step advantage
 
@@ -148,51 +148,51 @@ $$
 A_t^{(n)} = \sum_{i=0}^{n-1} \gamma^i r_{t+i+1} + \gamma^n V(s_{t+n}) - V(s_t)
 $$
 
-### GAE формула
+### The GAE formula
 
 $$
 A_t^{\text{GAE}(\lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}
 $$
 
-где $\lambda \in [0,1]$ — параметр компромисса:
+where $\lambda \in [0,1]$ is the trade-off parameter:
 
-* $\lambda = 0$ → 1-step TD (низкая дисперсия, высокое смещение).
-* $\lambda = 1$ → Monte Carlo (высокая дисперсия, низкое смещение).
+* $\lambda = 0$ → 1-step TD (low variance, high bias).
+* $\lambda = 1$ → Monte Carlo (high variance, low bias).
 
-**Типичное значение:** $\lambda = 0.95$.
+**Typical value:** $\lambda = 0.95$.
 
 ---
 
-## 7. Алгоритм A2C (Advantage Actor-Critic)
+## 7. The A2C algorithm (Advantage Actor-Critic)
 
-### Псевдокод
+### Pseudocode
 
-1. Инициализировать:
-   * Actor $\pi_\theta$ (нейросеть для политики).
-   * Critic $V_\phi$ (нейросеть для value-функции).
+1. Initialize:
+   * The Actor $\pi_\theta$ (a policy network).
+   * The Critic $V_\phi$ (a value-function network).
 
-2. Для каждого шага $t = 1, 2, \dots$:
-   1. Наблюдать состояние $s_t$.
-   2. Выбрать действие $a_t \sim \pi_\theta(\cdot|s_t)$.
-   3. Выполнить $a_t$, получить $r_{t+1}, s_{t+1}$.
-   4. Вычислить TD-ошибку:
+2. For every step $t = 1, 2, \dots$:
+   1. Observe state $s_t$.
+   2. Choose action $a_t \sim \pi_\theta(\cdot|s_t)$.
+   3. Take $a_t$, get $r_{t+1}, s_{t+1}$.
+   4. Compute the TD error:
       $$
       \delta_t = r_{t+1} + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
       $$
-   5. Обновить Actor:
+   5. Update the Actor:
       $$
       \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \delta_t
       $$
-   6. Обновить Critic:
+   6. Update the Critic:
       $$
       \phi \leftarrow \phi - \alpha_\phi \cdot \nabla_\phi \big(V_\phi(s_t) - (r_{t+1} + \gamma V_\phi(s_{t+1}))\big)^2
       $$
 
 ---
 
-## 8. Архитектура нейросетей в A2C
+## 8. Neural network architectures in A2C
 
-### Раздельные сети (separate networks)
+### Separate networks
 
 ```python
 class Actor(nn.Module):
@@ -222,15 +222,15 @@ class Critic(nn.Module):
         return value
 ```
 
-### Общий энкодер (shared backbone)
+### A shared backbone
 
-Более эффективный вариант — использовать общие слои для извлечения признаков:
+A more efficient variant is to use shared layers for feature extraction:
 
 ```python
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
-        # Общий энкодер
+        # The shared encoder
         self.shared = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
@@ -253,7 +253,7 @@ class ActorCritic(nn.Module):
 
 ---
 
-## 9. Практический пример: A2C на CartPole
+## 9. A hands-on example: A2C on CartPole
 
 ```python
 import torch
@@ -261,14 +261,14 @@ import torch.nn as nn
 import torch.optim as optim
 import gymnasium as gym
 
-# Инициализация
+# Setup
 env = gym.make('CartPole-v1')
 model = ActorCritic(state_dim=4, action_dim=2)
 
-# Для лучшего контроля можно использовать раздельные оптимизаторы:
+# For finer control you could use separate optimizers:
 # optimizer_actor = optim.Adam(model.actor.parameters(), lr=3e-4)
 # optimizer_critic = optim.Adam(model.critic.parameters(), lr=1e-3)
-# Здесь для простоты используем один:
+# Here, for simplicity, we use a single one:
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 gamma = 0.99
 
@@ -283,15 +283,15 @@ for episode in range(1000):
         # Forward pass
         policy, value = model(state_tensor)
         
-        # Выбор действия
+        # Choosing the action
         action = torch.multinomial(policy, 1).item()
         
-        # Шаг в среде
+        # A step in the environment
         next_state, reward, done, truncated, _ = env.step(action)
         done = done or truncated
         episode_reward += reward
         
-        # Вычисление TD-ошибки
+        # Computing the TD error
         next_state_tensor = torch.FloatTensor(next_state).unsqueeze(0)
         with torch.no_grad():
             _, next_value = model(next_state_tensor)
@@ -299,13 +299,13 @@ for episode in range(1000):
         td_target = reward + gamma * next_value * (1 - int(done))
         td_error = td_target - value
         
-        # Лоссы
+        # Losses
         actor_loss = -torch.log(policy[0, action]) * td_error.detach()
         critic_loss = td_error.pow(2)
         
         loss = actor_loss + 0.5 * critic_loss
         
-        # Обновление
+        # Update
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -318,46 +318,46 @@ for episode in range(1000):
 
 ---
 
-## 10. Энтропийная регуляризация в A2C
+## 10. Entropy regularization in A2C
 
-Чтобы политика не становилась слишком детерминированной, добавляют **энтропийный бонус**:
+To keep the policy from becoming too deterministic, an **entropy bonus** is added:
 
 $$
 L_{\text{total}} = L_{\text{actor}} + c_1 \cdot L_{\text{critic}} - c_2 \cdot H(\pi)
 $$
 
-где энтропия политики:
+where the policy's entropy is:
 
 $$
 H(\pi_\theta(\cdot|s)) = - \sum_a \pi_\theta(a|s) \log \pi_\theta(a|s)
 $$
 
-**Гиперпараметры:**
-* $c_1 = 0.5$ (вес critic loss)
-* $c_2 = 0.01$ (вес энтропии)
+**Hyperparameters:**
+* $c_1 = 0.5$ (the critic loss weight)
+* $c_2 = 0.01$ (the entropy weight)
 
 ```python
-# Добавление энтропии к лоссу
+# Adding entropy to the loss
 entropy = -(policy * torch.log(policy + 1e-8)).sum(dim=-1)
 loss = actor_loss + 0.5 * critic_loss - 0.01 * entropy
 ```
 
 ---
 
-## 11. A3C: Асинхронная версия A2C
+## 11. A3C: the asynchronous version of A2C
 
-**A3C (Asynchronous Advantage Actor-Critic)** — расширение A2C с параллельным обучением.
+**A3C (Asynchronous Advantage Actor-Critic)** extends A2C with parallel training.
 
-### Ключевые отличия
+### Key differences
 
-| Характеристика | A2C | A3C |
+| Property | A2C | A3C |
 |----------------|-----|-----|
-| Параллелизм | Один процесс | Множество параллельных процессов (workers) |
-| Обновление | Синхронное | Асинхронное |
-| Буфер опыта | Не требуется | Не требуется |
-| Скорость | Средняя | Высокая (за счёт параллелизма) |
+| Parallelism | A single process | Many parallel processes (workers) |
+| Updates | Synchronous | Asynchronous |
+| Experience buffer | Not needed | Not needed |
+| Speed | Moderate | High (thanks to parallelism) |
 
-### Схема работы A3C
+### How A3C works
 
 ```
 Global Network (θ_global, φ_global)
@@ -369,144 +369,144 @@ Worker 1 Worker 2 ... Worker N
    Env1  Env2  ...  EnvN
     │    │    │    │    │
     └────┴────┴────┴────┘
-         Асинхронные градиенты → Global Network
+         Asynchronous gradients → Global Network
 ```
 
-Каждый worker:
-1. Копирует параметры из глобальной сети.
-2. Собирает траекторию в своей среде.
-3. Вычисляет градиенты.
-4. Обновляет глобальную сеть.
+Each worker:
+1. Copies the parameters from the global network.
+2. Collects a trajectory in its own environment.
+3. Computes gradients.
+4. Updates the global network.
 
 ---
 
-## 12. Сравнение методов: DQN vs REINFORCE vs A2C
+## 12. Comparing methods: DQN vs REINFORCE vs A2C
 
-| Характеристика | DQN | REINFORCE | A2C |
+| Property | DQN | REINFORCE | A2C |
 |----------------|-----|-----------|-----|
-| Тип метода | Value-based | Policy-based | Actor-Critic |
-| Пространство действий | Дискретное | Любое | Любое |
-| Дисперсия | Низкая | Высокая | Средняя |
-| Sample efficiency | Высокая (off-policy) | Низкая (on-policy) | Средняя (on-policy) |
-| Стабильность | Нестабильна (overestimation) | Медленная сходимость | Более стабильна |
-| Требует replay buffer | Да | Нет | Нет |
-| Сходимость | К оптимальной Q-функции | К локальному оптимуму политики | К локальному оптимуму политики |
+| Method type | Value-based | Policy-based | Actor-Critic |
+| Action space | Discrete | Any | Any |
+| Variance | Low | High | Moderate |
+| Sample efficiency | High (off-policy) | Low (on-policy) | Moderate (on-policy) |
+| Stability | Unstable (overestimation) | Slow convergence | More stable |
+| Requires a replay buffer | Yes | No | No |
+| Convergence | To the optimal Q-function | To a local policy optimum | To a local policy optimum |
 
 ---
 
-## 13. Когда использовать A2C
+## 13. When to use A2C
 
-### Подходит для:
+### Well suited for:
 
-* **Непрерывные пространства действий** (управление роботами, автопилоты).
-* **Задачи с длинными эпизодами** (не нужно ждать конца эпизода для обновления).
-* **Стохастические среды** (где детерминированная политика неоптимальна).
-* **Задачи, требующие exploration** (энтропийная регуляризация).
+* **Continuous action spaces** (robot control, autopilots).
+* **Long-episode tasks** (no need to wait for the episode to end before updating).
+* **Stochastic environments** (where a deterministic policy is suboptimal).
+* **Tasks requiring exploration** (via entropy regularization).
 
-### Не подходит для:
+### Not well suited for:
 
-* Задачи с очень высокой дисперсией наград (лучше использовать DQN с replay buffer).
-* Задачи, требующие максимальной sample efficiency (off-policy методы лучше).
+* Tasks with very high reward variance (a replay-buffer-based DQN is a better fit).
+* Tasks requiring maximal sample efficiency (off-policy methods are better).
 
 ---
 
-## 14. Практические советы по обучению A2C
+## 14. Practical tips for training A2C
 
-### Гиперпараметры
+### Hyperparameters
 
-| Параметр | Типичное значение | Назначение |
+| Parameter | Typical value | Purpose |
 |----------|-------------------|------------|
-| Learning rate (Actor) | $3 \times 10^{-4}$ | Скорость обновления политики |
-| Learning rate (Critic) | $1 \times 10^{-3}$ | Скорость обновления value-функции |
-| Discount factor $\gamma$ | $0.99$ | Дисконтирование будущих наград |
-| GAE $\lambda$ | $0.95$ | Компромисс bias-variance |
-| Entropy coefficient $c_2$ | $0.01$ | Сила exploration |
-| Value loss coefficient $c_1$ | $0.5$ | Вес critic loss в общем лоссе |
+| Learning rate (Actor) | $3 \times 10^{-4}$ | The policy's update speed |
+| Learning rate (Critic) | $1 \times 10^{-3}$ | The value function's update speed |
+| Discount factor $\gamma$ | $0.99$ | Discounting future rewards |
+| GAE $\lambda$ | $0.95$ | The bias-variance trade-off |
+| Entropy coefficient $c_2$ | $0.01$ | The strength of exploration |
+| Value loss coefficient $c_1$ | $0.5$ | The critic loss's weight in the total loss |
 
-### Нормализация
+### Normalization
 
-1. **Нормализация состояний (running statistics):**
+1. **State normalization (running statistics):**
    ```python
-   # Инициализация running statistics
+   # Initialize the running statistics
    running_mean = np.zeros(state_dim)
    running_std = np.ones(state_dim)
-   alpha = 0.01  # скорость обновления статистик
+   alpha = 0.01  # the statistics' update rate
    
-   # Обновление и применение
+   # Updating and applying
    running_mean = alpha * state + (1 - alpha) * running_mean
    running_std = alpha * np.abs(state - running_mean) + (1 - alpha) * running_std
    state = (state - running_mean) / (running_std + 1e-8)
    
-   # Альтернатива: использовать VecNormalize из stable-baselines3
+   # Alternative: use VecNormalize from stable-baselines3
    from stable_baselines3.common.vec_env import VecNormalize
    ```
 
-2. **Нормализация advantage:**
+2. **Advantage normalization:**
    ```python
    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
    ```
 
-3. **Градиентный клиппинг:**
+3. **Gradient clipping:**
    ```python
    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5)
    ```
 
-### Отладка
+### Debugging
 
-* **Мониторинг TD-ошибки** — должна уменьшаться со временем.
-* **Entropy** — не должна падать слишком быстро (политика становится детерминированной).
-* **Отношение actor/critic loss** — должно быть сбалансировано.
-* **Средняя награда** — должна расти.
+* **Monitor the TD error** — it should decrease over time.
+* **Entropy** — it shouldn't drop too quickly (the policy becoming deterministic).
+* **The actor/critic loss ratio** — should stay balanced.
+* **Average reward** — should trend upward.
 
 ---
 
-## 15. Расширения и улучшения A2C
+## 15. Extensions and improvements to A2C
 
 ### Proximal Policy Optimization (PPO)
 
-Ограничивает изменение политики за одно обновление через clipping:
+Limits how much the policy can change in a single update via clipping:
 
 $$
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min\big(r_t(\theta) A_t, \text{clip}(r_t(\theta), 1-\varepsilon, 1+\varepsilon) A_t\big) \right]
 $$
 
-где $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$ — отношение вероятностей.
+where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$ is the probability ratio.
 
-**Преимущество:** более стабильное обучение, лучшая sample efficiency.
+**Advantage:** more stable training, better sample efficiency.
 
 ### Soft Actor-Critic (SAC)
 
-Максимизирует не только награду, но и энтропию (maximum entropy RL):
+Maximizes not only reward but also entropy (maximum entropy RL):
 
 $$
 J(\pi) = \mathbb{E}_{\tau \sim \pi} \left[ \sum_t r(s_t, a_t) + \alpha H(\pi(\cdot|s_t)) \right]
 $$
 
-**Преимущество:** лучший exploration, работает с непрерывными действиями.
+**Advantage:** better exploration, works with continuous actions.
 
 ---
 
-## 16. Ключевые формулы (шпаргалка)
+## 16. Key formulas (cheat sheet)
 
-**TD-ошибка (advantage):**
+**TD error (advantage):**
 
 $$
 \boxed{ \delta_t = r_{t+1} + \gamma V_\phi(s_{t+1}) - V_\phi(s_t) }
 $$
 
-**Обновление Actor (политики):**
+**Actor (policy) update:**
 
 $$
 \boxed{ \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \delta_t }
 $$
 
-**Обновление Critic (value-функции):**
+**Critic (value function) update:**
 
 $$
 \boxed{ \phi \leftarrow \phi - \alpha_\phi \cdot \nabla_\phi \big(V_\phi(s_t) - y_t\big)^2 }
 $$
 
-где $y_t = r_{t+1} + \gamma V_\phi(s_{t+1})$ — TD-target.
+where $y_t = r_{t+1} + \gamma V_\phi(s_{t+1})$ is the TD target.
 
 **GAE (Generalized Advantage Estimation):**
 
@@ -514,7 +514,7 @@ $$
 \boxed{ A_t^{\text{GAE}(\lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} }
 $$
 
-**Общий loss с энтропией:**
+**The total loss with entropy:**
 
 $$
 \boxed{ L_{\text{total}} = L_{\text{actor}} + c_1 \cdot L_{\text{critic}} - c_2 \cdot H(\pi) }
@@ -522,7 +522,7 @@ $$
 
 ---
 
-## 17. Визуализация обучения A2C
+## 17. Visualizing A2C training
 
 ```
 Episode reward vs Training steps
@@ -540,14 +540,14 @@ Episode reward vs Training steps
                 Training steps
 ```
 
-**Типичное поведение:**
-* **0-5k шагов:** Случайное поведение, низкие награды.
-* **5k-15k шагов:** Быстрое улучшение, политика учится основным паттернам.
-* **15k-30k шагов:** Стабилизация, fine-tuning политики.
+**Typical behavior:**
+* **0-5k steps:** Random behavior, low rewards.
+* **5k-15k steps:** Rapid improvement, the policy learns the main patterns.
+* **15k-30k steps:** Stabilization, fine-tuning the policy.
 
 ---
 
-## 18. Сравнение с другими алгоритмами
+## 18. Comparison with other algorithms
 
 ```
                 Sample Efficiency
@@ -572,22 +572,22 @@ Episode reward vs Training steps
 
 ---
 
-## Резюме
+## Summary
 
-| Понятие | Описание |
+| Concept | Description |
 |---------|----------|
-| **Actor-Critic** | Комбинация policy-based и value-based методов |
-| **Actor** | Политика $\pi_\theta(a\|s)$, выбирает действия |
-| **Critic** | Value-функция $V_\phi(s)$, оценивает действия |
-| **TD-ошибка** | $\delta_t = r + \gamma V(s') - V(s)$ |
+| **Actor-Critic** | A combination of policy-based and value-based methods |
+| **Actor** | The policy $\pi_\theta(a\|s)$, which chooses actions |
+| **Critic** | The value function $V_\phi(s)$, which evaluates actions |
+| **TD error** | $\delta_t = r + \gamma V(s') - V(s)$ |
 | **Advantage** | $A_t = Q(s,a) - V(s) \approx \delta_t$ |
-| **A2C** | Advantage Actor-Critic с GAE и энтропией |
-| **A3C** | Асинхронная версия с параллельными workers |
-| **Применение** | Непрерывные действия, онлайн обучение, стохастические среды |
+| **A2C** | Advantage Actor-Critic with GAE and entropy |
+| **A3C** | The asynchronous version with parallel workers |
+| **Applications** | Continuous actions, online learning, stochastic environments |
 
 ---
 
-**Основано на:**
+**Based on:**
 
 * Sutton & Barto, *Reinforcement Learning: An Introduction* (2020)
 * Mnih et al., *Asynchronous Methods for Deep Reinforcement Learning* (2016)
@@ -595,5 +595,4 @@ Episode reward vs Training steps
 * Schulman et al., *Proximal Policy Optimization Algorithms* (2017)
 * Haarnoja et al., *Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning* (2018)
 * Hugging Face Deep RL Course, Unit 5
-* Andrea Lonza, *Алгоритмы обучения с подкреплением на Python* (2020)
-
+* Andrea Lonza, *Reinforcement Learning Algorithms with Python* (2020)
