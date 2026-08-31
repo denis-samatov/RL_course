@@ -1,42 +1,42 @@
-# Теоретический конспект №13
+# Theoretical Note #13
 
-## Тема: Динамическое программирование в Reinforcement Learning
+## Topic: Dynamic Programming in Reinforcement Learning
 
-> **Связано с:** [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) — MDP формализация · [note_07_bellman_equation.md](note_07_bellman_equation.md) — Уравнение Беллмана
+> **Related to:** [note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md) — MDP formalization · [note_07_bellman_equation.md](note_07_bellman_equation.md) — The Bellman equation
 
 ---
 
-## 1. Что такое динамическое программирование (DP) в RL?
+## 1. What is Dynamic Programming (DP) in RL?
 
-**Динамическое программирование (Dynamic Programming, DP)** — это класс методов для нахождения оптимальной политики, когда **полностью известна модель среды** (MDP):
+**Dynamic Programming (DP)** is a class of methods for finding an optimal policy when the environment's model (the MDP) is **fully known**:
 
-- Известны вероятности переходов $P(s'|s,a)$
-- Известны награды $r(s,a)$ или $r(s,a,s')$
+- The transition probabilities $P(s'|s,a)$ are known
+- The rewards $r(s,a)$ or $r(s,a,s')$ are known
 
-> «DP — это вычисление оптимальной политики через итеративное применение уравнений Беллмана.»
+> "DP is computing the optimal policy through iterative application of the Bellman equations."
 
 ---
 
 ### Model-based vs Model-free
 
-| Подход | Требует модель? | Примеры |
+| Approach | Requires a model? | Examples |
 |--------|----------------|---------|
-| **Model-based** (DP) | ✅ Да | Policy Iteration, Value Iteration |
-| **Model-free** | ❌ Нет | Q-Learning, SARSA, MC, TD |
+| **Model-based** (DP) | ✅ Yes | Policy Iteration, Value Iteration |
+| **Model-free** | ❌ No | Q-Learning, SARSA, MC, TD |
 
-**Важно:** В реальных задачах модель среды часто неизвестна, поэтому DP применяется редко. Однако изучение DP критически важно, так как:
+**Important:** In real-world tasks the environment's model is often unknown, so DP is rarely applied directly. Still, studying DP is critically important because it:
 
-1. Формирует теоретическую базу для всех RL-алгоритмов
-2. Вводит концепцию **Generalized Policy Iteration (GPI)**
-3. Показывает, как итеративно улучшать политику
+1. Forms the theoretical foundation for all RL algorithms
+2. Introduces the concept of **Generalized Policy Iteration (GPI)**
+3. Shows how to iteratively improve a policy
 
 ---
 
-## 2. Уравнение Беллмана для оптимальной политики
+## 2. The Bellman equation for the optimal policy
 
-Напомним уравнения Беллмана (детали в [note_07_bellman_equation.md](note_07_bellman_equation.md)):
+Recall the Bellman equations (details in [note_07_bellman_equation.md](note_07_bellman_equation.md)):
 
-**Для функции ценности состояния:**
+**For the state-value function:**
 
 $$
 V_\pi(s) = \mathbb{E}_\pi \left[ R_{t+1} + \gamma V_\pi(S_{t+1}) \mid S_t = s \right]
@@ -46,13 +46,13 @@ $$
 V_\pi(s) = \sum_a \pi(a|s) \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_\pi(s') \right]
 $$
 
-**Для оптимальной функции ценности:**
+**For the optimal value function:**
 
 $$
 V^*(s) = \max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V^*(s') \right]
 $$
 
-**Для Q-функции:**
+**For the Q-function:**
 
 $$
 Q^*(s,a) = \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma \max_{a'} Q^*(s',a') \right]
@@ -60,30 +60,30 @@ $$
 
 ---
 
-## 3. Policy Evaluation (оценка политики)
+## 3. Policy Evaluation
 
-**Задача:** Дана фиксированная политика $\pi$. Вычислить $V_\pi(s)$ для всех состояний.
+**Task:** Given a fixed policy $\pi$. Compute $V_\pi(s)$ for all states.
 
-### Итеративный алгоритм
+### The iterative algorithm
 
-Начинаем с произвольных значений $V_0(s)$ и итеративно применяем уравнение Беллмана:
+Start with arbitrary values $V_0(s)$ and iteratively apply the Bellman equation:
 
 $$
 V_{k+1}(s) = \sum_a \pi(a|s) \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_k(s') \right]
 $$
 
-**Алгоритм (псевдокод):**
+**Algorithm (pseudocode):**
 
 ```python
-# Инициализация
+# Initialization
 V = {s: 0 for s in states}
-theta = 1e-6  # порог сходимости
+theta = 1e-6  # convergence threshold
 
 while True:
     delta = 0
     for s in states:
         v = V[s]
-        # Беллмановское обновление
+        # Bellman update
         V[s] = sum(
             pi[a|s] * sum(
                 P[s'|s,a] * (r[s,a,s'] + gamma * V[s'])
@@ -97,75 +97,75 @@ while True:
         break
 ```
 
-**Сходимость:** Гарантируется при $\gamma < 1$ или если все состояния достижимы и конечны.
+**Convergence:** Guaranteed when $\gamma < 1$, or when every state is reachable and finite.
 
 ---
 
-## 4. Policy Improvement (улучшение политики)
+## 4. Policy Improvement
 
-**Задача:** Дана $V_\pi(s)$. Построить **лучшую политику** $\pi'$.
+**Task:** Given $V_\pi(s)$. Construct a **better policy** $\pi'$.
 
-### Жадное улучшение
+### Greedy improvement
 
-Идея: выбираем действие, которое максимизирует ожидаемую ценность:
+Idea: choose the action that maximizes the expected value:
 
 $$
 \pi'(s) = \arg\max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_\pi(s') \right]
 $$
 
-Эквивалентно через Q-функцию:
+Equivalently, via the Q-function:
 
 $$
 \pi'(s) = \arg\max_a Q_\pi(s,a)
 $$
 
-где
+where
 
 $$
 Q_\pi(s,a) = \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_\pi(s') \right]
 $$
 
-**Теорема улучшения политики (Policy Improvement Theorem):**
+**The Policy Improvement Theorem:**
 
-Если $\pi'$ получена жадным улучшением из $\pi$, то:
+If $\pi'$ is obtained from $\pi$ via greedy improvement, then:
 
 $$
-V_{\pi'}(s) \geq V_\pi(s) \quad \text{для всех } s
+V_{\pi'}(s) \geq V_\pi(s) \quad \text{for all } s
 $$
 
-Равенство достигается, только если $\pi$ уже оптимальна: $\pi = \pi^*$.
+Equality holds only if $\pi$ is already optimal: $\pi = \pi^*$.
 
 ---
 
 ## 5. Policy Iteration
 
-**Идея:** Чередуем **оценку** и **улучшение** политики до сходимости.
+**Idea:** Alternate between **evaluating** and **improving** the policy until convergence.
 
-### Алгоритм Policy Iteration
+### The Policy Iteration algorithm
 
-1. **Инициализация:**
-   - Произвольная политика $\pi_0$ (например, равномерная)
-   - Произвольные значения $V_0(s) = 0$
+1. **Initialization:**
+   - An arbitrary policy $\pi_0$ (e.g., uniform)
+   - Arbitrary values $V_0(s) = 0$
 
 2. **Policy Evaluation:**
-   - Вычислить $V_{\pi_k}(s)$ для всех $s$ (итеративно, пока не сойдётся)
+   - Compute $V_{\pi_k}(s)$ for all $s$ (iteratively, until it converges)
 
 3. **Policy Improvement:**
-   - Для каждого состояния:
+   - For every state:
      $$
      \pi_{k+1}(s) = \arg\max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_{\pi_k}(s') \right]
      $$
 
-4. **Проверка сходимости:**
-   - Если $\pi_{k+1} = \pi_k$, стоп (найдена $\pi^*$)
-   - Иначе вернуться к шагу 2
+4. **Convergence check:**
+   - If $\pi_{k+1} = \pi_k$, stop (we've found $\pi^*$)
+   - Otherwise return to step 2
 
-**Псевдокод (исполняемый Python):**
+**Pseudocode (runnable Python):**
 
 ```python
 import numpy as np
 
-# 1. Инициализация
+# 1. Initialization
 n_states = env.observation_space.n
 n_actions = env.action_space.n
 
@@ -184,13 +184,13 @@ while True:
         
         for s in range(n_states):
             v = 0.0
-            # Сумма по всем действиям
+            # Sum over every action
             for a in range(n_actions):
-                # Получаем динамику среды: [(prob, next_s, reward, done)]
+                # Get the environment's dynamics: [(prob, next_s, reward, done)]
                 transitions = env.get_transition_prob(s, a)
                 
                 for prob_transition, s_prime, reward, done in transitions:
-                    # Беллмановское обновление
+                    # Bellman update
                     v += pi[s, a] * prob_transition * (
                         reward + gamma * V[s_prime] * (1 - int(done))
                     )
@@ -206,10 +206,10 @@ while True:
     policy_stable = True
     
     for s in range(n_states):
-        # Сохраняем старое действие
+        # Save the previous action
         old_action = np.argmax(pi[s])
         
-        # Вычисляем Q(s, a) для всех действий
+        # Compute Q(s, a) for every action
         q_values = np.zeros(n_actions)
         
         for a in range(n_actions):
@@ -221,62 +221,62 @@ while True:
             
             q_values[a] = q_sa
         
-        # Жадное улучшение: выбираем лучшее действие
+        # Greedy improvement: pick the best action
         best_action = np.argmax(q_values)
         
-        # Обновляем политику (детерминированная)
+        # Update the policy (deterministic)
         pi[s] = np.zeros(n_actions)
         pi[s, best_action] = 1.0
         
-        # Проверяем стабильность
+        # Check stability
         if best_action != old_action:
             policy_stable = False
     
-    # 4. Проверка сходимости
+    # 4. Convergence check
     if policy_stable:
         print("Policy Iteration converged!")
         break
 ```
 
-**Сложность одной итерации:** $O(|\mathcal{S}|^2 |\mathcal{A}|)$
+**Complexity per iteration:** $O(|\mathcal{S}|^2 |\mathcal{A}|)$
 
-**Сходимость:** Гарантируется за **полиномиальное число** итераций.
+**Convergence:** Guaranteed within a **polynomial number** of iterations.
 
 ---
 
 ## 6. Value Iteration
 
-**Идея:** Объединить evaluation и improvement в **один шаг**.
+**Idea:** Merge evaluation and improvement into a **single step**.
 
-Вместо полной оценки $V_\pi$, делаем **одно** обновление Беллмана с максимизацией:
+Instead of fully evaluating $V_\pi$, we perform a **single** Bellman update with maximization:
 
 $$
 V_{k+1}(s) = \max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_k(s') \right]
 $$
 
-Это **оптимальное уравнение Беллмана** в форме обновления.
+This is the **Bellman optimality equation** written as an update rule.
 
-### Алгоритм Value Iteration
+### The Value Iteration algorithm
 
-1. **Инициализация:** $V_0(s) = 0$ для всех $s$
+1. **Initialization:** $V_0(s) = 0$ for all $s$
 
-2. **Итеративное обновление:**
-   - Для каждого состояния $s$:
+2. **Iterative update:**
+   - For every state $s$:
      $$
      V_{k+1}(s) = \max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V_k(s') \right]
      $$
-   - Продолжать, пока $\max_s |V_{k+1}(s) - V_k(s)| < \theta$
+   - Continue until $\max_s |V_{k+1}(s) - V_k(s)| < \theta$
 
-3. **Извлечение политики:**
-   - После сходимости $V^* \approx V_k$:
+3. **Policy extraction:**
+   - Once converged, $V^* \approx V_k$:
      $$
      \pi^*(s) = \arg\max_a \sum_{s'} P(s'|s,a) \left[ r(s,a,s') + \gamma V^*(s') \right]
      $$
 
-**Псевдокод:**
+**Pseudocode:**
 
 ```python
-# Инициализация
+# Initialization
 V = {s: 0 for s in states}
 theta = 1e-6
 
@@ -284,7 +284,7 @@ while True:
     delta = 0
     for s in states:
         v = V[s]
-        # Оптимальное обновление Беллмана
+        # The optimal Bellman update
         V[s] = max(
             sum(P[s'|s,a] * (r[s,a,s'] + gamma * V[s'])
                 for s' in next_states(s,a))
@@ -295,7 +295,7 @@ while True:
     if delta < theta:
         break
 
-# Извлечение оптимальной политики
+# Extracting the optimal policy
 pi = {}
 for s in states:
     pi[s] = argmax_a(
@@ -304,153 +304,153 @@ for s in states:
     )
 ```
 
-**Сложность одной итерации:** $O(|\mathcal{S}|^2 |\mathcal{A}|)$
+**Complexity per iteration:** $O(|\mathcal{S}|^2 |\mathcal{A}|)$
 
-**Сходимость:** **Экспоненциальная скорость** — обычно быстрее, чем Policy Iteration.
+**Convergence:** **Exponential rate** — usually faster than Policy Iteration.
 
 ---
 
 ## 7. Generalized Policy Iteration (GPI)
 
-**GPI** — это общая идея, лежащая в основе **всех RL-алгоритмов**:
+**GPI** is the general idea underlying **every RL algorithm**:
 
-> «Пусть процесс оценки политики и процесс улучшения политики идут параллельно, взаимодействуя друг с другом.»
+> "Let the policy-evaluation process and the policy-improvement process run in parallel, interacting with each other."
 
-### Схема GPI
+### The GPI schematic
 
 ```
        ┌─────────────┐
-       │  Политика π │
+       │  Policy π   │
        └──────┬──────┘
               │
-         (улучшение)
+         (improvement)
               │
               ▼
        ┌─────────────┐
-       │ V-функция V │◄──────┐
+       │ V-function V │◄──────┐
        └──────┬──────┘       │
               │              │
-         (оценка)       (улучшение)
+          (evaluation)  (improvement)
               │              │
               ▼              │
        ┌─────────────┐       │
-       │  Политика π'│───────┘
+       │  Policy π'  │───────┘
        └─────────────┘
 ```
 
-**Ключевые идеи GPI:**
+**GPI's key ideas:**
 
-1. **Оценка и улучшение конкурируют:**
-   - Оценка делает $V$ согласованной с текущей $\pi$
-   - Улучшение делает $\pi$ жадной относительно текущей $V$
+1. **Evaluation and improvement compete:**
+   - Evaluation makes $V$ consistent with the current $\pi$
+   - Improvement makes $\pi$ greedy with respect to the current $V$
 
-2. **Не обязательно ждать полной сходимости:**
-   - Policy Iteration: полная оценка перед улучшением
-   - Value Iteration: одно обновление оценки перед улучшением
-   - Можно делать **асинхронные обновления** (см. ниже)
+2. **You don't have to wait for full convergence:**
+   - Policy Iteration: full evaluation before improvement
+   - Value Iteration: a single evaluation update before improvement
+   - You can do **asynchronous updates** (see below)
 
-3. **Гарантия сходимости к $\pi^*$ и $V^*$:**
-   - Оба процесса стабилизируются только в оптимуме
+3. **Guaranteed convergence to $\pi^*$ and $V^*$:**
+   - Both processes stabilize only at the optimum
 
 ---
 
-## 8. Сравнение Policy Iteration и Value Iteration
+## 8. Comparing Policy Iteration and Value Iteration
 
-| Аспект | Policy Iteration | Value Iteration |
+| Aspect | Policy Iteration | Value Iteration |
 |--------|------------------|-----------------|
-| **Обновление** | Полная оценка $V_\pi$, затем жадное улучшение | Одно оптимальное обновление Беллмана |
-| **Итераций до сходимости** | Мало (3-10 обычно) | Больше (зависит от $\gamma$ и $\theta$) |
-| **Стоимость итерации** | Высокая (много подитераций evaluation) | Низкая (один проход по состояниям) |
-| **Общее время** | Зависит от задачи | Обычно быстрее на практике |
-| **Политика** | Всегда определена явно | Извлекается в конце |
-| **Применимость** | Малые MDP (сотни состояний) | Средние MDP (тысячи состояний) |
+| **Update** | Full evaluation of $V_\pi$, then greedy improvement | A single optimal Bellman update |
+| **Iterations to convergence** | Few (typically 3-10) | More (depends on $\gamma$ and $\theta$) |
+| **Cost per iteration** | High (many evaluation sub-iterations) | Low (a single pass over states) |
+| **Total time** | Depends on the task | Usually faster in practice |
+| **Policy** | Always defined explicitly | Extracted at the end |
+| **Applicability** | Small MDPs (hundreds of states) | Medium MDPs (thousands of states) |
 
-**Практический совет:**
+**Practical tip:**
 
-- Value Iteration обычно предпочтительнее для сред с дискретными состояниями.
-- Policy Iteration лучше, если policy evaluation быстро сходится.
+- Value Iteration is generally preferable for environments with discrete states.
+- Policy Iteration is better when policy evaluation converges quickly.
 
 ---
 
-## 9. Асинхронные методы DP
+## 9. Asynchronous DP methods
 
-**Проблема синхронных методов:** Требуется полный проход по **всем состояниям** на каждой итерации → дорого для больших MDP.
+**The problem with synchronous methods:** They require a full pass over **every state** at each iteration → expensive for large MDPs.
 
-**Решение:** Обновлять состояния **асинхронно**, в произвольном порядке.
+**The solution:** Update states **asynchronously**, in an arbitrary order.
 
-### Типы асинхронных методов:
+### Types of asynchronous methods:
 
 1. **In-place updates:**
-   - Обновляем $V(s)$ сразу, используя уже обновлённые значения соседей
-   - Быстрее сходится (использует самую свежую информацию)
+   - Update $V(s)$ immediately, using already-updated neighbor values
+   - Converges faster (uses the freshest information)
 
 2. **Prioritized Sweeping:**
-   - Поддерживаем очередь состояний по приоритету
-   - Приоритет = величина ожидаемого изменения $|V_{\text{new}}(s) - V_{\text{old}}(s)|$
-   - Обновляем сначала состояния с наибольшим изменением
+   - Maintain a priority queue of states
+   - Priority = the magnitude of the expected change $|V_{\text{new}}(s) - V_{\text{old}}(s)|$
+   - Update the states with the largest change first
 
 3. **Real-time DP:**
-   - Обновляем только состояния, которые посещает агент
-   - Полезно, если большинство состояний недостижимы
+   - Update only the states the agent actually visits
+   - Useful when most states are unreachable
 
-**Пример In-place Value Iteration:**
+**Example: In-place Value Iteration:**
 
 ```python
-# Синхронный (классический)
+# Synchronous (classic)
 V_new = {}
 for s in states:
     V_new[s] = max_a bellman_update(s, a, V_old)
-V_old = V_new  # копируем целиком
+V_old = V_new  # copy the whole thing
 
-# Асинхронный (in-place)
+# Asynchronous (in-place)
 for s in states:
-    V[s] = max_a bellman_update(s, a, V)  # используем V напрямую
+    V[s] = max_a bellman_update(s, a, V)  # use V directly
 ```
 
-**Преимущества:**
-- Меньше памяти (не нужна копия $V$)
-- Быстрее сходится (использует обновлённые значения)
+**Advantages:**
+- Less memory (no need for a copy of $V$)
+- Converges faster (uses updated values)
 
 ---
 
-## 10. Ограничения динамического программирования
+## 10. Limitations of Dynamic Programming
 
-| Ограничение | Описание | Как преодолеть |
+| Limitation | Description | How to overcome it |
 |-------------|----------|----------------|
-| **Требует модель** | Нужны $P(s'\|s,a)$ и $r(s,a)$ | Model-free методы (Q-Learning, SARSA) |
-| **Проклятие размерности** | $O(\|\mathcal{S}\|^2 \|\mathcal{A}\|)$ неприемлемо для больших MDP | Аппроксимация функций (Deep RL) |
-| **Дискретные состояния** | Трудно для непрерывных пространств | Discretization или function approximation |
-| **Полный проход по состояниям** | Обновляет даже недостижимые состояния | Асинхронные методы, Real-time DP |
+| **Requires a model** | Needs $P(s'\|s,a)$ and $r(s,a)$ | Model-free methods (Q-Learning, SARSA) |
+| **The curse of dimensionality** | $O(\|\mathcal{S}\|^2 \|\mathcal{A}\|)$ is infeasible for large MDPs | Function approximation (Deep RL) |
+| **Discrete states** | Hard for continuous spaces | Discretization or function approximation |
+| **A full pass over states** | Updates even unreachable states | Asynchronous methods, Real-time DP |
 
-**Вывод:**
+**Conclusion:**
 
-> DP редко применяется напрямую в современном RL, но его принципы (GPI, итеративное улучшение) лежат в основе всех алгоритмов.
+> DP is rarely applied directly in modern RL, but its principles (GPI, iterative improvement) underlie every algorithm.
 
 ---
 
-## 11. От DP к Model-Free RL
+## 11. From DP to Model-Free RL
 
-**Связь между методами:**
+**The relationship between methods:**
 
-| DP метод | Model-Free аналог | Ключевое отличие |
+| DP method | Model-free analogue | Key difference |
 |----------|-------------------|------------------|
-| Policy Evaluation | Monte Carlo Prediction | Не требует модель, использует sample returns |
-| Policy Iteration | SARSA (on-policy TD) | Обновляет Q(s,a) по sample transitions |
-| Value Iteration | Q-Learning (off-policy TD) | Обновляет Q(s,a) по sample transitions с max |
+| Policy Evaluation | Monte Carlo Prediction | Requires no model, uses sample returns |
+| Policy Iteration | SARSA (on-policy TD) | Updates Q(s,a) from sample transitions |
+| Value Iteration | Q-Learning (off-policy TD) | Updates Q(s,a) from sample transitions with a max |
 
-**Общая идея:**
+**The general idea:**
 
 $$
 \text{DP: } V(s) \leftarrow \mathbb{E}[\cdots] \quad \Rightarrow \quad \text{Model-free: } V(s) \leftarrow \text{sample}
 $$
 
-Вместо **полного математического ожидания** (требует модель) используем **сэмплированные траектории** (не требует модель).
+Instead of a **full mathematical expectation** (requiring a model), we use **sampled trajectories** (requiring no model).
 
 ---
 
-## 12. Практический пример: GridWorld
+## 12. A hands-on example: GridWorld
 
-Рассмотрим сетку 4×4 с одним препятствием и целевым состоянием:
+Consider a 4×4 grid with one obstacle and a goal state:
 
 ```
 ┌───┬───┬───┬───┐
@@ -464,16 +464,16 @@ $$
 └───┬───┬───┴───┘
 ```
 
-**MDP:**
-- Состояния: 16 клеток (15 обычных + 1 терминальное Goal)
-- Действия: {↑, ↓, ←, →}
-- Переходы: детерминированные (если не стена)
-- Награды: -1 за каждый шаг, +10 за достижение Goal
+**The MDP:**
+- States: 16 cells (15 regular + 1 terminal Goal)
+- Actions: {↑, ↓, ←, →}
+- Transitions: deterministic (unless blocked by a wall)
+- Rewards: -1 per step, +10 for reaching the Goal
 
-**Применение Value Iteration:**
+**Applying Value Iteration:**
 
 ```python
-# Псевдокод для GridWorld
+# Pseudocode for GridWorld
 V = np.zeros((4, 4))
 gamma = 0.9
 theta = 1e-4
@@ -488,7 +488,7 @@ while True:
                 continue
             
             v = V[i,j]
-            # Макс по 4 направлениям
+            # Max over the 4 directions
             values = []
             for action in ['up', 'down', 'left', 'right']:
                 ni, nj = next_pos(i, j, action)
@@ -502,47 +502,47 @@ while True:
         break
 ```
 
-**Результат:**
+**Result:**
 
-После сходимости $V(s)$ показывает "расстояние до цели" (с учётом $\gamma$).
+After convergence, $V(s)$ reflects "distance to the goal" (weighted by $\gamma$).
 
-Оптимальная политика: стрелки, указывающие к Goal.
+The optimal policy: arrows pointing toward the Goal.
 
 ---
 
-## 13. Резюме
+## 13. Summary
 
-| Концепция | Описание |
+| Concept | Description |
 |-----------|----------|
-| **DP** | Итеративное применение уравнений Беллмана при известной модели MDP |
-| **Policy Evaluation** | Вычисление $V_\pi(s)$ для фиксированной политики |
-| **Policy Improvement** | Жадное улучшение политики на основе $V$ |
-| **Policy Iteration** | Чередование evaluation и improvement до сходимости |
-| **Value Iteration** | Комбинация evaluation и improvement в одном оптимальном обновлении |
-| **GPI** | Общая схема взаимодействия оценки и улучшения (основа всех RL) |
-| **Асинхронные методы** | Обновление подмножества состояний для ускорения |
+| **DP** | Iterative application of the Bellman equations given a known MDP model |
+| **Policy Evaluation** | Computing $V_\pi(s)$ for a fixed policy |
+| **Policy Improvement** | Greedily improving the policy based on $V$ |
+| **Policy Iteration** | Alternating evaluation and improvement until convergence |
+| **Value Iteration** | Combining evaluation and improvement into a single optimal update |
+| **GPI** | The general scheme of evaluation/improvement interplay (the basis of all RL) |
+| **Asynchronous methods** | Updating a subset of states to speed things up |
 
-**Ключевые выводы:**
+**Key takeaways:**
 
-1. DP требует полного знания MDP → применим только в симуляциях
-2. Принципы DP (GPI) лежат в основе всех RL-алгоритмов
-3. Model-free методы заменяют математическое ожидание на сэмплирование
-4. Value Iteration обычно эффективнее Policy Iteration на практике
-
----
-
-## 14. Связь с предыдущими семинарами
-
-- **[note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md):** Формализация MDP (состояния, действия, переходы, награды)
-- **[note_07_bellman_equation.md](note_07_bellman_equation.md):** Уравнение Беллмана — основа DP
-- **[note_08_monte_carlo_vs_td.md](note_08_monte_carlo_vs_td.md):** Monte Carlo — model-free альтернатива Policy Evaluation
-- **[note_09_q_learning.md](note_09_q_learning.md):** Q-Learning — model-free альтернатива Value Iteration
+1. DP requires full knowledge of the MDP → applicable only in simulations
+2. DP's principles (GPI) underlie every RL algorithm
+3. Model-free methods replace the mathematical expectation with sampling
+4. Value Iteration is usually more efficient than Policy Iteration in practice
 
 ---
 
-## 15. Дальнейшее изучение
+## 14. Connections to earlier sessions
 
-Рекомендуемые источники:
+- **[note_02_rl_framework_and_mdp.md](note_02_rl_framework_and_mdp.md):** MDP formalization (states, actions, transitions, rewards)
+- **[note_07_bellman_equation.md](note_07_bellman_equation.md):** The Bellman equation — the foundation of DP
+- **[note_08_monte_carlo_vs_td.md](note_08_monte_carlo_vs_td.md):** Monte Carlo — a model-free alternative to Policy Evaluation
+- **[note_09_q_learning.md](note_09_q_learning.md):** Q-Learning — a model-free alternative to Value Iteration
+
+---
+
+## 15. Further reading
+
+Recommended sources:
 
 - **Sutton & Barto, Chapter 4:** Dynamic Programming
 - **Maxim Lapan, Chapter 5:** Tabular Learning and the Bellman Equation
@@ -550,22 +550,21 @@ while True:
 
 ---
 
-## 16. Практическое задание
+## 16. Hands-on assignment
 
-В директории `code/13_dynamic_programming/` реализованы:
+Implemented in `code/13_dynamic_programming/`:
 
-1. **GridWorld environment** — кастомная среда с препятствиями
-2. **Policy Evaluation** — итеративная оценка произвольной политики
-3. **Policy Iteration** — полный алгоритм с чередованием evaluation/improvement
-4. **Value Iteration** — оптимальное обновление Беллмана
-5. **Визуализация** — тепловые карты $V(s)$, стрелки политики, анимация сходимости
+1. **GridWorld environment** — a custom environment with obstacles
+2. **Policy Evaluation** — iterative evaluation of an arbitrary policy
+3. **Policy Iteration** — the full algorithm alternating evaluation/improvement
+4. **Value Iteration** — the optimal Bellman update
+5. **Visualization** — heatmaps of $V(s)$, policy arrows, a convergence animation
 
-**Эксперименты:**
-- Сравнить скорость сходимости Policy Iteration vs Value Iteration
-- Изучить влияние $\gamma$ на оптимальную политику
-- Реализовать Prioritized Sweeping и сравнить с синхронным методом
+**Experiments:**
+- Compare the convergence speed of Policy Iteration vs Value Iteration
+- Study the effect of $\gamma$ on the optimal policy
+- Implement Prioritized Sweeping and compare it against the synchronous method
 
 ---
 
-**Далее:** [note_14_ppo_trpo.md](note_14_ppo_trpo.md) — PPO и TRPO
-
+**Next:** [note_14_ppo_trpo.md](note_14_ppo_trpo.md) — PPO and TRPO
