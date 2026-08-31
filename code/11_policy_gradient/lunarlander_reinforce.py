@@ -34,14 +34,14 @@ warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium")
 
 @dataclass
 class REINFORCEConfig:
-    """Конфигурация для обучения REINFORCE на LunarLander-v2.
-    
+    """Configuration for training REINFORCE on LunarLander-v2.
+
     Notes:
-        - LunarLander-v2 имеет 8-мерное непрерывное пространство
-          состояний и 4 дискретных действия.
-        - Типичная длина эпизода: 200-400 шагов.
-        - Считается решенной, когда средняя награда > 200 за 100
-          последовательных эпизодов.
+        - LunarLander-v2 has an 8-dimensional continuous state
+          space and 4 discrete actions.
+        - Typical episode length: 200-400 steps.
+        - Considered solved when the average reward > 200 over 100
+          consecutive episodes.
     """
     num_episodes: int = 2000
     max_steps_per_episode: int = 1000
@@ -61,26 +61,26 @@ class REINFORCEConfig:
 
 
 class PolicyNetwork(nn.Module):
-    """Сеть политики для дискретных пространств действий.
-    
-    Выдает распределение вероятностей по действиям через softmax.
+    """The policy network for discrete action spaces.
+
+    Outputs a probability distribution over actions via softmax.
     """
-    
+
     def __init__(self, state_dim: int, action_dim: int, hidden_sizes: Tuple[int, int] = (128, 128)):
         super().__init__()
         self.fc1 = nn.Linear(state_dim, hidden_sizes[0])
         self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.fc3 = nn.Linear(hidden_sizes[1], action_dim)
-        
+
     def forward(self, state: torch.Tensor) -> Categorical:
-        """Прямой проход, возвращающий распределение действий.
-        
+        """Forward pass, returning the action distribution.
+
         Args:
-            state: Тензор состояния формы (batch_size, state_dim) или
+            state: A state tensor of shape (batch_size, state_dim) or
                 (state_dim,)
-            
+
         Returns:
-            Категориальное распределение по действиям
+            A categorical distribution over actions
         """
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
@@ -89,23 +89,23 @@ class PolicyNetwork(nn.Module):
 
 
 class ValueNetwork(nn.Module):
-    """Сеть функции ценности (baseline) для уменьшения дисперсии."""
-    
+    """The value-function network (baseline), used to reduce variance."""
+
     def __init__(self, state_dim: int, hidden_sizes: Tuple[int, int] = (128, 128)):
         super().__init__()
         self.fc1 = nn.Linear(state_dim, hidden_sizes[0])
         self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.fc3 = nn.Linear(hidden_sizes[1], 1)
-        
+
     def forward(self, state: torch.Tensor) -> torch.Tensor:
-        """Прямой проход, возвращающий ценность состояния.
-        
+        """Forward pass, returning the state's value.
+
         Args:
-            state: Тензор состояния формы (batch_size, state_dim) или
+            state: A state tensor of shape (batch_size, state_dim) or
                 (state_dim,)
-            
+
         Returns:
-            Оценка ценности формы (batch_size, 1) или (1,)
+            A value estimate of shape (batch_size, 1) or (1,)
         """
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
@@ -114,57 +114,58 @@ class ValueNetwork(nn.Module):
 
 
 class REINFORCEAgent:
-    """Агент REINFORCE с опциональным baseline и энтропийной
-    регуляризацией."""
-    
+    """A REINFORCE agent with an optional baseline and entropy
+    regularization."""
+
     def __init__(self, config: REINFORCEConfig):
         self.config = config
-        
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         # Environment setup
         self.env = gym.make("LunarLander-v2", render_mode=config.render_mode)
         self.env.action_space.seed(config.seed)
         self.env.observation_space.seed(config.seed)
-        
+
         self.state_dim = self.env.observation_space.shape[0]
         self.action_dim = self.env.action_space.n
-        
+
         # Networks
-        self.policy = PolicyNetwork(self.state_dim, self.action_dim, config.hidden_sizes)
-        self.value = ValueNetwork(self.state_dim, config.hidden_sizes) if config.baseline else None
-        
+        self.policy = PolicyNetwork(self.state_dim, self.action_dim, config.hidden_sizes).to(self.device)
+        self.value = ValueNetwork(self.state_dim, config.hidden_sizes).to(self.device) if config.baseline else None
+
         # Optimizers
         self.policy_optimizer = optim.Adam(self.policy.parameters(), lr=config.learning_rate_policy)
         if self.value:
             self.value_optimizer = optim.Adam(self.value.parameters(), lr=config.learning_rate_value)
-        
+
         # Random seed
         torch.manual_seed(config.seed)
         np.random.seed(config.seed)
-        
+
     def select_action(self, state: np.ndarray) -> Tuple[int, torch.Tensor, torch.Tensor]:
-        """Выбирает действие, используя текущую политику.
-        
+        """Chooses an action using the current policy.
+
         Args:
-            state: Текущее наблюдение состояния.
-            
+            state: The current state observation.
+
         Returns:
-            Кортеж из (действие, log_prob, энтропия).
+            A tuple of (action, log_prob, entropy).
         """
-        state_tensor = torch.FloatTensor(state).unsqueeze(0)
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         dist = self.policy(state_tensor)
         action = dist.sample()
         log_prob = dist.log_prob(action)
         entropy = dist.entropy()
         return action.item(), log_prob, entropy
-    
+
     def compute_returns(self, rewards: List[float]) -> torch.Tensor:
-        """Вычисляет дисконтированные вознаграждения (Монте-Карло).
-        
+        """Computes the discounted (Monte Carlo) returns.
+
         Args:
-            rewards: Список вознаграждений из эпизода.
-            
+            rewards: The list of rewards from an episode.
+
         Returns:
-            Тензор дисконтированных вознаграждений для каждого шага.
+            A tensor of discounted returns for every step.
         """
         returns = []
         G = 0.0
@@ -173,44 +174,44 @@ class REINFORCEAgent:
             returns.insert(0, G)
         returns = torch.FloatTensor(returns)
         return returns
-    
+
     def train_episode(self, episode_idx: int = 0) -> Tuple[float, int]:
-        """Запускает один эпизод и обновляет политику.
-        
+        """Runs a single episode and updates the policy.
+
         Args:
-            episode_idx: Индекс эпизода для инициализации
-                (обеспечивает исследование между эпизодами).
-            
+            episode_idx: The episode index, used for seeding (ensures
+                different trajectories across episodes).
+
         Returns:
-            Кортеж (общее вознаграждение, длина эпизода).
+            A tuple of (total reward, episode length).
         """
         states, log_probs, rewards, entropies = [], [], [], []
-        
+
         # Use episode_idx for seed to ensure different trajectories per episode
         state, _ = self.env.reset(seed=self.config.seed + episode_idx)
         done = False
         episode_reward = 0.0
-        
+
         # Collect trajectory
         for t in range(self.config.max_steps_per_episode):
             action, log_prob, entropy = self.select_action(state)
             next_state, reward, terminated, truncated, _ = self.env.step(action)
-            
+
             states.append(state)
             log_probs.append(log_prob)
             rewards.append(reward)
             entropies.append(entropy)
-            
+
             state = next_state
             episode_reward += reward
             done = terminated or truncated
-            
+
             if done:
                 break
-        
+
         # Compute returns
-        returns = self.compute_returns(rewards)
-        
+        returns = self.compute_returns(rewards).to(self.device)
+
         # Compute advantages (with baseline if enabled)
         if self.config.baseline:
             # Properly move tensors to device for GPU compatibility
@@ -218,11 +219,11 @@ class REINFORCEAgent:
                 np.array(states), dtype=torch.float32, device=self.device
             )
             values = self.value(states_tensor).squeeze()
-            
+
             # Normalize returns for numerical stability (improves value learning)
             returns_normalized = (returns - returns.mean()) / (returns.std() + 1e-8)
             advantages = returns_normalized - values.detach()
-            
+
             # Update value function
             value_loss = nn.MSELoss()(values, returns_normalized)
             self.value_optimizer.zero_grad()
@@ -233,41 +234,41 @@ class REINFORCEAgent:
             # Without baseline, use returns as advantages
             returns_normalized = (returns - returns.mean()) / (returns.std() + 1e-8)
             advantages = returns_normalized
-        
+
         # Normalize advantages (per-episode normalization for stability)
         if self.config.normalize_advantages and len(advantages) > 1:
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        
+
         # Policy gradient update
         log_probs = torch.cat(log_probs)
         entropies = torch.cat(entropies)
-        
+
         policy_loss = -(log_probs * advantages).mean()
         entropy_loss = -entropies.mean()
         total_loss = policy_loss + self.config.entropy_coef * entropy_loss
-        
+
         self.policy_optimizer.zero_grad()
         total_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.config.gradient_clip)
         self.policy_optimizer.step()
-        
+
         return episode_reward, t + 1
-    
+
     def train(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Обучает агента в течение заданного количества эпизодов.
-        
+        """Trains the agent for the configured number of episodes.
+
         Returns:
-            Кортеж (вознаграждения за эпизод, длина эпизодов).
+            A tuple of (per-episode rewards, per-episode lengths).
         """
         episode_rewards = []
         episode_lengths = []
-        
+
         with tqdm(range(self.config.num_episodes), desc="Training REINFORCE", unit="ep") as pbar:
             for episode in pbar:
                 reward, length = self.train_episode(episode_idx=episode)
                 episode_rewards.append(reward)
                 episode_lengths.append(length)
-                
+
                 # Update progress bar with rolling statistics
                 if episode >= 99:
                     avg_reward = np.mean(episode_rewards[-100:])
@@ -277,54 +278,53 @@ class REINFORCEAgent:
                         'avg_100': f'{avg_reward:.1f}',
                         'length': f'{length}'
                     })
-        
+
         return np.array(episode_rewards), np.array(episode_lengths)
-    
+
     def evaluate(self, num_episodes: int = 10, render: bool = False) -> Tuple[float, float]:
-        """Оценивает обученную политику.
-        
+        """Evaluates the trained policy.
+
         Args:
-            num_episodes: Количество эпизодов для оценки.
-            render: Отображать ли эпизоды.
-            
+            num_episodes: The number of episodes to evaluate over.
+            render: Whether to render the episodes.
+
         Returns:
-            Кортеж (среднее вознаграждение, стандартное отклонение
-            вознаграждения).
+            A tuple of (mean reward, reward standard deviation).
         """
         eval_env = gym.make("LunarLander-v2", render_mode="human" if render else None)
         rewards = []
-        
+
         for episode in range(num_episodes):
             state, _ = eval_env.reset(seed=self.config.seed + 10000 + episode)
             episode_reward = 0.0
             done = False
-            
+
             while not done:
-                state_tensor = torch.FloatTensor(state).unsqueeze(0)
+                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
                 with torch.no_grad():
                     dist = self.policy(state_tensor)
                     action = dist.probs.argmax().item()  # Greedy action
-                
+
                 state, reward, terminated, truncated, _ = eval_env.step(action)
                 episode_reward += reward
                 done = terminated or truncated
-            
+
             rewards.append(episode_reward)
-        
+
         eval_env.close()
         return np.mean(rewards), np.std(rewards)
-    
+
     def save(self, path: str):
-        """Сохраняет сети политики и ценности."""
+        """Saves the policy and value networks."""
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict() if self.value else None,
             'config': self.config
         }, path)
         print(f"Model saved to {path}")
-    
+
     def load(self, path: str):
-        """Загружает сети политики и ценности."""
+        """Loads the policy and value networks."""
         checkpoint = torch.load(path)
         self.policy.load_state_dict(checkpoint['policy_state_dict'])
         if self.value and checkpoint['value_state_dict']:
@@ -333,9 +333,9 @@ class REINFORCEAgent:
 
 
 def plot_training_curves(rewards: np.ndarray, lengths: np.ndarray, window: int = 100):
-    """Строит кривые обучения со скользящим средним."""
+    """Plots the training curves with a rolling average."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-    
+
     # Rewards
     ax1.plot(rewards, alpha=0.3, label='Episode reward')
     if len(rewards) >= window:
@@ -347,7 +347,7 @@ def plot_training_curves(rewards: np.ndarray, lengths: np.ndarray, window: int =
     ax1.set_title('REINFORCE on LunarLander-v2: Training Rewards')
     ax1.legend()
     ax1.grid(alpha=0.3)
-    
+
     # Lengths
     ax2.plot(lengths, alpha=0.3, label='Episode length')
     if len(lengths) >= window:
@@ -358,48 +358,48 @@ def plot_training_curves(rewards: np.ndarray, lengths: np.ndarray, window: int =
     ax2.set_title('REINFORCE on LunarLander-v2: Episode Lengths')
     ax2.legend()
     ax2.grid(alpha=0.3)
-    
+
     plt.tight_layout()
     plt.savefig('lunarlander_reinforce_training.png', dpi=150)
     plt.show()
 
 
 def record_video(agent: REINFORCEAgent, num_episodes: int = 5):
-    """Записывает видео лучших эпизодов."""
+    """Records videos of the best episodes."""
     video_path = Path(agent.config.video_folder)
     video_path.mkdir(parents=True, exist_ok=True)
-    
+
     # Wrapper to record video
     env = gym.make("LunarLander-v2", render_mode="rgb_array")
     env = RecordVideo(
-        env, 
+        env,
         video_path,
         episode_trigger=lambda x: True,  # Record all episodes
         name_prefix="reinforce"
     )
-    
+
     for episode in range(num_episodes):
         state, _ = env.reset(seed=agent.config.seed + 20000 + episode)
         episode_reward = 0.0
         done = False
-        
+
         while not done:
-            state_tensor = torch.FloatTensor(state).unsqueeze(0)
+            state_tensor = torch.FloatTensor(state).unsqueeze(0).to(agent.device)
             with torch.no_grad():
                 dist = agent.policy(state_tensor)
                 action = dist.probs.argmax().item()
-            
+
             state, reward, terminated, truncated, _ = env.step(action)
             episode_reward += reward
             done = terminated or truncated
-        
+
         print(f"Video episode {episode + 1}: Reward = {episode_reward:.2f}")
-    
+
     env.close()
 
 
 def main(args):
-    """Основной конвейер обучения."""
+    """The main training pipeline."""
     config = REINFORCEConfig(
         num_episodes=args.episodes,
         learning_rate_policy=args.lr,
@@ -407,7 +407,7 @@ def main(args):
         entropy_coef=args.entropy,
         seed=args.seed
     )
-    
+
     print("=" * 60)
     print("REINFORCE on LunarLander-v2")
     print("=" * 60)
@@ -417,28 +417,28 @@ def main(args):
     print(f"Entropy coefficient: {config.entropy_coef}")
     print(f"Seed: {config.seed}")
     print("=" * 60)
-    
+
     # Train
     agent = REINFORCEAgent(config)
     rewards, lengths = agent.train()
-    
+
     # Plot results
     plot_training_curves(rewards, lengths)
-    
+
     # Evaluate
     print("\nEvaluating trained policy...")
     mean_reward, std_reward = agent.evaluate(num_episodes=100)
     print(f"Evaluation over 100 episodes: {mean_reward:.2f} ± {std_reward:.2f}")
-    
+
     # Check if solved
     if mean_reward >= 200:
         print("✓ Environment SOLVED! (Average reward >= 200)")
     else:
         print(f"✗ Not solved yet. Need {200 - mean_reward:.2f} more reward.")
-    
+
     # Save model
     agent.save(config.model_save_path)
-    
+
     # Record videos
     if args.record_video:
         print("\nRecording videos...")
@@ -450,13 +450,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="REINFORCE on LunarLander-v2")
     parser.add_argument("--episodes", type=int, default=2000, help="Number of training episodes")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
-    parser.add_argument("--no-baseline", action="store_false", dest="baseline", 
+    parser.add_argument("--no-baseline", action="store_false", dest="baseline",
                         help="Disable value baseline (baseline enabled by default)")
     parser.set_defaults(baseline=True)
     parser.add_argument("--entropy", type=float, default=0.01, help="Entropy coefficient")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--record-video", action="store_true", help="Record evaluation videos")
-    
+
     args = parser.parse_args()
     main(args)
-
