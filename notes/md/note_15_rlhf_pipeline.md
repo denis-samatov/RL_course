@@ -1,44 +1,44 @@
-# Теоретический конспект №15
+# Theoretical Note #15
 
-## Тема: RLHF — Reinforcement Learning from Human Feedback
+## Topic: RLHF — Reinforcement Learning from Human Feedback
 
-> **Связано с:** [note_14_ppo_trpo.md](note_14_ppo_trpo.md) — PPO · [note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md) — Policy Gradient
-
----
-
-## 1. Мотивация: выравнивание LLM с человеческими ценностями
-
-**Проблема:** Large Language Models (LLM), обученные на огромных текстовых корпусах, могут:
-
-- Генерировать токсичный контент
-- Давать вредные советы
-- Не следовать инструкциям пользователя
-- "Галлюцинировать" (выдумывать факты)
-
-**Почему Supervised Fine-Tuning (SFT) недостаточно?**
-
-- Дорого собирать тысячи примеров ответов вручную
-- Сложно покрыть все возможные сценарии
-- "Правильный" ответ субъективен (tone, style, verbosity)
-
-**Решение: RLHF** — обучить модель на **предпочтениях** людей, а не на абсолютных ответах.
+> **Related to:** [note_14_ppo_trpo.md](note_14_ppo_trpo.md) — PPO · [note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md) — Policy Gradient
 
 ---
 
-## 2. История RLHF
+## 1. Motivation: aligning LLMs with human values
 
-| Год | Модель | Вклад |
+**The problem:** Large Language Models (LLMs), trained on huge text corpora, can:
+
+- Generate toxic content
+- Give harmful advice
+- Fail to follow user instructions
+- "Hallucinate" (make up facts)
+
+**Why isn't Supervised Fine-Tuning (SFT) enough?**
+
+- Collecting thousands of hand-written response examples is expensive
+- Hard to cover every possible scenario
+- The "correct" response is subjective (tone, style, verbosity)
+
+**The solution: RLHF** — train the model on human **preferences**, rather than absolute answers.
+
+---
+
+## 2. RLHF's history
+
+| Year | Model | Contribution |
 |-----|--------|-------|
-| 2017 | Deep RL from Human Preferences | Первая работа по RLHF для Atari |
-| 2020 | GPT-3 | Показал потенциал LLM, но без alignment |
-| 2022 | **InstructGPT** | Первая масштабная RLHF для языка → ChatGPT |
-| 2023 | GPT-4, Claude, Llama 2 | RLHF становится стандартом |
+| 2017 | Deep RL from Human Preferences | The first RLHF work, on Atari |
+| 2020 | GPT-3 | Showed LLM potential, but with no alignment |
+| 2022 | **InstructGPT** | The first large-scale RLHF for language → ChatGPT |
+| 2023 | GPT-4, Claude, Llama 2 | RLHF becomes standard |
 
-**Ключевая insight:** Легче для человека **сравнивать** два ответа, чем писать идеальный ответ.
+**Key insight:** It's easier for a person to **compare** two responses than to write a perfect one.
 
 ---
 
-## 3. Трёхэтапный пайплайн RLHF
+## 3. The three-stage RLHF pipeline
 
 ```
 Pretrained LLM
@@ -54,61 +54,61 @@ Aligned LLM
 
 ---
 
-### Этап 1: Supervised Fine-Tuning (SFT)
+### Stage 1: Supervised Fine-Tuning (SFT)
 
-**Цель:** Адаптировать pretrained LLM к формату "инструкция → ответ".
+**Goal:** Adapt a pretrained LLM to the "instruction → response" format.
 
-**Данные:**
-- Пары $(x, y)$: prompt + high-quality response
-- Обычно 10K-50K примеров (собраны людьми)
+**Data:**
+- Pairs $(x, y)$: a prompt + a high-quality response
+- Typically 10K-50K examples (human-collected)
 
-**Обучение:** Стандартный language modeling loss
+**Training:** The standard language-modeling loss
 
 $$
 L_{SFT}(\theta) = -\sum_{t=1}^T \log p_\theta(y_t \mid y_{<t}, x)
 $$
 
-**Пример:**
+**Example:**
 
 ```
 x (prompt): "Explain quantum computing to a 5-year-old"
 y (response): "Imagine you have a magic coin..."
 ```
 
-**Результат:** $\pi_{SFT}$ — модель, умеющая следовать инструкциям, но несовершенная.
+**Result:** $\pi_{SFT}$ — a model that can follow instructions, but isn't perfect.
 
 ---
 
-### Этап 2: Reward Model Training (RM)
+### Stage 2: Reward Model Training (RM)
 
-**Цель:** Обучить модель, предсказывающую "качество" ответа с точки зрения человека.
+**Goal:** Train a model that predicts a response's "quality" from a human's perspective.
 
-**Данные: предпочтения (preferences)**
+**Data: preferences**
 
-Для одного промпта $x$, собираем 4-9 ответов от $\pi_{SFT}$, человек ранжирует их:
+For a single prompt $x$, we collect 4-9 responses from $\pi_{SFT}$, and a human ranks them:
 
 $$
-(x, y_w, y_l) \quad \text{где } y_w \succ y_l
+(x, y_w, y_l) \quad \text{where } y_w \succ y_l
 $$
 
-- $y_w$ — "winning" response (предпочтительнее)
-- $y_l$ — "losing" response
+- $y_w$ — the "winning" response (preferred)
+- $y_l$ — the "losing" response
 
-Обычно 50K-100K таких пар.
+Typically 50K-100K such pairs.
 
-**Reward Model:** Скалярная функция $r_\phi(x, y) \in \mathbb{R}$
+**The reward model:** A scalar function $r_\phi(x, y) \in \mathbb{R}$
 
-Инициализируется от $\pi_{SFT}$, последний слой заменяется на линейную голову для скаляра.
+Initialized from $\pi_{SFT}$, with the last layer replaced by a linear scalar head.
 
-**Loss: Bradley-Terry Model**
+**Loss: the Bradley-Terry model**
 
-Вероятность того, что $y_w$ предпочтительнее $y_l$:
+The probability that $y_w$ is preferred over $y_l$:
 
 $$
 P(y_w \succ y_l \mid x) = \sigma(r_\phi(x, y_w) - r_\phi(x, y_l))
 $$
 
-где $\sigma$ — сигмоида.
+where $\sigma$ is the sigmoid function.
 
 **Loss:**
 
@@ -116,60 +116,60 @@ $$
 L_{RM}(\phi) = -\mathbb{E}_{(x, y_w, y_l) \sim D} \left[ \log \sigma(r_\phi(x, y_w) - r_\phi(x, y_l)) \right]
 $$
 
-**Интуиция:** Maximize разницу в rewards между хорошими и плохими ответами.
+**Intuition:** Maximize the reward gap between good and bad responses.
 
 ---
 
-### Этап 3: RL Fine-Tuning (PPO)
+### Stage 3: RL Fine-Tuning (PPO)
 
-**Цель:** Оптимизировать политику $\pi_\theta$ для максимизации reward от RM, **НО** не уходить далеко от $\pi_{SFT}$.
+**Goal:** Optimize the policy $\pi_\theta$ to maximize the RM's reward, **BUT** without straying too far from $\pi_{SFT}$.
 
-**Целевая функция:**
+**The objective function:**
 
 $$
 \max_\theta \mathbb{E}_{x \sim D_{prompts}, y \sim \pi_\theta(y|x)} \left[ r_\phi(x, y) - \beta \cdot D_{KL}(\pi_\theta \| \pi_{SFT}) \right]
 $$
 
-где:
-- $r_\phi(x, y)$ — награда от RM
-- $\beta$ — коэффициент KL-штрафа (типично 0.01-0.1)
-- $D_{KL}$ — KL-дивергенция от reference policy $\pi_{SFT}$
+where:
+- $r_\phi(x, y)$ is the RM's reward
+- $\beta$ is the KL-penalty coefficient (typically 0.01-0.1)
+- $D_{KL}$ is the KL divergence from the reference policy $\pi_{SFT}$
 
-**KL-штраф:**
+**The KL penalty:**
 
 $$
 D_{KL}(\pi_\theta \| \pi_{SFT}) = \mathbb{E}_{y \sim \pi_\theta} \left[ \log \frac{\pi_\theta(y|x)}{\pi_{SFT}(y|x)} \right]
 $$
 
-**Зачем KL-штраф?**
+**Why the KL penalty?**
 
-1. **Предотвращает reward hacking** (модель находит лазейки в RM)
-2. **Сохраняет языковые способности** (не забывает грамматику, факты)
-3. **Стабилизирует обучение**
+1. **Prevents reward hacking** (the model finding loopholes in the RM)
+2. **Preserves language ability** (doesn't forget grammar, facts)
+3. **Stabilizes training**
 
 ---
 
-### PPO для LLM
+### PPO for LLMs
 
-Используем **PPO** (см. [note_14_ppo_trpo.md](note_14_ppo_trpo.md)) с модификациями:
+We use **PPO** (see [note_14_ppo_trpo.md](note_14_ppo_trpo.md)) with a few modifications:
 
-**Алгоритм:**
+**The algorithm:**
 
 ```
 for iteration in range(N):
     # 1. Sample prompts
     prompts = sample_batch(D_prompts)
     
-    # 2. Generate responses с π_θ
+    # 2. Generate responses with π_θ
     responses = π_θ.generate(prompts)
     
     # 3. Compute rewards
     rewards = r_φ(prompts, responses)
     
-    # 4. Compute KL penalty
+    # 4. Compute the KL penalty
     kl_penalty = KL(π_θ || π_SFT)
     
-    # 5. Compute advantages через GAE
+    # 5. Compute advantages via GAE
     advantages = compute_gae(rewards - β * kl_penalty, V_critic)
     
     # 6. PPO update (multiple epochs)
@@ -186,21 +186,21 @@ for iteration in range(N):
             optimizer.step()
 ```
 
-**Отличия от обычного PPO:**
+**Differences from ordinary PPO:**
 
-- **4 модели в памяти одновременно:**
-  1. Actor $\pi_\theta$ (обучаем)
-  2. Critic $V_\psi$ (обучаем)
+- **4 models held in memory at once:**
+  1. Actor $\pi_\theta$ (being trained)
+  2. Critic $V_\psi$ (being trained)
   3. Reference $\pi_{SFT}$ (frozen)
   4. Reward Model $r_\phi$ (frozen)
   
-- **Огромные вычислительные требования:** GPT-4 обучался на тысячах GPU
+- **Enormous compute requirements:** GPT-4 was trained on thousands of GPUs
 
 ---
 
-## 4. KL-штраф: критически важный компонент
+## 4. The KL penalty: a critically important component
 
-### Без KL-штрафа: катастрофа
+### Without a KL penalty: catastrophe
 
 ```
 Iteration 1: reward = 5.0, text = "Great answer!"
@@ -208,58 +208,58 @@ Iteration 10: reward = 8.0, text = "!!!!!!!!!!!!!!!!!!!"
 Iteration 50: reward = 15.0, text = "kdfj;alskdjf;laksdjf"
 ```
 
-**Что происходит:** Модель находит **adversarial примеры**, которые получают высокую reward от RM, но бессмысленны.
+**What happens:** The model finds **adversarial examples** that get a high reward from the RM but are meaningless.
 
-### С KL-штрафом: стабильность
+### With a KL penalty: stability
 
 $$
 \text{Total Reward} = r_\phi(x, y) - \beta \cdot D_{KL}(\pi_\theta \| \pi_{SFT})
 $$
 
-Если модель уходит далеко от $\pi_{SFT}$ → большой KL-штраф → низкая total reward.
+If the model strays too far from $\pi_{SFT}$ → a large KL penalty → low total reward.
 
-**Типичные значения $\beta$:**
+**Typical values of $\beta$:**
 
-| $\beta$ | Эффект |
+| $\beta$ | Effect |
 |---------|--------|
-| 0.001 | Слабый контроль, риск reward hacking |
-| 0.01 | Хороший баланс (стандарт) |
-| 0.1 | Сильный контроль, медленное улучшение |
+| 0.001 | Weak control, risk of reward hacking |
+| 0.01 | A good balance (standard) |
+| 0.1 | Strong control, slow improvement |
 
 ---
 
-## 5. Проблемы и челленджи RLHF
+## 5. RLHF's problems and challenges
 
-### 1. Reward Hacking
+### 1. Reward hacking
 
-**Проблема:** RM обучена на ограниченном датасете → модель находит OOD примеры с высокой reward.
+**The problem:** The RM is trained on a limited dataset → the model finds out-of-distribution examples with a high reward.
 
-**Пример:**
-- RM научилась, что длинные ответы лучше
-- Модель генерирует многословные, но бесполезные ответы
+**Example:**
+- The RM learned that longer responses are better
+- The model generates wordy, but useless, responses
 
-**Решение:**
-- KL-штраф (основной механизм)
+**Solutions:**
+- The KL penalty (the primary mechanism)
 - Adversarial testing
-- Итеративное обновление RM
+- Iteratively updating the RM
 
 ---
 
-### 2. Distribution Shift
+### 2. Distribution shift
 
-**Проблема:** RM обучена на ответах $\pi_{SFT}$, но оценивает ответы $\pi_\theta$.
+**The problem:** The RM is trained on $\pi_{SFT}$'s responses, but evaluates $\pi_\theta$'s responses.
 
-При $\pi_\theta \neq \pi_{SFT}$ → RM экстраполирует → ненадёжные rewards.
+Once $\pi_\theta \neq \pi_{SFT}$ → the RM has to extrapolate → unreliable rewards.
 
-**Решение:**
-- KL-штраф ограничивает shift
-- Iterative RLHF (периодически обновлять RM)
+**Solutions:**
+- The KL penalty limits the shift
+- Iterative RLHF (periodically update the RM)
 
 ---
 
-### 3. Reward Over-Optimization
+### 3. Reward over-optimization
 
-**Наблюдение:** При слишком долгом обучении качество **ухудшается**, несмотря на рост reward!
+**Observation:** With too much training, quality **gets worse**, even as the reward keeps rising!
 
 ```
 RM Reward: ↑↑↑↑↑↑
@@ -268,59 +268,59 @@ Human Eval: ↑↑↑↓↓↓ (Goodhart's Law)
 
 **Goodhart's Law:** "When a measure becomes a target, it ceases to be a good measure."
 
-**Решение:**
-- Early stopping по human evaluation
-- Регулярный мониторинг метрик
+**Solutions:**
+- Early stopping based on human evaluation
+- Regular metric monitoring
 
 ---
 
-### 4. Вычислительная стоимость
+### 4. Computational cost
 
-**Требования:**
+**Requirements:**
 
-- 4 модели в памяти (Actor, Critic, Reference, RM)
-- Для 7B модели: ~40-60GB VRAM
-- Для GPT-3.5/4: тысячи GPU, недели обучения
+- 4 models held in memory (Actor, Critic, Reference, RM)
+- For a 7B model: ~40-60GB of VRAM
+- For GPT-3.5/4: thousands of GPUs, weeks of training
 
-**Решение:**
-- LoRA, QLoRA для параметр-эффективного fine-tuning
+**Solutions:**
+- LoRA, QLoRA for parameter-efficient fine-tuning
 - Distillation
-- DPO (см. [note_16_dpo_and_variants.md](note_16_dpo_and_variants.md)) — более эффективная альтернатива
+- DPO (see [note_16_dpo_and_variants.md](note_16_dpo_and_variants.md)) — a more efficient alternative
 
 ---
 
-## 6. Метрики оценки RLHF
+## 6. RLHF evaluation metrics
 
-| Метрика | Описание | Как измерить |
+| Metric | Description | How it's measured |
 |---------|----------|--------------|
-| **RM Reward** | Reward от trained RM | Автоматически |
-| **KL Divergence** | Расстояние от $\pi_{SFT}$ | $D_{KL}(\pi_\theta \| \pi_{SFT})$ |
-| **Human Eval** | Ручная оценка качества | Win rate против baseline |
-| **Perplexity** | Сохранение языковых способностей | На held-out data |
-| **Safety Metrics** | Toxicity, bias, harmful content | Perspective API, Red teaming |
-| **Task Performance** | Точность на downstream tasks | Benchmarks (MMLU, HumanEval) |
+| **RM Reward** | The reward from the trained RM | Automatically |
+| **KL Divergence** | Distance from $\pi_{SFT}$ | $D_{KL}(\pi_\theta \| \pi_{SFT})$ |
+| **Human Eval** | Manual quality assessment | Win rate against a baseline |
+| **Perplexity** | Preservation of language ability | On held-out data |
+| **Safety Metrics** | Toxicity, bias, harmful content | Perspective API, red teaming |
+| **Task Performance** | Accuracy on downstream tasks | Benchmarks (MMLU, HumanEval) |
 
-**Ключевой trade-off:**
+**The key trade-off:**
 
 $$
 \text{RM Reward} \uparrow \quad \leftrightarrow \quad \text{KL Divergence} \uparrow
 $$
 
-Нужно найти баланс через подбор $\beta$.
+You need to find a balance by tuning $\beta$.
 
 ---
 
-## 7. Варианты и расширения RLHF
+## 7. RLHF variants and extensions
 
 ### Constitutional AI (Anthropic)
 
-- Модель самостоятельно критикует и улучшает свои ответы
-- Меньше зависимости от человеческой аннотации
+- The model critiques and improves its own responses
+- Less reliance on human annotation
 
 ### RLAIF (RL from AI Feedback)
 
-- Используем сильную LLM (GPT-4) вместо людей для генерации предпочтений
-- Дешевле и быстрее масштабируется
+- Uses a strong LLM (GPT-4) instead of people to generate preferences
+- Cheaper and scales faster
 
 ### Iterative RLHF
 
@@ -336,120 +336,119 @@ $$
 \max_\theta \mathbb{E} \left[ \alpha_1 r_{\text{helpful}} + \alpha_2 r_{\text{harmless}} + \alpha_3 r_{\text{honest}} - \beta D_{KL} \right]
 $$
 
-Обучаем несколько reward models для разных целей.
+Trains multiple reward models for different objectives.
 
 ---
 
-## 8. Practical Tips для RLHF
+## 8. Practical tips for RLHF
 
-### 1. Quality > Quantity для предпочтений
+### 1. Quality > quantity for preferences
 
-- 10K высококачественных пар лучше 100K шумных
-- Важна согласованность аннотаторов (agreement rate > 70%)
+- 10K high-quality pairs beat 100K noisy ones
+- Annotator agreement matters (agreement rate > 70%)
 
-### 2. Balanced Dataset
+### 2. A balanced dataset
 
-- Покрыть разные типы промптов (вопросы, инструкции, creative writing)
-- Избегать сильных biases в предпочтениях
+- Cover different prompt types (questions, instructions, creative writing)
+- Avoid strong biases in the preferences
 
-### 3. KL Warm-up
+### 3. KL warm-up
 
 ```python
-# Постепенно увеличиваем β
+# Gradually increase β
 β = β_min + (β_max - β_min) * min(1.0, iteration / warmup_steps)
 ```
 
-### 4. Мониторинг KL
+### 4. Monitor the KL
 
-Если $D_{KL} > 10$: модель слишком далеко ушла → увеличить $\beta$ или early stop.
+If $D_{KL} > 10$: the model has strayed too far → increase $\beta$ or stop early.
 
-### 5. Length Normalization
+### 5. Length normalization
 
 $$
 r_{\text{normalized}} = \frac{r_\phi(x, y)}{\text{length}(y)}
 $$
 
-Предотвращает bias к длинным ответам.
+Prevents a bias toward long responses.
 
 ---
 
-## 9. RLHF в индустрии
+## 9. RLHF in industry
 
 ### OpenAI: InstructGPT → ChatGPT → GPT-4
 
-- **InstructGPT (2022):** Первая масштабная RLHF для GPT-3
-- **ChatGPT (Nov 2022):** Применение RLHF для диалоговой модели
-- **GPT-4 (Mar 2023):** Масштабирование RLHF на multimodal модель
+- **InstructGPT (2022):** The first large-scale RLHF applied to GPT-3
+- **ChatGPT (Nov 2022):** RLHF applied to a conversational model
+- **GPT-4 (Mar 2023):** RLHF scaled to a multimodal model
 
-**Ключевые insights:**
-- RLHF критичен для "человекоподобного" поведения
-- KL-штраф к SFT абсолютно необходим
+**Key insights:**
+- RLHF is critical for "human-like" behavior
+- A KL penalty against SFT is absolutely necessary
 
 ### Anthropic: Claude
 
 - Constitutional AI + RLHF
-- Акцент на harmlessness и honesty
+- An emphasis on harmlessness and honesty
 
 ### Meta: Llama 2-Chat
 
-- Open-source модель с RLHF
-- Детальное описание процесса в paper
+- An open-source model trained with RLHF
+- The process is described in detail in the paper
 
 ---
 
-## 10. Резюме
+## 10. Summary
 
-| Концепция | Описание |
+| Concept | Description |
 |-----------|----------|
-| **RLHF Pipeline** | SFT → RM → PPO в три этапа |
-| **Reward Model** | Обучается на парных предпочтениях (Bradley-Terry) |
-| **KL Constraint** | $\beta D_{KL}(\pi_\theta \| \pi_{SFT})$ предотвращает reward hacking |
-| **PPO для LLM** | 4 модели в памяти, огромные вычисления |
-| **Reward Hacking** | Основная проблема, решается KL-штрафом |
-| **Goodhart's Law** | Over-optimization RM приводит к ухудшению качества |
+| **The RLHF pipeline** | SFT → RM → PPO, in three stages |
+| **The reward model** | Trained on pairwise preferences (Bradley-Terry) |
+| **The KL constraint** | $\beta D_{KL}(\pi_\theta \| \pi_{SFT})$ prevents reward hacking |
+| **PPO for LLMs** | 4 models in memory, enormous compute |
+| **Reward hacking** | The main problem, addressed by the KL penalty |
+| **Goodhart's Law** | Over-optimizing the RM degrades actual quality |
 
-**Ключевые выводы:**
+**Key takeaways:**
 
-1. **RLHF = индустриальный стандарт** для alignment LLM
-2. **KL-штраф критически важен** для стабильности
-3. **Вычислительно дорого**, но необходимо для качества
-4. **Альтернативы (DPO)** активно развиваются
-
----
-
-## 11. Связь с предыдущими семинарами
-
-- **[note_14_ppo_trpo.md](note_14_ppo_trpo.md):** PPO — RL алгоритм для RLHF
-- **[note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md):** Policy Gradient — основа PPO
-- **[note_12_actor_critic_a2c.md](note_12_actor_critic_a2c.md):** Actor-Critic — архитектура для LLM RL
+1. **RLHF is the industry standard** for LLM alignment
+2. **The KL penalty is critically important** for stability
+3. **It's computationally expensive**, but necessary for quality
+4. **Alternatives (DPO) are actively being developed**
 
 ---
 
-## 12. Дальнейшее изучение
+## 11. Connections to earlier sessions
 
-**Ключевые статьи:**
+- **[note_14_ppo_trpo.md](note_14_ppo_trpo.md):** PPO — the RL algorithm behind RLHF
+- **[note_11_policy_gradients_reinforce.md](note_11_policy_gradients_reinforce.md):** Policy Gradient — the foundation PPO builds on
+- **[note_12_actor_critic_a2c.md](note_12_actor_critic_a2c.md):** Actor-Critic — the architecture used for LLM RL
+
+---
+
+## 12. Further reading
+
+**Key papers:**
 
 - *Training language models to follow instructions with human feedback* (InstructGPT, 2022)
 - *Constitutional AI: Harmlessness from AI Feedback* (Anthropic, 2022)
 - *Llama 2: Open Foundation and Fine-Tuned Chat Models* (Meta, 2023)
 
-**Библиотеки:**
+**Libraries:**
 
-- [Hugging Face TRL](https://github.com/huggingface/trl) — RLHF для transformers
+- [Hugging Face TRL](https://github.com/huggingface/trl) — RLHF for transformers
 - [DeepSpeed-Chat](https://github.com/microsoft/DeepSpeed) — Efficient RLHF
 
 ---
 
-## 13. Практическое задание
+## 13. Hands-on assignment
 
-В `code/15_rlhf_basics/` реализован упрощённый RLHF pipeline на игрушечной задаче.
+`code/15_rlhf_basics/` implements a simplified RLHF pipeline on a toy task.
 
-**Эксперименты:**
-- Влияние $\beta$ на качество и KL
-- Reward hacking без KL-штрафа
-- Сравнение SFT baseline vs RLHF
+**Experiments:**
+- The effect of $\beta$ on quality and KL
+- Reward hacking with no KL penalty
+- Comparing an SFT baseline vs RLHF
 
 ---
 
-**Далее:** [note_16_dpo_and_variants.md](note_16_dpo_and_variants.md) — DPO: Direct Preference Optimization
-
+**Next:** [note_16_dpo_and_variants.md](note_16_dpo_and_variants.md) — DPO: Direct Preference Optimization
