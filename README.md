@@ -1,6 +1,6 @@
 # 🎓 Reinforcement Learning — Practical Course (2025)
 
-[![CI](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-samatov/reinforcement_learning_course/actions/workflows/ci.yml)
+[![CI](https://github.com/denis-samatov/reinforcement-learning-course/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-samatov/reinforcement-learning-course/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A practical, code-first reinforcement learning course for anyone who wants to build and
@@ -32,8 +32,8 @@ and PyTorch. Licensed under [MIT](LICENSE).
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/denis-samatov/reinforcement_learning_course.git
-cd reinforcement_learning_course
+git clone https://github.com/denis-samatov/reinforcement-learning-course.git
+cd reinforcement-learning-course
 ```
 
 ### 2. Create and activate a virtual environment
